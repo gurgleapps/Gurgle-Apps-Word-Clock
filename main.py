@@ -48,13 +48,20 @@ def time_to_matrix():
     now = time.localtime()
     hour = (now[3])
     minute = now[4]
-    if minute>4 and minute<35:
+    # round min to nearest 5
+    minute = int(round(minute/5)*5)
+    if minute>0 and minute<30:
         word = merge_chars(word,clockFont['past'])
-    elif minute>4:
+    elif minute>30:
         word = merge_chars(word,clockFont['to'])
         hour = hour+1
     hour = hour%12
     word = merge_chars(word,clockFont['h_'+str(hour)])
+    if minute>30:
+        minute = 60-minute
+    if minute>0:
+        word = merge_chars(word,clockFont['m_'+str(minute)])
+    
     matrix.show_char(word)
 
 def merge_chars(char1,char2):
@@ -70,6 +77,9 @@ matrix = ht16k33_matrix(config.I2C_SDA,config.I2C_SCL,config.I2C_BUS,config.I2C_
 #reverse all clockFont characters
 for key in clockFont:
     clockFont[key] = matrix.reverse_char(clockFont[key])
-time_to_matrix()
+
+while True:
+    time_to_matrix()
+    time.sleep(30)
 #rev = matrix.reverse_char([0x00,0x00,0x1e,0x00,0x00,0x00,0x00,0x00])
 #matrix.show_char(rev)

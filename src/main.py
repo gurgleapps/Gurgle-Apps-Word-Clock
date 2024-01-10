@@ -3,6 +3,8 @@ import machine
 from ht16k33_matrix import ht16k33_matrix
 import ntptime
 import utime as time
+from gurgleapps_webserver import GurgleAppsWebserver
+import uasyncio as asyncio
 
 clockFont={
     'past':[0x00,0x00,0x1e,0x00,0x00,0x00,0x00,0x00],
@@ -52,6 +54,8 @@ def time_to_matrix():
     minute = int(round(minute/5)*5)
     if minute>0 and minute<30:
         word = merge_chars(word,clockFont['past'])
+    elif minute==60:
+        pass #on the hour
     elif minute>30:
         word = merge_chars(word,clockFont['to'])
         hour = hour+1
@@ -69,6 +73,11 @@ def merge_chars(char1,char2):
         char1[i] |= char2[i]
     return char1   
 
+async def main():
+    while True:
+        time_to_matrix()
+        await asyncio.sleep(10)
+        
 
 scan_for_devices()
 set_time()
@@ -78,8 +87,19 @@ matrix = ht16k33_matrix(config.I2C_SDA,config.I2C_SCL,config.I2C_BUS,config.I2C_
 for key in clockFont:
     clockFont[key] = matrix.reverse_char(clockFont[key])
 
-while True:
-    time_to_matrix()
-    time.sleep(30)
-#rev = matrix.reverse_char([0x00,0x00,0x1e,0x00,0x00,0x00,0x00,0x00])
-#matrix.show_char(rev)
+
+
+server = GurgleAppsWebserver(
+    None,
+    None,
+    port=80,
+    timeout=20,
+    doc_root="/www",
+    log_level=2
+)
+success = server.start_access_point('gurgleapps','gurgleapps')
+if success:
+    print(success)
+    asyncio.run(server.start_server_with_background_task(main))
+else:
+    print("Failed to start access point")

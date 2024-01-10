@@ -41,10 +41,11 @@ class GurgleAppsWebserver:
             </body>
         </html>
         """
-        if self.connect_wifi(self.wifi_ssid, self.wifi_password):
-            print('point your browser to http://', self.ip_address)
-        else:
-            raise RuntimeError('network connection failed')
+        if self.wifi_ssid!=None:
+            if self.connect_wifi(self.wifi_ssid, self.wifi_password):
+                print('point your browser to http://', self.ip_address)
+            else:
+                raise RuntimeError('network connection failed')
         self.server_running = False
         
 
@@ -88,7 +89,7 @@ class GurgleAppsWebserver:
     
     async def maintain_connection(self):
         while True:
-            if self.wlan_sta.isconnected() == False:
+            if self.wlan_sta.isconnected() == False and self.wifi_ssid != None:
                 print("Lost connection to Wi-Fi. Attempting to reconnect...")
                 self.connect_wifi(self.wifi_ssid, self.wifi_password)
             await asyncio.sleep(10)

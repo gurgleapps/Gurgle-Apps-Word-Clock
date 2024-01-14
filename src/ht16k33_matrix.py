@@ -22,15 +22,20 @@ class ht16k33_matrix:
         for item in c:
           bytes.append( ((item & 0xFE)>>1)|((item & 0x01)<<7) )
           bytes.append(0x00)
-        self.i2c.writeto_mem(self.addr, 0x00, bytes)
+        return self.reg_write(0x00,bytes)
         
     def set_brightness(self,brightness):
         self.reg_write(_HT16K33_CMD_BRIGHTNESS | brightness,0x00)
 
     def reg_write(self, reg, data):
-        msg = bytearray()
-        msg.append(data)
-        self.i2c.writeto_mem(self.addr, reg, msg)
+        if isinstance(data, int):
+            data = bytearray([data])
+        try:
+            self.i2c.writeto_mem(self.addr, reg, data)
+            return True
+        except OSError:
+            print("Error writing to I2C device")
+            return False
 
     def reverse_bits(self, byte):
         result = 0

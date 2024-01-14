@@ -65,8 +65,8 @@ def time_to_matrix():
         minute = 60-minute
     if minute>0:
         word = merge_chars(word,clockFont['m_'+str(minute)])
-    
-    matrix.show_char(word)
+    if not matrix.show_char(word):
+        print("Error writing to matrix")
 
 def merge_chars(char1,char2):
     for i in range(8):
@@ -97,6 +97,7 @@ server = GurgleAppsWebserver(
     doc_root="/www",
     log_level=2
 )
+server.set_default_index_pages(["time.html"])
 success = server.start_access_point('gurgleapps','gurgleapps')
 if success:
     print(success)

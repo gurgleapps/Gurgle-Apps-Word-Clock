@@ -1,6 +1,7 @@
 import config
 import machine
 from ht16k33_matrix import ht16k33_matrix
+from max7219_matrix import max7219_matrix
 import ntptime
 import utime as time
 from gurgleapps_webserver import GurgleAppsWebserver
@@ -65,8 +66,11 @@ def time_to_matrix():
         minute = 60-minute
     if minute>0:
         word = merge_chars(word,clockFont['m_'+str(minute)])
-    if not matrix.show_char(word):
-        print("Error writing to matrix")
+    if config.ENABLE_MAX7219:
+        spi_matrix.show_char(word)
+    if config.ENABLE_HT16K33:            
+        if not i2c_matrix.show_char(i2c_matrix.reverse_char(word)):
+            print("Error writing to matrix")
 
 def merge_chars(char1,char2):
     for i in range(8):
@@ -78,16 +82,14 @@ async def main():
         time_to_matrix()
         await asyncio.sleep(10)
         
+if config.ENABLE_HT16K33:
+    scan_for_devices()
+    i2c_matrix = ht16k33_matrix(config.I2C_SDA,config.I2C_SCL,config.I2C_BUS,config.I2C_ADDRESS)
 
-scan_for_devices()
+if config.ENABLE_MAX7219:
+    spi_matrix = max7219_matrix(machine.SPI(config.SPI_PORT), machine.Pin(config.SPI_CS))
+
 set_time()
-
-matrix = ht16k33_matrix(config.I2C_SDA,config.I2C_SCL,config.I2C_BUS,config.I2C_ADDRESS)
-#reverse all clockFont characters
-for key in clockFont:
-    clockFont[key] = matrix.reverse_char(clockFont[key])
-
-
 
 server = GurgleAppsWebserver(
     None,

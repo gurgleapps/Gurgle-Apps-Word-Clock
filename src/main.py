@@ -87,7 +87,7 @@ if config.ENABLE_HT16K33:
     i2c_matrix = ht16k33_matrix(config.I2C_SDA,config.I2C_SCL,config.I2C_BUS,config.I2C_ADDRESS)
 
 if config.ENABLE_MAX7219:
-    spi_matrix = max7219_matrix(machine.SPI(config.SPI_PORT), machine.Pin(config.SPI_CS))
+    spi_matrix = max7219_matrix(machine.SPI(config.SPI_PORT), machine.Pin(config.SPI_CS, machine.Pin.OUT, True))
 
 set_time()
 

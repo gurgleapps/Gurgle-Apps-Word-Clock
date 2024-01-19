@@ -19,10 +19,9 @@ class max7219_matrix:
         self.spi = spi
         self.cs = cs
         self.setup()
-        self.left_char = [0x3c,0x56,0x93,0xdb,0xff,0xff,0xdd,0x89]
-        self.right_char = [0x3c,0x56,0x93,0xdb,0xff,0xff,0xdd,0x89]
-        self.left_brightness = 15
-        self.right_brightness = 15
+        self.char = [0x3c,0x56,0x93,0xdb,0xff,0xff,0xdd,0x89]
+        self.brightness = 7
+        self.set_brightness(self.brightness)
         
     def setup(self):
         self.write(_SHUTDOWN,0)
@@ -34,14 +33,11 @@ class max7219_matrix:
     def write(self, command, data):
         self.cs.value(0)
         self.spi.write(bytearray([command, data]))
-        self.spi.write(bytearray([command, data]))
         self.cs.value(1)
 
     def show_char(self, char):
         for i in range(8):
-            self.cs.value(0)      
-            self.spi.write(bytearray([i+1, char[i]]))          
-            self.cs.value(1)
+            self.write(i+1, char[i])
         return True
             
     

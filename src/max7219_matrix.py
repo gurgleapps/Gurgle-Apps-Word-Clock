@@ -1,8 +1,8 @@
 import machine
 
-# DIN -> TX
-# CS -> CSn
-# CLK -> SCK
+# DIN -> TX pico uses TX as MOSI on ESP32-C3 its GPIO 7
+# CS -> CSn chip select any pin
+# CLK -> SCK on ESP32-C3 it's GPIO 6 
 
 class max7219_matrix:
     

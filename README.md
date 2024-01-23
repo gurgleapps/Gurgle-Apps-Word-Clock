@@ -24,4 +24,24 @@ spi =machine.SPI(1, sck=machine.Pin(20), mosi=machine.Pin(21))
 
 so we know that SPI Port is 1, MOSI is 7 and CLK is 6
 
+
 I2C sda was GPIO6 and clk was GPIO7
+
+## ESP32-C3 super mini pinouts view from top
+
+```
+         USB-C Port
+          _______
+         |       |
+GPIO 05 [o]     [o] 5V
+GPIO 06 [o]     [o] GND
+GPIO 07 [o]     [o] 3V3
+GPIO 08 [o]     [o] GPIO 04
+GPIO 09 [o]     [o] GPIO 03
+GPIO 10 [o]     [o] GPIO 02
+GPIO 20 [o]     [o] GPIO 01
+GPIO 21 [o]     [o] GPIO 00
+         |_______|
+```
+
+

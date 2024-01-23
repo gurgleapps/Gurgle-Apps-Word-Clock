@@ -2,6 +2,7 @@ import config
 import machine
 from ht16k33_matrix import ht16k33_matrix
 from max7219_matrix import max7219_matrix
+from ws2812b_matrix import ws2812b_matrix
 import ntptime
 import utime as time
 from gurgleapps_webserver import GurgleAppsWebserver
@@ -71,6 +72,8 @@ def time_to_matrix():
     if config.ENABLE_HT16K33:            
         if not i2c_matrix.show_char(i2c_matrix.reverse_char(word)):
             print("Error writing to matrix")
+    if config.ENABLE_WS2812B:
+        ws2812b_matrix.show_char(word,(0,0,255))
 
 def merge_chars(char1,char2):
     for i in range(8):
@@ -89,6 +92,11 @@ if config.ENABLE_HT16K33:
 if config.ENABLE_MAX7219:
     spi =machine.SPI(1, sck=machine.Pin(config.SPI_SCK), mosi=machine.Pin(config.SPI_MOSI))
     spi_matrix = max7219_matrix(spi, machine.Pin(config.SPI_CS, machine.Pin.OUT, True))
+    spi_matrix.set_brightness(17)
+
+if config.ENABLE_WS2812B:
+    ws2812b_matrix = ws2812b_matrix(config.WS2812B_PIN,8,8)
+    ws2812b_matrix.set_brightness(1)
 
 set_time()
 

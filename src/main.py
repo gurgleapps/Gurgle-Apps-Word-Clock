@@ -74,6 +74,7 @@ def time_to_matrix():
             print("Error writing to matrix")
     if config.ENABLE_WS2812B:
         ws2812b_matrix.show_char(word,(0,0,255))
+        ws2812b_matrix.show_char_with_colour_array(word,ws2812b_matrix.get_rainbow_array())
 
 def merge_chars(char1,char2):
     for i in range(8):

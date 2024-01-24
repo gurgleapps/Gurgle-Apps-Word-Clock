@@ -23,6 +23,18 @@ class ws2812b_matrix:
         self.np.write()
         return True
     
+    def show_char_with_colour_array(self, char, colour_array):
+        self.char = char
+        for i in range(8):
+            for j in range(8):
+                if char[i] & (1 << 7 - j):
+                    adjusted_colour = self.adjust_for_brightness(colour_array[i*8+j])
+                    self.np[i*8+j] = adjusted_colour
+                else:
+                    self.np[i*8+j] = (0,0,0)
+        self.np.write()
+        return True
+    
     def set_brightness(self, brightness):
         if 0 <= brightness <= self.max_brightness:
             self.brightness = brightness
@@ -55,6 +67,26 @@ class ws2812b_matrix:
 
     def get_char(self):
         return self.char
+    
+    def get_rainbow_array(self):
+        rainbow = []
+        for i in range(self.width * self.height):
+            colour_position = int(i * 256 / (self.width * self.height))
+            rainbow.append(self.wheel(colour_position))
+        return rainbow
+
+    def wheel(self, pos):
+        # Input a value 0 to 255 to get a color value.
+        # The colours are a transition r - g - b - back to r.
+        if pos < 0 or pos > 255:
+            return (0, 0, 0)
+        if pos < 85:
+            return (255 - pos * 3, pos * 3, 0)
+        if pos < 170:
+            pos -= 85
+            return (0, 255 - pos * 3, pos * 3)
+        pos -= 170
+        return (pos * 3, 0, 255 - pos * 3)
     
 
 

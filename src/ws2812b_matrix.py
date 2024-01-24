@@ -1,4 +1,5 @@
-import machine, neopixel
+import machine
+import neopixel
 
 class ws2812b_matrix:
 
@@ -11,27 +12,27 @@ class ws2812b_matrix:
         self.max_brightness = 15
         self.set_brightness(self.brightness)
 
-    def show_char(self, char, colour=(255,255,255)):
+    def show_char(self, char, color=(255, 255, 255)):
         self.char = char
-        adjusted_colour = self.adjust_for_brightness(colour)
+        adjusted_color = self.adjust_for_brightness(color)
         for i in range(8):
             for j in range(8):
                 if char[i] & (1 << 7 - j):
-                    self.np[i*8+j] = adjusted_colour
+                    self.np[i*8+j] = adjusted_color
                 else:
-                    self.np[i*8+j] = (0,0,0)
+                    self.np[i*8+j] = (0, 0, 0)
         self.np.write()
         return True
     
-    def show_char_with_colour_array(self, char, colour_array):
+    def show_char_with_color_array(self, char, color_array):
         self.char = char
         for i in range(8):
             for j in range(8):
                 if char[i] & (1 << 7 - j):
-                    adjusted_colour = self.adjust_for_brightness(colour_array[i*8+j])
-                    self.np[i*8+j] = adjusted_colour
+                    adjusted_color = self.adjust_for_brightness(color_array[i*8+j])
+                    self.np[i*8+j] = adjusted_color
                 else:
-                    self.np[i*8+j] = (0,0,0)
+                    self.np[i*8+j] = (0, 0, 0)
         self.np.write()
         return True
     
@@ -41,25 +42,25 @@ class ws2812b_matrix:
         else:
             raise ValueError(f"Brightness must be between 0 and {self.max_brightness}")
 
-    def set_pixel(self, x, y, colour):
-        self.np[x*8+y] = colour
+    def set_pixel(self, x, y, color):
+        self.np[x*8+y] = color
         self.np.write()
 
-    def adjust_for_brightness(self, colour):
+    def adjust_for_brightness(self, color):
         brightness_scale = self.brightness/self.max_brightness
-        return tuple([int(x*brightness_scale) for x in colour])
+        return tuple([int(x*brightness_scale) for x in color])
 
     def show(self):
         self.np.write()
 
     def clear(self):
         for i in range(self.width*self.height):
-            self.np[i] = (0,0,0)
+            self.np[i] = (0, 0, 0)
         self.np.write()
 
-    def fill(self, colour):
+    def fill(self, color):
         for i in range(self.width*self.height):
-            self.np[i] = colour
+            self.np[i] = color
         self.np.write()
 
     def set_char(self, char):
@@ -71,13 +72,13 @@ class ws2812b_matrix:
     def get_rainbow_array(self):
         rainbow = []
         for i in range(self.width * self.height):
-            colour_position = int(i * 256 / (self.width * self.height))
-            rainbow.append(self.wheel(colour_position))
+            color_position = int(i * 256 / (self.width * self.height))
+            rainbow.append(self.wheel(color_position))
         return rainbow
 
     def wheel(self, pos):
         # Input a value 0 to 255 to get a color value.
-        # The colours are a transition r - g - b - back to r.
+        # The colors are a transition r - g - b - back to r.
         if pos < 0 or pos > 255:
             return (0, 0, 0)
         if pos < 85:
@@ -87,7 +88,3 @@ class ws2812b_matrix:
             return (0, 255 - pos * 3, pos * 3)
         pos -= 170
         return (pos * 3, 0, 255 - pos * 3)
-    
-
-
-

@@ -13,8 +13,9 @@ DISPLAY_MODE_RAINBOW = 'rainbow'
 DISPLAY_MODE_SINGLE_COLOR = 'single_color'
 DISPLAY_MODE_COLOR_PER_WORD = 'color_per_word'
 
-current_display_mode = DISPLAY_MODE_COLOR_PER_WORD
+current_display_mode = DISPLAY_MODE_RAINBOW
 
+brightness = 2
 # Color data for different modes
 single_color = (0, 0, 255)
 # Color data for different words
@@ -39,6 +40,7 @@ clockFont = {
     'h_10': [0x00, 0x00, 0x00, 0x01, 0x01, 0x01, 0x00, 0x00],
     'h_11': [0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0x00, 0x00],
     'h_12': [0x00, 0x00, 0x00, 0x00, 0x00, 0xf6, 0x00, 0x00],
+    'h_0': [0x00, 0x00, 0x00, 0x00, 0x00, 0xf6, 0x00, 0x00], # 0 is the same as 12
     'm_5': [0x00, 0xd4, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
     'm_10': [0x00, 0x0d, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
     'm_15': [0x00, 0xef, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
@@ -95,6 +97,7 @@ def time_to_matrix():
         if not i2c_matrix.show_char(i2c_matrix.reverse_char(word)):
             print("Error writing to matrix")
     if config.ENABLE_WS2812B:
+        ws2812b_matrix.set_brightness(brightness)
         display_fuction = display_modes.get(current_display_mode)
         if display_fuction:
             display_fuction(word)

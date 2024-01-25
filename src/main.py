@@ -1,5 +1,5 @@
 import machine
-import config
+#import config 
 from ht16k33_matrix import ht16k33_matrix
 from max7219_matrix import max7219_matrix
 from ws2812b_matrix import ws2812b_matrix
@@ -7,6 +7,9 @@ import ntptime
 import utime as time
 from gurgleapps_webserver import GurgleAppsWebserver
 import uasyncio as asyncio
+import json
+
+config_file = 'config.json'
 
 # Display modes
 DISPLAY_MODE_RAINBOW = 'rainbow'
@@ -48,6 +51,43 @@ clockFont = {
     'm_25': [0x3f, 0xd4, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
     'm_30': [0xc0, 0x00, 0xc0, 0x00, 0x00, 0x00, 0x00, 0x00]
 }
+
+class DotDict(dict):
+    """ Dictionary subclass that allows attribute-style access. """
+    def __getattr__(self, key):
+        try:
+            return self[key]
+        except KeyError:
+            raise AttributeError(f"'DotDict' object has no attribute '{key}'")
+
+    def __setattr__(self, key, value):
+        self[key] = value
+
+    def __delattr__(self, key):
+        del self[key]
+
+
+def read_config():
+    try:
+        with open(config_file, 'r') as file:
+            return DotDict(json.load(file))
+    except (OSError):
+        print(f"Configuration file not found or is invalid. Please create a valid {config_file} file.")
+        return None
+
+def save_config():
+    try:
+        with open('config.json', 'w') as file:
+            json.dump(config, file, indent=4)
+    except IOError as e:
+        print(f"Error saving configuration: {e}")
+
+config = read_config()
+
+if config is None:
+    raise SystemExit("Stopping execution due to missing configuration.")
+
+
 
 def scan_for_devices():
     i2c = machine.I2C(config.I2C_BUS, sda=machine.Pin(config.I2C_SDA), scl=machine.Pin(config.I2C_SCL))
@@ -185,8 +225,6 @@ def connect_to_wifi():
     else:
         print("No Wi-Fi SSID set")
         return False
-
-
         
 
 async def main():
@@ -196,7 +234,7 @@ async def main():
         
 if config.ENABLE_HT16K33:
     scan_for_devices()
-    i2c_matrix = ht16k33_matrix(config.I2C_SDA, config.I2C_SCL, config.I2C_BUS, config.I2C_ADDRESS)
+    i2c_matrix = ht16k33_matrix(config.I2C_SDA, config.I2C_SCL, config.I2C_BUS,  int(config.I2C_ADDRESS, 16))
 
 if config.ENABLE_MAX7219:
     spi = machine.SPI(1, sck=machine.Pin(config.SPI_SCK), mosi=machine.Pin(config.SPI_MOSI))

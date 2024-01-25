@@ -1,4 +1,4 @@
-To Edit Font this is very a good tool
+
 
 
 
@@ -19,6 +19,14 @@ GPIO 10 [o]     [o] GPIO 02
 GPIO 20 [o]     [o] GPIO 01
 GPIO 21 [o]     [o] GPIO 00
          |_______|
+```
+
+## Development Environment
+
+Set up test python web server for quick look and feel rather than copying files to the microcontroller repeatedly.
+
+```bash
+python3 -m http.server 8000 -d ./src/www
 ```
 
 

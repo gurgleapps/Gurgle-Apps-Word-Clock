@@ -52,34 +52,20 @@ clockFont = {
     'm_30': [0xc0, 0x00, 0xc0, 0x00, 0x00, 0x00, 0x00, 0x00]
 }
 
-class DotDict(dict):
-    """ Dictionary subclass that allows attribute-style access. """
-    def __getattr__(self, key):
-        try:
-            return self[key]
-        except KeyError:
-            raise AttributeError(f"'DotDict' object has no attribute '{key}'")
-
-    def __setattr__(self, key, value):
-        self[key] = value
-
-    def __delattr__(self, key):
-        del self[key]
-
-
 def read_config():
     try:
         with open(config_file, 'r') as file:
-            return DotDict(json.load(file))
+            return json.load(file)
     except (OSError):
         print(f"Configuration file not found or is invalid. Please create a valid {config_file} file.")
         return None
 
-def save_config():
+def save_config(data):
     try:
-        with open('config.json', 'w') as file:
-            json.dump(config, file, indent=4)
-    except IOError as e:
+        with open('config_saved.json', 'w') as file:
+            json.dump(data, file)
+            print("Configuration saved.")
+    except OSError as e:
         print(f"Error saving configuration: {e}")
 
 config = read_config()
@@ -87,10 +73,8 @@ config = read_config()
 if config is None:
     raise SystemExit("Stopping execution due to missing configuration.")
 
-
-
 def scan_for_devices():
-    i2c = machine.I2C(config.I2C_BUS, sda=machine.Pin(config.I2C_SDA), scl=machine.Pin(config.I2C_SCL))
+    i2c = machine.I2C(config['I2C_BUS'], sda=machine.Pin(config['I2C_SDA']), scl=machine.Pin(config['I2C_SCL']))
     devices = i2c.scan()
     if devices:
         for d in devices:
@@ -131,12 +115,12 @@ def time_to_matrix():
     if minute > 0:
         word = merge_chars(word, clockFont['m_'+str(minute)])
         colour_per_word_array = merge_color_array(colour_per_word_array, clockFont['m_'+str(minute)], minute_color)
-    if config.ENABLE_MAX7219:
+    if config['ENABLE_MAX7219']:
         spi_matrix.show_char(word)
-    if config.ENABLE_HT16K33:            
+    if config['ENABLE_HT16K33']:            
         if not i2c_matrix.show_char(i2c_matrix.reverse_char(word)):
             print("Error writing to matrix")
-    if config.ENABLE_WS2812B:
+    if config['ENABLE_WS2812B']:
         ws2812b_matrix.set_brightness(brightness)
         display_fuction = display_modes.get(current_display_mode)
         if display_fuction:
@@ -159,11 +143,11 @@ def merge_color_array(color_array, char, color):
 def set_brightness(new_brightness):
     global brightness
     brightness = new_brightness
-    if config.ENABLE_MAX7219:
+    if config['ENABLE_MAX7219']:
         spi_matrix.set_brightness(brightness)
-    if config.ENABLE_HT16K33:
+    if config['ENABLE_HT16K33']:
         i2c_matrix.set_brightness(brightness)
-    if config.ENABLE_WS2812B:
+    if config['ENABLE_WS2812B']:
         ws2812b_matrix.set_brightness(brightness)
 
 def display_rainbow_mode(word):
@@ -216,7 +200,7 @@ def connect_to_wifi():
         # password could be blank for open networks
         password = getattr(config, 'WIFI_PASSWORD', None)
         print("Connecting to Wi-Fi")
-        success = server.connect_to_wifi(config.WIFI_SSID, password)
+        success = server.connect_wifi(['WIFI_SSID, password'])
         if success:
             print("Connected to Wi-Fi")
         else:
@@ -232,17 +216,17 @@ async def main():
         time_to_matrix()
         await asyncio.sleep(10)
         
-if config.ENABLE_HT16K33:
+if config['ENABLE_HT16K33']:
     scan_for_devices()
-    i2c_matrix = ht16k33_matrix(config.I2C_SDA, config.I2C_SCL, config.I2C_BUS,  int(config.I2C_ADDRESS, 16))
+    i2c_matrix = ht16k33_matrix(config['I2C_SDA'], config['I2C_SCL'], config['I2C_BUS'],  int(config['I2C_ADDRESS'], 16))
 
-if config.ENABLE_MAX7219:
-    spi = machine.SPI(1, sck=machine.Pin(config.SPI_SCK), mosi=machine.Pin(config.SPI_MOSI))
-    spi_matrix = max7219_matrix(spi, machine.Pin(config.SPI_CS, machine.Pin.OUT, True))
+if config['ENABLE_MAX7219']:
+    spi = machine.SPI(1, sck=machine.Pin(config['SPI_SCK']), mosi=machine.Pin(config['SPI_MOSI']))
+    spi_matrix = max7219_matrix(spi, machine.Pin(config['SPI_CS'], machine.Pin.OUT, True))
     spi_matrix.set_brightness(17)
 
-if config.ENABLE_WS2812B:
-    ws2812b_matrix = ws2812b_matrix(config.WS2812B_PIN, 8, 8)
+if config['ENABLE_WS2812B']:
+    ws2812b_matrix = ws2812b_matrix(config['WS2812B_PIN'], 8, 8)
     ws2812b_matrix.set_brightness(1)
 
 set_time()

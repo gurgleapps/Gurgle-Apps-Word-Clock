@@ -1,5 +1,4 @@
 import machine
-#import config 
 from ht16k33_matrix import ht16k33_matrix
 from max7219_matrix import max7219_matrix
 from ws2812b_matrix import ws2812b_matrix
@@ -62,16 +61,11 @@ def read_config():
 
 def save_config(data):
     try:
-        with open('config_saved.json', 'w') as file:
+        with open(config_file, 'w') as file:
             json.dump(data, file)
             print("Configuration saved.")
     except OSError as e:
         print(f"Error saving configuration: {e}")
-
-config = read_config()
-
-if config is None:
-    raise SystemExit("Stopping execution due to missing configuration.")
 
 def scan_for_devices():
     i2c = machine.I2C(config['I2C_BUS'], sda=machine.Pin(config['I2C_SDA']), scl=machine.Pin(config['I2C_SCL']))
@@ -143,6 +137,8 @@ def merge_color_array(color_array, char, color):
 def set_brightness(new_brightness):
     global brightness
     brightness = new_brightness
+    config['BRIGHTNESS'] = brightness
+    save_config(config)
     if config['ENABLE_MAX7219']:
         spi_matrix.set_brightness(brightness)
     if config['ENABLE_HT16K33']:
@@ -159,27 +155,21 @@ def display_single_color_mode(word):
 def display_color_per_word_mode(word):
     ws2812b_matrix.show_char_with_color_array(word, colour_per_word_array)
 
-display_modes = {
-    DISPLAY_MODE_RAINBOW: display_rainbow_mode,
-    DISPLAY_MODE_SINGLE_COLOR: display_single_color_mode,
-    DISPLAY_MODE_COLOR_PER_WORD: display_color_per_word_mode
-}
-
 async def set_brightness_request(request, response):
     new_brightness = int(request.post_data['brightness'])
     print("Setting brightness to " + str(new_brightness))
     set_brightness(new_brightness)
     time_to_matrix()
     settings = settings_to_json()
-    response.send_json(settings)
+    await response.send_json(settings, 200)
 
 
 async def get_clock_settings_request(request, response):
     global current_display_mode
-    response.send_json(settings_to_json())
+    await response.send_json(settings_to_json())
 
 def settings_to_json():
-    return {
+    return json.dumps({
         'brightness': brightness,
         'display_mode': current_display_mode,
         'single_color': single_color,
@@ -188,11 +178,11 @@ def settings_to_json():
         'past_to_color': past_to_color,
         'time': time.localtime(),
         'status': 'OK'
-    }
+    })
 
 def setup_routes(server):
-    server.add_function_route('/set_brightness', set_brightness_request)
-    server.add_function_route('/get_clock_settings', get_clock_settings_request)
+    server.add_function_route('/set-brightness', set_brightness_request)
+    server.add_function_route('/get-clock-settings', get_clock_settings_request)
 
 def connect_to_wifi():
     # Check if Wi-Fi SSID is set and not blank
@@ -212,11 +202,23 @@ def connect_to_wifi():
         return False
 
         
-
 async def main():
     while True:
         time_to_matrix()
         await asyncio.sleep(10)
+
+display_modes = {
+    DISPLAY_MODE_RAINBOW: display_rainbow_mode,
+    DISPLAY_MODE_SINGLE_COLOR: display_single_color_mode,
+    DISPLAY_MODE_COLOR_PER_WORD: display_color_per_word_mode
+}
+
+config = read_config()
+
+if config is None:
+    raise SystemExit("Stopping execution due to missing configuration.")
+
+brightness = config.get('BRIGHTNESS', 2)
         
 if config['ENABLE_HT16K33']:
     scan_for_devices()

@@ -95,11 +95,12 @@
     const flipClockHours = document.getElementById('flipClockHours')
     const flipClockMins = document.getElementById('flipClockMins')
     const flipClockYear = document.getElementById('flipClockYear')
-    //const path = 'http://192.168.1.167'
-    const path = ''
+    const path = 'http://192.168.1.179'
+    //const path = ''
 
     document.addEventListener('DOMContentLoaded', async (event) => {
       getTime()
+      getClockSettings()
     });
 
     refreshBtn.addEventListener('click', async () => {
@@ -121,6 +122,14 @@
         flipClockYear.textContent = json.time[0].toString().padStart(4, '0')
       } else {
         statusElement.textContent = 'Error: ' + response.status
+      }
+    }
+
+    async function getClockSettings() {
+      const response = await fetch(path + '/get-clock-settings')
+      if (response.ok) {
+        const json = await response.json()
+        console.log(json)
       }
     }
 

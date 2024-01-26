@@ -8,7 +8,7 @@
   <title>GurgleApps.com Frequency Generator</title>
 </head>
 
-<body class="bg-gray-100">
+<body class="bg-gray-100" x-data="clock()">
   <div class="min-h-screen flex flex-col items-center justify-center">
 
     <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
@@ -80,7 +80,7 @@
       </div>
 
       <div class="flex justify-center">
-        <button id="refreshBtn"
+        <button @click.prevent="refresh()"
           class="bg-green-600 text-white font-semibold py-2 px-4 rounded focus:outline-none hover:bg-green-700">Refresh</button>
       </div>
 
@@ -88,7 +88,35 @@
     </div>
   </div>
 
-  <script>
+  <script src="/js/alpine.min.js" defer></script>
+
+  <script defer>
+
+    function clock(e) {
+      return {
+        settings: {'brightness': 5},
+        path: 'http://192.168.1.179', // use this for development
+        //path: '', //use this for production
+        init() {
+          console.log('init')
+          this.getClockSettings()
+        },
+        async getClockSettings() {
+          const response = await fetch(path + '/get-clock-settings')
+          if (response.ok) {
+            this.settings = await response.json()
+            console.log(this.settings)
+          }
+        },
+        refresh() {
+          console.log('refresh')
+          console.log(this.settings.brightness)
+          this.getClockSettings()
+        },
+        ...e
+      }
+    }
+
     const statusElement = document.getElementById('status')
     const timeElement = document.getElementById('time')
     const refreshBtn = document.getElementById('refreshBtn')
@@ -96,16 +124,9 @@
     const flipClockMins = document.getElementById('flipClockMins')
     const flipClockYear = document.getElementById('flipClockYear')
     const path = 'http://192.168.1.179'
+    let settings = { 'brightness': 5 }
     //const path = ''
 
-    document.addEventListener('DOMContentLoaded', async (event) => {
-      getTime()
-      getClockSettings()
-    });
-
-    refreshBtn.addEventListener('click', async () => {
-      getTime()
-    });
 
     async function getTime() {
       const response = await fetch(path + '/get-time')
@@ -125,13 +146,6 @@
       }
     }
 
-    async function getClockSettings() {
-      const response = await fetch(path + '/get-clock-settings')
-      if (response.ok) {
-        const json = await response.json()
-        console.log(json)
-      }
-    }
 
     function formatTime(timeArray) {
       const [year, month, day, hour, minute, second] = timeArray;

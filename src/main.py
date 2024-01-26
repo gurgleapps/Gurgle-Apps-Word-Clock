@@ -196,11 +196,12 @@ def setup_routes(server):
 
 def connect_to_wifi():
     # Check if Wi-Fi SSID is set and not blank
-    if getattr(config, 'WIFI_SSID', '').strip():
-        # password could be blank for open networks
-        password = getattr(config, 'WIFI_PASSWORD', None)
+    wifi_ssid = config.get('WIFI_SSID', '').strip()
+    if wifi_ssid:
+        # Password could be blank for open networks
+        wifi_password = config.get('WIFI_PASSWORD', None)
         print("Connecting to Wi-Fi")
-        success = server.connect_wifi(['WIFI_SSID, password'])
+        success = server.connect_wifi(wifi_ssid, wifi_password)
         if success:
             print("Connected to Wi-Fi")
         else:
@@ -209,6 +210,7 @@ def connect_to_wifi():
     else:
         print("No Wi-Fi SSID set")
         return False
+
         
 
 async def main():

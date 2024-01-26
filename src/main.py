@@ -231,8 +231,6 @@ if config['ENABLE_WS2812B']:
     ws2812b_matrix = ws2812b_matrix(config['WS2812B_PIN'], 8, 8)
     ws2812b_matrix.set_brightness(1)
 
-set_time()
-
 server = GurgleAppsWebserver(
     None,
     None,
@@ -245,7 +243,7 @@ server.set_default_index_pages(["time.html"])
 setup_routes(server)
 
 connect_to_wifi()
-
+set_time()
 success = server.start_access_point('gurgleapps', 'gurgleapps')
 if success:
     print(success)

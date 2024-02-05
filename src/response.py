@@ -1,11 +1,17 @@
 import os
 
 class Response:
-    def __init__(self, writer):
+    def __init__(self, writer, enable_cors=False):
         self.writer = writer
+        self.enable_cors = enable_cors
 
     async def send_headers(self, status_code=200, content_type="text/html", content_length=None):
         headers = f'HTTP/1.0 {status_code}\r\nContent-type: {content_type}\r\n'
+        if self.enable_cors:
+            # allow CORS
+            headers += 'Access-Control-Allow-Origin: *\r\n'
+            headers += 'Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS\r\n'
+            headers += 'Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With\r\n'
         if content_length is not None:
             headers += f'Content-Length: {content_length}\r\n'
         headers += '\r\n'

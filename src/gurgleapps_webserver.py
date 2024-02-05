@@ -34,6 +34,7 @@ class GurgleAppsWebserver:
         self.log_level = log_level
         self.wlan_sta = network.WLAN(network.STA_IF)
         self.wlan_ap = network.WLAN(network.AP_IF)
+        self.enable_cors = False
         self.html = """<!DOCTYPE html>
         <html>
             <head> <title>GurgleApps.com Webserver</title> </head>
@@ -126,6 +127,9 @@ class GurgleAppsWebserver:
     def set_default_index_pages(self, default_index_pages):
         self.default_index_pages = default_index_pages
 
+    def set_cors(self, enable_cors=True):
+        self.enable_cors = enable_cors
+
     # async def start_server(self):
     #     print("start_server")
     #     server = await asyncio.start_server(
@@ -139,7 +143,7 @@ class GurgleAppsWebserver:
     async def serve_request(self, reader, writer):
         gc.collect()
         try:
-            response = Response(writer)
+            response = Response(writer, enable_cors=self.enable_cors)
             url = ""
             method = ""
             content_length = 0
@@ -156,7 +160,7 @@ class GurgleAppsWebserver:
             request_raw = str("\r\n".join(headers))
             if self.log_level > 0:
                 print(request_raw)
-            request_pattern = re.compile(r"(GET|POST)\s+([^\s]+)\s+HTTP")
+            request_pattern = re.compile(r"(GET|POST|OPTIONS)\s+([^\s]+)\s+HTTP")
             match = request_pattern.search(request_raw)
             if match:
                 method = match.group(1)
@@ -172,6 +176,10 @@ class GurgleAppsWebserver:
                         print(method, url)
                 elif self.log_level > 0:
                     print("no match")
+            if method == "OPTIONS":
+                # Handle preflight requests
+                await response.send("", status_code=204)
+                return
             # extract content length for POST requests
             if method == "POST":
                 content_length_pattern = re.compile(r"Content-Length:\s+(\d+)")
@@ -192,6 +200,8 @@ class GurgleAppsWebserver:
                         break
                 if "application/json" in content_type_header.lower():
                     try:
+                        if self.log_level > 0:
+                            print("decoding JSON data")
                         post_data = json.loads(post_data_raw)
                     except ValueError as e:
                         print("Error decoding JSON data:", e)

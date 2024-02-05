@@ -164,6 +164,24 @@ async def set_brightness_request(request, response):
     settings = settings_to_json()
     await response.send_json(settings, 200)
 
+async def set_clock_settings_request(request, response):
+    global current_display_mode
+    global single_color
+    global minute_color
+    global hour_color
+    global past_to_color
+    print(request.post_data)
+    set_brightness(int(request.post_data['brightness']))
+    current_display_mode = request.post_data['display_mode']
+    single_color = (int(request.post_data['single_color'][0]), int(request.post_data['single_color'][1]), int(request.post_data['single_color'][2]))
+    minute_color = (int(request.post_data['minute_color'][0]), int(request.post_data['minute_color'][1]), int(request.post_data['minute_color'][2]))
+    hour_color = (int(request.post_data['hour_color'][0]), int(request.post_data['hour_color'][0]), int(request.post_data['hour_color'][0]))
+    past_to_color = (int(request.post_data['past_to_color'][0]), int(request.post_data['past_to_color'][1]), int(request.post_data['past_to_color'][2]))
+    set_brightness(brightness)
+    time_to_matrix()
+    settings = settings_to_json()
+    await response.send_json(settings, 200)
+
 
 async def get_clock_settings_request(request, response):
     global current_display_mode
@@ -184,6 +202,7 @@ def settings_to_json():
 def setup_routes(server):
     server.add_function_route('/set-brightness', set_brightness_request)
     server.add_function_route('/get-clock-settings', get_clock_settings_request)
+    server.add_function_route('/set-clock-settings', set_clock_settings_request)
 
 def connect_to_wifi():
     # Check if Wi-Fi SSID is set and not blank
@@ -243,6 +262,7 @@ server = GurgleAppsWebserver(
     log_level=2
 )
 server.set_default_index_pages(["time.html"])
+server.set_cors(True)
 setup_routes(server)
 
 connect_to_wifi()

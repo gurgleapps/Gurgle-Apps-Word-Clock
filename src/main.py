@@ -69,6 +69,7 @@ def save_config(data):
 
 def scan_for_devices():
     i2c = machine.I2C(config['I2C_BUS'], sda=machine.Pin(config['I2C_SDA']), scl=machine.Pin(config['I2C_SCL']))
+    time.sleep(1)
     devices = i2c.scan()
     if devices:
         for d in devices:
@@ -225,7 +226,7 @@ if config['ENABLE_HT16K33']:
     i2c_matrix = ht16k33_matrix(config['I2C_SDA'], config['I2C_SCL'], config['I2C_BUS'],  int(config['I2C_ADDRESS'], 16))
 
 if config['ENABLE_MAX7219']:
-    spi = machine.SPI(1, sck=machine.Pin(config['SPI_SCK']), mosi=machine.Pin(config['SPI_MOSI']))
+    spi = machine.SPI(config['SPI_PORT'], sck=machine.Pin(config['SPI_SCK']), mosi=machine.Pin(config['SPI_MOSI']))
     spi_matrix = max7219_matrix(spi, machine.Pin(config['SPI_CS'], machine.Pin.OUT, True))
     spi_matrix.set_brightness(17)
 
@@ -246,6 +247,7 @@ setup_routes(server)
 
 connect_to_wifi()
 set_time()
+print("starting access point")
 success = server.start_access_point('gurgleapps', 'gurgleapps')
 if success:
     print(success)

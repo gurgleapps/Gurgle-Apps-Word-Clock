@@ -42,7 +42,7 @@
                   <div class="bg-gradient-to-br from-gray-800 to-gray-900"></div>
                   <div class="bg-gradient-to-br from-gray-700 to-gray-900"></div>
                 </div>
-                <div id="flipClockHours" class="relative">05</div>
+                <div id="flipClockHours" class="relative" x-text="timeDisplay[3].toString().padStart(2,0)">05</div>
                 <div class="absolute inset-0 w-full h-full flex items-center justify-center">
                   <div class="h-px w-full bg-gray-800"></div>
                 </div>
@@ -56,7 +56,7 @@
                   <div class="bg-gradient-to-br from-gray-800 to-gray-900"></div>
                   <div class="bg-gradient-to-br from-gray-700 to-gray-900"></div>
                 </div>
-                <div id="flipClockMins" class="relative">05</div>
+                <div id="flipClockMins" class="relative" x-text="timeDisplay[4].toString().padStart(2, '0')">05</div>
                 <div class="absolute inset-0 w-full h-full flex items-center justify-center">
                   <div class="h-px w-full bg-gray-800"></div>
                 </div>
@@ -76,7 +76,8 @@
 
       <div class="mb-4">
         <label for="brightnessControl" class="text-gray-700 font-semibold">Brightness:</label>
-        <input type="range" id="brightnessControl" min="0" max="15" value="5" step="1" class="w-full">
+        <input type="range" id="brightnessControl" min="0" max="15" :value="settings.brightness" step="1"
+          class="w-full">
       </div>
 
       <div class="flex justify-center">
@@ -94,8 +95,9 @@
 
     function clock(e) {
       return {
-        settings: {'brightness': 5},
-        path: 'http://192.168.1.179', // use this for development
+        settings: { 'brightness': 5 },
+        timeDisplay: [0, 0, 0, 0, 0, 0],
+        path: 'http://192.168.1.181', // use this for development
         //path: '', //use this for production
         init() {
           console.log('init')
@@ -106,12 +108,17 @@
           if (response.ok) {
             this.settings = await response.json()
             console.log(this.settings)
+            this.timeDisplay = this.settings.time
           }
         },
         refresh() {
           console.log('refresh')
           console.log(this.settings.brightness)
           this.getClockSettings()
+        },
+        formatTime(timeArray) {
+          const [year, month, day, hour, minute, second] = timeArray;
+          return `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')} ${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}:${second.toString().padStart(2, '0')}`;
         },
         ...e
       }
@@ -123,7 +130,7 @@
     const flipClockHours = document.getElementById('flipClockHours')
     const flipClockMins = document.getElementById('flipClockMins')
     const flipClockYear = document.getElementById('flipClockYear')
-    const path = 'http://192.168.1.179'
+    const path = 'http://192.168.1.181'
     let settings = { 'brightness': 5 }
     //const path = ''
 
@@ -145,7 +152,6 @@
         statusElement.textContent = 'Error: ' + response.status
       }
     }
-
 
     function formatTime(timeArray) {
       const [year, month, day, hour, minute, second] = timeArray;

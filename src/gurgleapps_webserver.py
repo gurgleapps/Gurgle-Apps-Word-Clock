@@ -81,6 +81,27 @@ class GurgleAppsWebserver:
         except OSError as e:
             print(f"Error connecting to Wi-Fi: {e}")
             return False
+        
+    def is_wifi_connected(self):
+        return self.wlan_sta.isconnected()
+    
+    def is_access_point_active(self):
+        return self.wlan_ap.active()
+    
+    def get_wifi_ssid(self):
+        return self.wifi_ssid
+    
+    def get_wifi_ip_address(self):
+        return self.wlan_sta.ifconfig()[0]
+    
+    def get_ap_ssid(self):
+        return self.ap_ssid
+    
+    def get_ap_ip_address(self):
+        return self.wlan_ap.ifconfig()[0]
+    
+    def get_ip_address(self):
+        return self.ip_address
     
     def start_access_point(self, ssid, password=None):
     #def connect_access_point(self, ssid, password=None, ip='192.168.1.1', subnet='255.255.255.0', gateway='192.168.1.1', dns='8.8.8.8'):

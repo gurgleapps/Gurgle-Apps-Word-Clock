@@ -80,6 +80,11 @@
           class="w-full">
       </div>
 
+      <div class="mb-4">
+        <label for="timeControl" class="text-gray-700 font-semibold">Time:</label>
+        <input type="datetime-local" id="timeControl" x-model="newTime" class="w-full">
+      </div>
+
       <div class="flex justify-center">
         <button @click.prevent="refresh()"
           class="bg-green-600 text-white font-semibold py-2 px-4 rounded focus:outline-none hover:bg-green-700">Refresh</button>
@@ -98,6 +103,7 @@
         settings: { 'brightness': 5 },
         timeDisplay: [0, 0, 0, 0, 0, 0],
         path: 'http://192.168.1.161', // use this for development
+        newTime: new Date(),
         //path: '', //use this for production
         init() {
           console.log('init')

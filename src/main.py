@@ -84,10 +84,21 @@ def set_time():
     except OSError:
         print("Error setting time")
 
+def get_corrected_time():
+    return time.localtime(time.time() + time_offset)
+
+def set_manual_time(year, month, day, hour, minute, second):
+    global time_offset
+    current_time = time.localtime()
+    current_seconds = time.mktime(current_time)
+    manual_seconds = time.mktime((year, month, day, hour, minute, second, 0, 0))
+    time_offset = manual_seconds - current_seconds
+
+
 def time_to_matrix():
     global colour_per_word_array
     word = [0, 0, 0, 0, 0, 0, 0, 0]
-    now = time.localtime()
+    now = get_corrected_time()
     hour = (now[3])
     minute = now[4]
     colour_per_word_array.clear()
@@ -195,7 +206,15 @@ def settings_to_json():
         'minute_color': minute_color,
         'hour_color': hour_color,
         'past_to_color': past_to_color,
-        'time': time.localtime(),
+        'time': get_corrected_time(),
+        'local_time': time.localtime(),
+        'time_offset': time_offset,
+        'wifi_connected': server.is_wifi_connected(),
+        'wifi_ip_address': server.get_wifi_ip_address(),
+        'wifi_ssid': server.get_wifi_ssid(),
+        'ap_address': server.get_ap_ip_address(),
+        'ap_ssid': server.get_ap_ssid(),
+        'ap_active': server.is_access_point_active(),
         'status': 'OK'
     })
 
@@ -239,6 +258,13 @@ if config is None:
     raise SystemExit("Stopping execution due to missing configuration.")
 
 brightness = config.get('BRIGHTNESS', 2)
+single_color = config.get('SINGLE_COLOR', (0, 0, 255))
+minute_color = config.get('MINUTE_COLOR', (0, 255, 0))
+hour_color = config.get('HOUR_COLOR', (255, 0, 0))
+past_to_color = config.get('PAST_TO_COLOR', (0, 0, 255))
+current_display_mode = config.get('DISPLAY_MODE', DISPLAY_MODE_RAINBOW)
+time_offset = config.get('TIME_OFFSET', 0)
+
         
 if config['ENABLE_HT16K33']:
     scan_for_devices()

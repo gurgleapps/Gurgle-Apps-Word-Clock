@@ -76,7 +76,7 @@
 
       <div class="mb-4">
         <label for="brightnessControl" class="text-gray-700 font-semibold">Brightness:</label>
-        <input @change="brigtnessUpdated()" type="range" id="brightnessControl" min="0" max="15" :value="settings.brightness" step="1"
+        <input @change="brigtnessUpdated()" type="range" id="brightnessControl" min="0" max="15" x-model.number="settings.brightness" step="1"
           class="w-full">
       </div>
 
@@ -112,7 +112,6 @@
           }
         },
         async brigtnessUpdated() {
-          console.log('brightness updated '+this.settings.brightness)
           this.updateSettings()
         },
         async updateSettings() {

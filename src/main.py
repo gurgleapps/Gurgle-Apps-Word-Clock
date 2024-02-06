@@ -77,12 +77,18 @@ def scan_for_devices():
     else:
         print('no i2c devices')
 
-def set_time():
+def sync_ntp_time():
+    global time_offset, ntp_synced_at, config
+    remember_time = time.localtime()
     ntptime.host = "pool.ntp.org"
     try:
         ntptime.settime()
+        ntp_synced_at = time.time()
+        config['NTP_SYNCED_AT'] = ntp_synced_at
+        save_config(config)
     except OSError:
         print("Error setting time")
+
 
 def get_corrected_time():
     return time.localtime(time.time() + time_offset)
@@ -93,6 +99,8 @@ def set_manual_time(year, month, day, hour, minute, second):
     current_seconds = time.mktime(current_time)
     manual_seconds = time.mktime((year, month, day, hour, minute, second, 0, 0))
     time_offset = manual_seconds - current_seconds
+    config['TIME_OFFSET'] = time_offset
+    save_config(config)
 
 
 def time_to_matrix():
@@ -188,6 +196,13 @@ async def set_clock_settings_request(request, response):
     minute_color = (int(request.post_data['minute_color'][0]), int(request.post_data['minute_color'][1]), int(request.post_data['minute_color'][2]))
     hour_color = (int(request.post_data['hour_color'][0]), int(request.post_data['hour_color'][0]), int(request.post_data['hour_color'][0]))
     past_to_color = (int(request.post_data['past_to_color'][0]), int(request.post_data['past_to_color'][1]), int(request.post_data['past_to_color'][2]))
+    config['BRIGHTNESS'] = brightness
+    config['DISPLAY_MODE'] = current_display_mode
+    config['SINGLE_COLOR'] = single_color
+    config['MINUTE_COLOR'] = minute_color
+    config['HOUR_COLOR'] = hour_color
+    config['PAST_TO_COLOR'] = past_to_color
+    save_config(config)
     if request.post_data['timeChanged']:
         time_data = request.post_data['newTime']
         set_manual_time(int(time_data[0]), int(time_data[1]), int(time_data[2]), int(time_data[3]), int(time_data[4]), 0)
@@ -254,6 +269,8 @@ def connect_to_wifi():
 async def main():
     while True:
         time_to_matrix()
+        if ntp_synced_at < (time.time() - 3600) and server.is_wifi_connected(): # Sync time every hour
+            sync_ntp_time()
         await asyncio.sleep(10)
 
 display_modes = {
@@ -274,6 +291,7 @@ hour_color = config.get('HOUR_COLOR', (255, 0, 0))
 past_to_color = config.get('PAST_TO_COLOR', (0, 0, 255))
 current_display_mode = config.get('DISPLAY_MODE', DISPLAY_MODE_RAINBOW)
 time_offset = config.get('TIME_OFFSET', 0)
+ntp_synced_at = config.get('NTP_SYNCED_AT', 0)
 
         
 if config['ENABLE_HT16K33']:
@@ -302,7 +320,7 @@ server.set_cors(True)
 setup_routes(server)
 
 connect_to_wifi()
-set_time()
+sync_ntp_time()
 print("starting access point")
 success = server.start_access_point('gurgleapps', 'gurgleapps')
 if success:

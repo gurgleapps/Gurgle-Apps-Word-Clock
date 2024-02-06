@@ -47,7 +47,7 @@ class ws2812b_matrix:
         self.np.write()
 
     def adjust_for_brightness(self, color):
-        brightness_scale = self.brightness/self.max_brightness
+        brightness_scale = (self.brightness+1)/(self.max_brightness+1)
         return tuple([int(x*brightness_scale) for x in color])
 
     def show(self):

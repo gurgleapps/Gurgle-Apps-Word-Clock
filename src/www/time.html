@@ -29,7 +29,8 @@
                   <div class="bg-gradient-to-br from-gray-800 to-gray-900"></div>
                   <div class="bg-gradient-to-br from-gray-700 to-gray-900"></div>
                 </div>
-                <div class="relative px-1" id="flipClockYear" x-text="timeDisplay[0].toString().padStart(4, '0')">0000</div>
+                <div class="relative px-1" id="flipClockYear" x-text="timeDisplay[0].toString().padStart(4, '0')">0000
+                </div>
                 <div class="absolute inset-0 w-full  h-full flex items-center justify-center">
                   <div class="h-px w-full  bg-gray-800"></div>
                 </div>
@@ -67,14 +68,16 @@
       </div>
 
       <div class="mb-4">
-        <label for="brightnessControl" class="text-gray-700 font-semibold">Brightness: </label><span x-text="settings.brightness"></span>
-        <input @change="brigtnessUpdated()" type="range" id="brightnessControl" min="0" max="15" x-model.number="settings.brightness" step="1"
-          class="w-full">
+        <label for="brightnessControl" class="text-gray-700 font-semibold">Brightness: </label><span
+          x-text="settings.brightness"></span>
+        <input @change="brigtnessUpdated()" type="range" id="brightnessControl" min="0" max="15"
+          x-model.number="settings.brightness" step="1" class="w-full">
       </div>
 
       <div class="mb-4">
         <label for="timeControl" class="text-gray-700 font-semibold">Time:</label>
-        <input type="datetime-local" id="timeControl" x-model="newTimeString" class="w-full">
+        <input @change="datetimeUpdated()" step="60" type="datetime-local" id="timeControl" x-model="newTimeString"
+          class="w-full">
       </div>
 
       <div class="flex justify-center">
@@ -100,7 +103,7 @@
         init() {
           console.log('init')
           this.getClockSettings()
-          this.newTimeString = this.formatTime(this.dateToArray(new Date()))
+          this.newTimeString = this.formatTime(this.dateToArray(new Date()), false)
         },
         async getClockSettings() {
           const response = await fetch(this.path + '/get-clock-settings')
@@ -113,6 +116,11 @@
         async brigtnessUpdated() {
           //this.updateSettings()
         },
+        datetimeUpdated() {
+          console.log('datetime updated')
+          this.timeDisplay = this.dateStringToArray(this.newTimeString)
+          console.log(this.timeDisplay)
+        },
         async updateSettings() {
           const response = await fetch(this.path + '/set-clock-settings', {
             method: 'POST',
@@ -124,6 +132,8 @@
           if (response.ok) {
             console.log('settings updated')
             json = await response.json()
+            this.settings = json.settings
+            this.timeDisplay = json.settings.time
             console.log(json)
           }
         },
@@ -136,9 +146,12 @@
         dateToArray(date) {
           return [date.getFullYear(), date.getMonth() + 1, date.getDate(), date.getHours(), date.getMinutes(), date.getSeconds()]
         },
-        formatTime(timeArray) {
+        formatTime(timeArray, includeSeconds = true) {
           const [year, month, day, hour, minute, second] = timeArray;
-          return `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')} ${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}:${second.toString().padStart(2, '0')}`;
+          if (!includeSeconds) {
+            return `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')} ${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+          }
+          return `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}T${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}:${second.toString().padStart(2, '0')}`;
         },
         ...e
       }

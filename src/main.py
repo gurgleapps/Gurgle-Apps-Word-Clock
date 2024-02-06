@@ -190,16 +190,21 @@ async def set_clock_settings_request(request, response):
     past_to_color = (int(request.post_data['past_to_color'][0]), int(request.post_data['past_to_color'][1]), int(request.post_data['past_to_color'][2]))
     set_brightness(brightness)
     time_to_matrix()
-    settings = settings_to_json()
-    await response.send_json(settings, 200)
+    response_data = {
+        'status': 'OK',
+        'success': True,
+        'message': 'Settings updated',
+        'settings': settings_object()
+    }
+    await response.send_json(json.dumps(response_data), 200)
 
 
 async def get_clock_settings_request(request, response):
     global current_display_mode
     await response.send_json(settings_to_json())
 
-def settings_to_json():
-    return json.dumps({
+def settings_object():
+    return {
         'brightness': brightness,
         'display_mode': current_display_mode,
         'single_color': single_color,
@@ -216,7 +221,10 @@ def settings_to_json():
         'ap_ssid': server.get_ap_ssid(),
         'ap_active': server.is_access_point_active(),
         'status': 'OK'
-    })
+    }
+
+def settings_to_json():
+    return json.dumps(settings_object())
 
 def setup_routes(server):
     server.add_function_route('/set-brightness', set_brightness_request)

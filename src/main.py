@@ -116,6 +116,8 @@ def time_to_matrix():
         word = merge_chars(word, clockFont['past'])
         colour_per_word_array = merge_color_array(colour_per_word_array, clockFont['past'], past_to_color)
     elif minute == 60:
+        if now[4] > 55: # just before the hour
+            hour = hour + 1 # round up to next hour
         pass  # on the hour
     elif minute > 30:
         word = merge_chars(word, clockFont['to'])

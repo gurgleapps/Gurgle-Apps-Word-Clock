@@ -99,6 +99,7 @@
         timeDisplay: [0, 0, 0, 0, 0, 0],
         path: 'http://192.168.1.161', // use this for development
         newTimeString: '2099-01-02T03:04:05',
+        timeChanged: false,
         //path: '', //use this for production
         init() {
           console.log('init')
@@ -119,9 +120,14 @@
         datetimeUpdated() {
           console.log('datetime updated')
           this.timeDisplay = this.dateStringToArray(this.newTimeString)
+          this.timeChanged = true
           console.log(this.timeDisplay)
         },
         async updateSettings() {
+          if (this.timeChanged) {
+            this.settings.newTime = this.timeDisplay
+          }
+          this.settings.timeChanged = this.timeChanged
           const response = await fetch(this.path + '/set-clock-settings', {
             method: 'POST',
             headers: {
@@ -134,6 +140,7 @@
             json = await response.json()
             this.settings = json.settings
             this.timeDisplay = json.settings.time
+            this.timeChanged = false
             console.log(json)
           }
         },

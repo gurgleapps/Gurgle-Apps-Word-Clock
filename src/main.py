@@ -188,7 +188,9 @@ async def set_clock_settings_request(request, response):
     minute_color = (int(request.post_data['minute_color'][0]), int(request.post_data['minute_color'][1]), int(request.post_data['minute_color'][2]))
     hour_color = (int(request.post_data['hour_color'][0]), int(request.post_data['hour_color'][0]), int(request.post_data['hour_color'][0]))
     past_to_color = (int(request.post_data['past_to_color'][0]), int(request.post_data['past_to_color'][1]), int(request.post_data['past_to_color'][2]))
-    set_brightness(brightness)
+    if request.post_data['timeChanged']:
+        time_data = request.post_data['newTime']
+        set_manual_time(int(time_data[0]), int(time_data[1]), int(time_data[2]), int(time_data[3]), int(time_data[4]), 0)
     time_to_matrix()
     response_data = {
         'status': 'OK',

@@ -196,7 +196,7 @@ async def set_clock_settings_request(request, response):
     current_display_mode = request.post_data['display_mode']
     single_color = (int(request.post_data['single_color'][0]), int(request.post_data['single_color'][1]), int(request.post_data['single_color'][2]))
     minute_color = (int(request.post_data['minute_color'][0]), int(request.post_data['minute_color'][1]), int(request.post_data['minute_color'][2]))
-    hour_color = (int(request.post_data['hour_color'][0]), int(request.post_data['hour_color'][0]), int(request.post_data['hour_color'][0]))
+    hour_color = (int(request.post_data['hour_color'][0]), int(request.post_data['hour_color'][1]), int(request.post_data['hour_color'][2]))
     past_to_color = (int(request.post_data['past_to_color'][0]), int(request.post_data['past_to_color'][1]), int(request.post_data['past_to_color'][2]))
     config['BRIGHTNESS'] = brightness
     config['DISPLAY_MODE'] = current_display_mode

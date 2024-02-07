@@ -154,7 +154,7 @@
       </div>
 
       <div class="mb-4">
-        <label  for="colorMode" class="block text-sm font-medium leading-6 text-gray-900">Color Mode:</label>
+        <label  for="colorMode" class="block text-sm font-medium leading-6 text-gray-900">Color Display Mode:</label>
         <select x-model="settings.display_mode" id="colorMode"  class="mt-2 block w-full bg-gray-50 rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 sm:text-sm sm:leading-6">
           <option value="single_color">Single Colour</option>
           <option value="rainbow">Rainbow</option>
@@ -169,10 +169,20 @@
       </div>
 
       <!-- color  per word -->
-      <div x-show="settings.display_mode=='color_per_word'" x-transition x-cloak>
-        <div>
-          <label for="" class="block text-sm font-medium leading-6 text-gray-900">Minute Color:</label>
-          <input type="color" x-model="minuteColorHex" list="colorList">
+      <div x-show="settings.display_mode=='color_per_word'" x-transition x-cloak class="mb-4">
+        <div class="flex justify-between">
+          <div>
+            <label for="" class="block text-sm font-medium leading-6 text-gray-900 mb-1">Minute Color:</label>
+            <input type="color" x-model="minuteColorHex" list="colorList">
+          </div>
+          <div>
+            <label for="" class="block text-sm font-medium leading-6 text-gray-900 mb-1">Past/To Color:</label>
+            <input type="color" x-model="pastToColorHex" list="colorList">
+          </div>
+          <div>
+            <label for="" class="block text-sm font-medium leading-6 text-gray-900 mb-1">Hour Color:</label>
+            <input type="color" x-model="hourColorHex" list="colorList">
+          </div>
         </div>
       </div>
 
@@ -245,6 +255,9 @@
           }
           this.settings.timeChanged = this.timeChanged
           this.settings.single_color = this.hexToRgbArray(this.singeColorHex)
+          this.settings.minute_color = this.hexToRgbArray(this.minuteColorHex)
+          this.settings.past_to_color = this.hexToRgbArray(this.pastToColorHex)
+          this.settings.hour_color = this.hexToRgbArray(this.hourColorHex)
           const response = await fetch(this.path + '/set-clock-settings', {
             method: 'POST',
             headers: {

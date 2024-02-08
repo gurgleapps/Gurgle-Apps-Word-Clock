@@ -9,7 +9,8 @@
 </head>
 
 <body class="bg-gray-100" x-data="clock()">
-  <div class="min-h-screen flex flex-col items-center justify-center mx-2" x-data="{options:['Clock Settings','Wifi','Updates'],selected:'Clock Settings'}">
+  <div class="min-h-screen flex flex-col items-center justify-center mx-2"
+    x-data="{options:['Clock Settings','Wi-Fi','Updates'],selectedx:'Clock Settings',selected:'Wi-Fi'}">
 
     <div class="bg-white p-5 rounded-lg shadow-md w-full max-w-md">
 
@@ -73,7 +74,8 @@
         <div class="sm:hidden">
           <label for="tabs" class="sr-only">Select a tab</label>
           <!-- Use an "onChange" listener to redirect the user to the selected tab URL. -->
-          <select x-model="selected" id="tabs" name="tabs" class="block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm">
+          <select x-model="selected" id="tabs" name="tabs"
+            class="block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm">
             <template x-for="option in options" :key="option">
               <option x-text="option"></option>
             </template>
@@ -83,24 +85,52 @@
           <div class="border-b border-gray-200">
             <nav class="-mb-px flex space-x-8x" aria-label="Tabs">
               <template x-for="(option, index ) in options" :key="index">
-                <a :class="{'border-indigo-500 text-indigo-600': selected == option, 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700': selected != option, 'ml-0' : index === 0, 'ml-6' : index > 0}" href="#" x-text="option" @click.prevent="selected = option" class="whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium"></a>
+                <a :class="{'border-indigo-500 text-indigo-600': selected == option, 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700': selected != option, 'ml-0' : index === 0, 'ml-6' : index > 0}"
+                  href="#" x-text="option" @click.prevent="selected = option"
+                  class="whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium"></a>
               </template>
-           </nav>
+            </nav>
           </div>
         </div>
       </div>
 
-      <div x-show="selected=='Wifi'" x-collapse x-collapse.duration.1000ms class=" rounded-lg ring-1 ring-gray-100 p-3 my-4">
-        Wifi
+      <div x-show="selected=='Wi-Fi'" x-collapse x-collapse.duration.1000ms
+        class=" rounded-lg ring-1 ring-gray-100 p-3 my-4">
+        <div class="mb-4 inline-flex gap-x-4 border-b border-gray-300 w-full pb-2">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
+            <path fill-rule="evenodd"
+              d="M1.371 8.143c5.858-5.857 15.356-5.857 21.213 0a.75.75 0 0 1 0 1.061l-.53.53a.75.75 0 0 1-1.06 0c-4.98-4.979-13.053-4.979-18.032 0a.75.75 0 0 1-1.06 0l-.53-.53a.75.75 0 0 1 0-1.06Zm3.182 3.182c4.1-4.1 10.749-4.1 14.85 0a.75.75 0 0 1 0 1.061l-.53.53a.75.75 0 0 1-1.062 0 8.25 8.25 0 0 0-11.667 0 .75.75 0 0 1-1.06 0l-.53-.53a.75.75 0 0 1 0-1.06Zm3.204 3.182a6 6 0 0 1 8.486 0 .75.75 0 0 1 0 1.061l-.53.53a.75.75 0 0 1-1.061 0 3.75 3.75 0 0 0-5.304 0 .75.75 0 0 1-1.06 0l-.53-.53a.75.75 0 0 1 0-1.06Zm3.182 3.182a1.5 1.5 0 0 1 2.122 0 .75.75 0 0 1 0 1.061l-.53.53a.75.75 0 0 1-1.061 0l-.53-.53a.75.75 0 0 1 0-1.06Z"
+              clip-rule="evenodd" />
+          </svg>
+          Wi-Fi
+        </div>
+        <div class="mb-4">
+          <label for="ssid" class="block text-sm font-medium leading-6 text-gray-900">SSID:</label>
+          <input type="text" id="ssid" x-model="settings.wifi_ssid"
+            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-1.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+        </div>
+        <div class="mb-4">
+          <label for="password" class="block text-sm font-medium leading-6 text-gray-900">Password:</label>
+          <input type="password" id="password" x-model="newWifiPassword"
+            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-1.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+        </div>
+
+        <div class="flex justify-center mb-2 mt-1">
+          <button @click.prevent="updateWifi()"
+            class="bg-green-600 text-white font-semibold py-2 px-4 rounded focus:outline-none hover:bg-green-700">Update Wifi</button>
+        </div>
+
       </div>
 
-      <div x-show="selected=='Updates'" x-collapse x-collapse.duration.1000ms class=" rounded-lg ring-1 ring-gray-100 p-3 my-4">
-        Updates
+      <div x-show="selected=='Updates'" x-collapse x-collapse.duration.1000ms
+        class=" rounded-lg ring-1 ring-gray-100 p-3 my-4">
+        Updates Comming Soon ...
       </div>
-    
+
 
       <!-- clock settings -->
-      <div x-show="selected=='Clock Settings'" x-collapse x-collapse.duration.1000ms  class=" rounded-lg ring-1 ring-gray-100 p-3 my-4">
+      <div x-show="selected=='Clock Settings'" x-collapse x-collapse.duration.1000ms
+        class=" rounded-lg ring-1 ring-gray-100 p-3 my-4">
 
         <div class="mb-4">
           <label for="brightnessControl" class="block text-sm font-medium leading-6 text-gray-900">Brightness: <span
@@ -211,7 +241,7 @@
                 d="M1.371 8.143c5.858-5.857 15.356-5.857 21.213 0a.75.75 0 0 1 0 1.061l-.53.53a.75.75 0 0 1-1.06 0c-4.98-4.979-13.053-4.979-18.032 0a.75.75 0 0 1-1.06 0l-.53-.53a.75.75 0 0 1 0-1.06Zm3.182 3.182c4.1-4.1 10.749-4.1 14.85 0a.75.75 0 0 1 0 1.061l-.53.53a.75.75 0 0 1-1.062 0 8.25 8.25 0 0 0-11.667 0 .75.75 0 0 1-1.06 0l-.53-.53a.75.75 0 0 1 0-1.06Zm3.204 3.182a6 6 0 0 1 8.486 0 .75.75 0 0 1 0 1.061l-.53.53a.75.75 0 0 1-1.061 0 3.75 3.75 0 0 0-5.304 0 .75.75 0 0 1-1.06 0l-.53-.53a.75.75 0 0 1 0-1.06Zm3.182 3.182a1.5 1.5 0 0 1 2.122 0 .75.75 0 0 1 0 1.061l-.53.53a.75.75 0 0 1-1.061 0l-.53-.53a.75.75 0 0 1 0-1.06Z"
                 clip-rule="evenodd" />
             </svg>
-            <div>Wifi</div>
+            <div>Wi-Fi</div>
           </div>
           <div x-text="settings.wifi_connected ? 'Connected' : 'Not Connected'"
             :class="{'bg-green-50 text-green-700 ring-green-600/20': settings.wifi_connected, 'bg-red-50 text-red-700 ring-red-600/20': !settings.wifi_connected}"
@@ -260,20 +290,12 @@
 
 
 
-      
-
-
-
-
-
-
-
     </div>
   </div>
 
   <script src="/js/collapse.min.js" defer></script>
   <script src="/js/alpine.min.js" defer></script>
- 
+
 
   <script defer>
 
@@ -288,6 +310,7 @@
         pastToColorHex: '#0000ff',
         hourColorHex: '#ffff00',
         timeChanged: false,
+        newWifiPassword: '',
         //path: '', //use this for production
         init() {
           console.log('init')
@@ -315,6 +338,11 @@
           this.timeDisplay = this.dateStringToArray(this.newTimeString)
           this.timeChanged = true
           console.log(this.timeDisplay)
+        },
+        updateWifi() {
+          this.settings.wifi_ssid = this.settings.wifi_ssid
+          this.settings.wifi_password = this.settings.wifi_password
+          this.updateSettings()
         },
         async updateSettings() {
           if (this.timeChanged) {

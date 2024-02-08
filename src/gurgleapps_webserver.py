@@ -15,6 +15,7 @@ from response import Response
 from request import Request
 import gc
 import os
+import machine
 
 
 class GurgleAppsWebserver:
@@ -95,6 +96,7 @@ class GurgleAppsWebserver:
         return self.wlan_sta.ifconfig()[0]
     
     def get_ap_ssid(self):
+        return self.wlan_ap.config('essid')
         return self.ap_ssid
     
     def get_ap_ip_address(self):
@@ -109,10 +111,16 @@ class GurgleAppsWebserver:
         #self.wlan_ap.ifconfig((ip, subnet, gateway, dns))
         self.ap_ssid = ssid
         self.ap_password = password
-        self.wlan_ap.active(True) # ESP32 needed this before config
+        if os.uname().sysname == 'esp32':
+            self.wlan_ap.active(True) # ESP32 needed this before config
         self.wlan_ap.config(essid=ssid, password=password)
-        self.ip_address = self.wlan_ap.ifconfig()[0]
-        print(f"AP Mode started. SSID: {ssid}, IP: {self.ip_address}")
+        if os.uname().sysname != 'esp32':
+            self.wlan_ap.active(True)
+        print(f"AP Mode started. SSID: {self.get_ap_ssid()}, IP: {self.get_ap_ip_address()}")
+        # pico needs a cycle or ssid is PICO-xxxx
+        if self.get_ap_ssid() != ssid:
+            print("AP SSID incorrect: "+self.get_ap_ssid())
+            machine.reset()
         return True
     
     async def maintain_connection(self):
@@ -120,7 +128,7 @@ class GurgleAppsWebserver:
             if self.wlan_sta.isconnected() == False and self.wifi_ssid != None:
                 print("Lost connection to Wi-Fi. Attempting to reconnect...")
                 self.connect_wifi(self.wifi_ssid, self.wifi_password)
-            await asyncio.sleep(10)
+            await asyncio.sleep(20)
 
 
     async def start_server(self):

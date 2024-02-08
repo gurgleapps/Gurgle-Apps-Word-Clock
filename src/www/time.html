@@ -9,8 +9,7 @@
 </head>
 
 <body class="bg-gray-100" x-data="clock()">
-  <div class="min-h-screen flex flex-col items-center justify-center mx-2"
-    x-data="{options:['Clock Settings','Wi-Fi','Updates'],selectedx:'Clock Settings',selected:'Wi-Fi'}">
+  <div class="min-h-screen flex flex-col items-center justify-center mx-2">
 
     <div class="bg-white p-5 rounded-lg shadow-md w-full max-w-md">
 
@@ -71,22 +70,20 @@
 
       <!-- tabs -->
       <div class="my-4">
-        <div class="sm:hidden">
-          <label for="tabs" class="sr-only">Select a tab</label>
-          <!-- Use an "onChange" listener to redirect the user to the selected tab URL. -->
-          <select x-model="selected" id="tabs" name="tabs"
+        <div class="xs:hidden">
+          <select x-model="selectedOption"
             class="block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm">
-            <template x-for="option in options" :key="option">
-              <option x-text="option"></option>
+            <template x-for="(option, index) in options" :key="index">
+              <option x-text="option" :value="option"></option>
             </template>
           </select>
         </div>
-        <div class="hidden sm:block">
+        <div class="hidden xs:block">
           <div class="border-b border-gray-200">
             <nav class="-mb-px flex space-x-8x" aria-label="Tabs">
               <template x-for="(option, index ) in options" :key="index">
-                <a :class="{'border-indigo-500 text-indigo-600': selected == option, 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700': selected != option, 'ml-0' : index === 0, 'ml-6' : index > 0}"
-                  href="#" x-text="option" @click.prevent="selected = option"
+                <a :class="{'border-indigo-500 text-indigo-600': selectedOption == option, 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700': selectedOption != option, 'ml-0' : index === 0, 'ml-6' : index > 0}"
+                  href="#" x-text="option" @click.prevent="selectedOption = option"
                   class="whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium"></a>
               </template>
             </nav>
@@ -94,7 +91,7 @@
         </div>
       </div>
 
-      <div x-show="selected=='Wi-Fi'" x-collapse x-collapse.duration.1000ms
+      <div x-show="selectedOption=='Wi-Fi'" x-collapse x-collapse.duration.1000ms
         class=" rounded-lg ring-1 ring-gray-100 p-3 my-4">
         <div class="mb-4 inline-flex gap-x-4 border-b border-gray-300 w-full pb-2">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
@@ -122,14 +119,14 @@
 
       </div>
 
-      <div x-show="selected=='Updates'" x-collapse x-collapse.duration.1000ms
+      <div x-show="selectedOption=='Updates'" x-collapse x-collapse.duration.1000ms
         class=" rounded-lg ring-1 ring-gray-100 p-3 my-4">
         Updates Comming Soon ...
       </div>
 
 
       <!-- clock settings -->
-      <div x-show="selected=='Clock Settings'" x-collapse x-collapse.duration.1000ms
+      <div x-show="selectedOption=='Clock Settings'" x-collapse x-collapse.duration.1000ms
         class=" rounded-lg ring-1 ring-gray-100 p-3 my-4">
 
         <div class="mb-4">
@@ -271,7 +268,7 @@
             <div>Access Point</div>
           </div>
           <div x-text="settings.ap_active ? 'Active' : 'Not Active'"
-            :class="{'bg-green-50 text-green-700 ring-green-600/20': settings.wifi_connected, 'bg-red-50 text-red-700 ring-red-600/20': !settings.wifi_connected}"
+            :class="{'bg-green-50 text-green-700 ring-green-600/20': settings.ap_active, 'bg-red-50 text-red-700 ring-red-600/20': !settings.ap_active}"
             class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium  ring-1 ring-inset ">
             Not Active</div>
         </div>
@@ -304,6 +301,7 @@
         settings: { 'brightness': 5, 'display_mode': 'single_color', 'rainbow': [255, 0, 0], 'wifi_connected': false },
         timeDisplay: [0, 0, 0, 0, 0, 0],
         path: 'http://192.168.1.161', // use this for development
+        //path: '',
         newTimeString: '2099-01-02T03:04:05',
         singeColorHex: '#ff0000',
         minuteColorHex: '#00ff00',
@@ -311,12 +309,15 @@
         hourColorHex: '#ffff00',
         timeChanged: false,
         newWifiPassword: '',
+        options:['Clock Settings','Wi-Fi','Updates'],
+        selectedOption:'Updates',
         //path: '', //use this for production
         init() {
           console.log('init')
           this.getClockSettings()
           this.newTimeString = this.formatTime(this.dateToArray(new Date()), false)
-
+          this.selectedOption = 'Clock Settings'
+          this.selectedOption = 'Wi-Fi'
         },
         async getClockSettings() {
           const response = await fetch(this.path + '/get-clock-settings')
@@ -339,10 +340,26 @@
           this.timeChanged = true
           console.log(this.timeDisplay)
         },
-        updateWifi() {
+        async updateWifi() {
           this.settings.wifi_ssid = this.settings.wifi_ssid
-          this.settings.wifi_password = this.settings.wifi_password
-          this.updateSettings()
+          this.settings.wifi_password = this.newWifiPassword
+          const response = fetch(this.path + '/set-wifi-settings', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(this.settings)
+          })
+          if (response.ok) {
+            console.log('wifi updated')
+            json = await response.json()
+            this.settings = json.settings
+            console.log(json)
+            // give wifi time to connect and get settings
+            setTimeout(() => {
+              this.getClockSettings()
+            }, 10000)
+          }
         },
         async updateSettings() {
           if (this.timeChanged) {

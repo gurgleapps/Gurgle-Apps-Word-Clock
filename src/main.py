@@ -185,6 +185,22 @@ async def set_brightness_request(request, response):
     settings = settings_to_json()
     await response.send_json(settings, 200)
 
+async def set_wifi_settings_request(request, response):
+    print(request.post_data)
+    wifi_ssid = request.post_data['wifi_ssid']
+    wifi_password = request.post_data['wifi_password']
+    config['WIFI_SSID'] = wifi_ssid
+    config['WIFI_PASSWORD'] = wifi_password
+    save_config(config)
+    response_data = {
+        'status': 'OK',
+        'success': True,
+        'message': 'Updated Wi-Fi',
+        'settings': settings_object()
+    }
+    await response.send_json(json.dumps(response_data), 200)
+    connect_to_wifi()
+
 async def set_clock_settings_request(request, response):
     global current_display_mode
     global single_color
@@ -249,6 +265,7 @@ def setup_routes(server):
     server.add_function_route('/set-brightness', set_brightness_request)
     server.add_function_route('/get-clock-settings', get_clock_settings_request)
     server.add_function_route('/set-clock-settings', set_clock_settings_request)
+    server.add_function_route('/set-wifi-settings', set_wifi_settings_request)
 
 def connect_to_wifi():
     # Check if Wi-Fi SSID is set and not blank

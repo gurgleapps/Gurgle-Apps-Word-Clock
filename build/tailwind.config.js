@@ -7,6 +7,9 @@ module.exports = {
   ],
   theme: {
     extend: {},
+    screens: {
+      'xs': '320px',
+    }
   },
   plugins: [
     require('@tailwindcss/forms'),

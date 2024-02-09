@@ -9,7 +9,7 @@
 </head>
 
 <body class="bg-gray-100" x-data="clock()">
-  <div class="min-h-screen flex flex-col items-center justify-center mx-2">
+  <div class="min-h-screen flex flex-col items-center justify-start mt-8 mx-2">
 
     <div class="bg-white p-5 rounded-lg shadow-md w-full max-w-md">
 
@@ -91,141 +91,124 @@
         </div>
       </div>
 
-      <div x-show="selectedOption=='Wi-Fi'" x-collapse x-collapse.duration.1000ms
-        class=" rounded-lg ring-1 ring-gray-100 p-3 my-4">
-        <div class="mb-4 inline-flex gap-x-4 border-b border-gray-300 w-full pb-2">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
-            <path fill-rule="evenodd"
-              d="M1.371 8.143c5.858-5.857 15.356-5.857 21.213 0a.75.75 0 0 1 0 1.061l-.53.53a.75.75 0 0 1-1.06 0c-4.98-4.979-13.053-4.979-18.032 0a.75.75 0 0 1-1.06 0l-.53-.53a.75.75 0 0 1 0-1.06Zm3.182 3.182c4.1-4.1 10.749-4.1 14.85 0a.75.75 0 0 1 0 1.061l-.53.53a.75.75 0 0 1-1.062 0 8.25 8.25 0 0 0-11.667 0 .75.75 0 0 1-1.06 0l-.53-.53a.75.75 0 0 1 0-1.06Zm3.204 3.182a6 6 0 0 1 8.486 0 .75.75 0 0 1 0 1.061l-.53.53a.75.75 0 0 1-1.061 0 3.75 3.75 0 0 0-5.304 0 .75.75 0 0 1-1.06 0l-.53-.53a.75.75 0 0 1 0-1.06Zm3.182 3.182a1.5 1.5 0 0 1 2.122 0 .75.75 0 0 1 0 1.061l-.53.53a.75.75 0 0 1-1.061 0l-.53-.53a.75.75 0 0 1 0-1.06Z"
-              clip-rule="evenodd" />
-          </svg>
-          Wi-Fi
-        </div>
-        <div class="mb-4">
-          <label for="ssid" class="block text-sm font-medium leading-6 text-gray-900">SSID:</label>
-          <input type="text" id="ssid" x-model="settings.wifi_ssid"
-            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-1.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-        </div>
-        <div class="mb-4">
-          <label for="password" class="block text-sm font-medium leading-6 text-gray-900">Password:</label>
-          <input type="password" id="password" x-model="newWifiPassword"
-            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-1.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-        </div>
-
-        <div class="flex justify-center mb-2 mt-1">
-          <button @click.prevent="updateWifi()"
-            class="bg-green-600 text-white font-semibold py-2 px-4 rounded focus:outline-none hover:bg-green-700">Update Wifi</button>
-        </div>
-
-      </div>
-
-      <div x-show="selectedOption=='Updates'" x-collapse x-collapse.duration.1000ms
-        class=" rounded-lg ring-1 ring-gray-100 p-3 my-4">
-        Updates Coming Soon ...
-      </div>
-
-
-      <!-- clock settings -->
-      <div x-show="selectedOption=='Clock Settings'" x-collapse x-collapse.duration.1000ms
-        class=" rounded-lg ring-1 ring-gray-100 p-3 my-4">
-
-        <div class="mb-4">
-          <label for="brightnessControl" class="block text-sm font-medium leading-6 text-gray-900">Brightness: <span
-              x-text="settings.brightness"></span></label>
-          <input @change="brigtnessUpdated()" type="range" id="brightnessControl" min="0" max="15"
-            x-model.number="settings.brightness" step="1" class="w-full bg-transparent cursor-pointer appearance-none disabled:opacity-50 disabled:pointer-events-none focus:outline-none
-              [&::-webkit-slider-thumb]:w-3.5
-        [&::-webkit-slider-thumb]:h-3.5
-        [&::-webkit-slider-thumb]:-mt-0.5
-        [&::-webkit-slider-thumb]:appearance-none
-        [&::-webkit-slider-thumb]:bg-white
-        [&::-webkit-slider-thumb]:shadow-[0_0_0_4px_rgba(37,99,235,1)]
-        [&::-webkit-slider-thumb]:rounded-full
-        [&::-webkit-slider-thumb]:transition-all
-        [&::-webkit-slider-thumb]:duration-150
-        [&::-webkit-slider-thumb]:ease-in-out
-        [&::-webkit-slider-thumb]:dark:bg-slate-700
-  
-        [&::-moz-range-thumb]:w-3.5
-        [&::-moz-range-thumb]:h-3.5
-        [&::-moz-range-thumb]:appearance-none
-        [&::-moz-range-thumb]:bg-white
-        [&::-moz-range-thumb]:border-4
-        [&::-moz-range-thumb]:border-blue-600
-        [&::-moz-range-thumb]:rounded-full
-        [&::-moz-range-thumb]:transition-all
-        [&::-moz-range-thumb]:duration-150
-        [&::-moz-range-thumb]:ease-in-out
-  
-        [&::-webkit-slider-runnable-track]:w-full
-        [&::-webkit-slider-runnable-track]:h-2
-        [&::-webkit-slider-runnable-track]:bg-gray-100
-        [&::-webkit-slider-runnable-track]:rounded-full
-        [&::-webkit-slider-runnable-track]:dark:bg-gray-700
-  
-        [&::-moz-range-track]:w-full
-        [&::-moz-range-track]:h-2
-        [&::-moz-range-track]:bg-gray-100
-        [&::-moz-range-track]:rounded-full
-              ">
-        </div>
-
-
-
-        <div class="mb-4">
-          <label for="timeControl" class="block text-sm font-medium leading-6 text-gray-900">Time:</label>
-          <input @change="datetimeUpdated()" step="60" type="datetime-local" id="timeControl" x-model="newTimeString"
-            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-1.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-        </div>
-
-        <div class="mb-4">
-          <label for="colorMode" class="block text-sm font-medium leading-6 text-gray-900">Color Display Mode:</label>
-          <select x-model="settings.display_mode" id="colorMode"
-            class="mt-2 block w-full bg-gray-50 rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 sm:text-sm sm:leading-6">
-            <option value="single_color">Single Colour</option>
-            <option value="rainbow">Rainbow</option>
-            <option value="color_per_word">Word Colours</option>
-          </select>
-        </div>
-
-        <!-- single color -->
-        <div x-show="settings.display_mode=='single_color'" x-transition x-cloak class="mb-4">
-          <label for="" class="block text-sm font-medium leading-6 text-gray-900">Color:</label>
-          <input type="color" x-model="singeColorHex" list="colorList">
-        </div>
-
-        <!-- color  per word -->
-        <div x-show="settings.display_mode=='color_per_word'" x-transition x-cloak class="mb-4">
-          <div class="flex justify-between">
-            <div>
-              <label for="" class="block text-sm font-medium leading-6 text-gray-900 mb-1">Minute Color:</label>
-              <input type="color" x-model="minuteColorHex" list="colorList">
-            </div>
-            <div>
-              <label for="" class="block text-sm font-medium leading-6 text-gray-900 mb-1">Past/To Color:</label>
-              <input type="color" x-model="pastToColorHex" list="colorList">
-            </div>
-            <div>
-              <label for="" class="block text-sm font-medium leading-6 text-gray-900 mb-1">Hour Color:</label>
-              <input type="color" x-model="hourColorHex" list="colorList">
-            </div>
+      <div> <!-- tab content -->
+        <div x-show="selectedOption=='Wi-Fi'" x-collapse class=" rounded-lg ring-1 ring-gray-100 p-3 my-4">
+          <div class="mb-4 inline-flex gap-x-4 border-b border-gray-300 w-full pb-2">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
+              <path fill-rule="evenodd"
+                d="M1.371 8.143c5.858-5.857 15.356-5.857 21.213 0a.75.75 0 0 1 0 1.061l-.53.53a.75.75 0 0 1-1.06 0c-4.98-4.979-13.053-4.979-18.032 0a.75.75 0 0 1-1.06 0l-.53-.53a.75.75 0 0 1 0-1.06Zm3.182 3.182c4.1-4.1 10.749-4.1 14.85 0a.75.75 0 0 1 0 1.061l-.53.53a.75.75 0 0 1-1.062 0 8.25 8.25 0 0 0-11.667 0 .75.75 0 0 1-1.06 0l-.53-.53a.75.75 0 0 1 0-1.06Zm3.204 3.182a6 6 0 0 1 8.486 0 .75.75 0 0 1 0 1.061l-.53.53a.75.75 0 0 1-1.061 0 3.75 3.75 0 0 0-5.304 0 .75.75 0 0 1-1.06 0l-.53-.53a.75.75 0 0 1 0-1.06Zm3.182 3.182a1.5 1.5 0 0 1 2.122 0 .75.75 0 0 1 0 1.061l-.53.53a.75.75 0 0 1-1.061 0l-.53-.53a.75.75 0 0 1 0-1.06Z"
+                clip-rule="evenodd" />
+            </svg>
+            Wi-Fi
+          </div>
+          <div class="mb-4">
+            <label for="ssid" class="block text-sm font-medium leading-6 text-gray-900">SSID:</label>
+            <input type="text" id="ssid" x-model="settings.wifi_ssid"
+              class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-1.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+          </div>
+          <div class="mb-4">
+            <label for="password" class="block text-sm font-medium leading-6 text-gray-900">Password:</label>
+            <input type="password" id="password" x-model="newWifiPassword"
+              class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-1.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+          </div>
+          <div class="flex justify-center mb-2 mt-1">
+            <button @click.prevent="updateWifi()"
+              class="bg-green-600 text-white font-semibold py-2 px-4 rounded focus:outline-none hover:bg-green-700">Update
+              Wifi</button>
           </div>
         </div>
-
-
-        <datalist id="colorList">
-          <option>#ff0000</option>
-          <option>#00ff00</option>
-          <option>#0000ff</option>
-          <option>#ffff00</option>
-          <option>#00ffff</option>
-          <option>#ff00ff</option>
-          <option>#ff6600</option>
-        </datalist>
-
-        <div class="flex justify-center mb-2 mt-1">
-          <button @click.prevent="update()"
-            class="bg-green-600 text-white font-semibold py-2 px-4 rounded focus:outline-none hover:bg-green-700">Update</button>
+        <div x-show="selectedOption=='Updates'" x-collapse class=" rounded-lg ring-1 ring-gray-100 p-3 my-4">
+          Updates Coming Soon ...
+        </div>
+        <!-- clock settings -->
+        <div x-show="selectedOption=='Clock Settings'" x-collapse
+          class=" rounded-lg ring-1 ring-gray-100 p-3 my-4">
+          <div class="mb-4">
+            <label for="brightnessControl" class="block text-sm font-medium leading-6 text-gray-900">Brightness: <span
+                x-text="settings.brightness"></span></label>
+            <input @change="brigtnessUpdated()" type="range" id="brightnessControl" min="0" max="15"
+              x-model.number="settings.brightness" step="1" class="w-full bg-transparent cursor-pointer appearance-none disabled:opacity-50 disabled:pointer-events-none focus:outline-none
+                [&::-webkit-slider-thumb]:w-3.5
+          [&::-webkit-slider-thumb]:h-3.5
+          [&::-webkit-slider-thumb]:-mt-0.5
+          [&::-webkit-slider-thumb]:appearance-none
+          [&::-webkit-slider-thumb]:bg-white
+          [&::-webkit-slider-thumb]:shadow-[0_0_0_4px_rgba(37,99,235,1)]
+          [&::-webkit-slider-thumb]:rounded-full
+          [&::-webkit-slider-thumb]:transition-all
+          [&::-webkit-slider-thumb]:duration-150
+          [&::-webkit-slider-thumb]:ease-in-out
+          [&::-webkit-slider-thumb]:dark:bg-slate-700
+          [&::-moz-range-thumb]:w-3.5
+          [&::-moz-range-thumb]:h-3.5
+          [&::-moz-range-thumb]:appearance-none
+          [&::-moz-range-thumb]:bg-white
+          [&::-moz-range-thumb]:border-4
+          [&::-moz-range-thumb]:border-blue-600
+          [&::-moz-range-thumb]:rounded-full
+          [&::-moz-range-thumb]:transition-all
+          [&::-moz-range-thumb]:duration-150
+          [&::-moz-range-thumb]:ease-in-out
+          [&::-webkit-slider-runnable-track]:w-full
+          [&::-webkit-slider-runnable-track]:h-2
+          [&::-webkit-slider-runnable-track]:bg-gray-100
+          [&::-webkit-slider-runnable-track]:rounded-full
+          [&::-webkit-slider-runnable-track]:dark:bg-gray-700
+          [&::-moz-range-track]:w-full
+          [&::-moz-range-track]:h-2
+          [&::-moz-range-track]:bg-gray-100
+          [&::-moz-range-track]:rounded-full
+                ">
+          </div>
+          <div class="mb-4">
+            <label for="timeControl" class="block text-sm font-medium leading-6 text-gray-900">Time:</label>
+            <input @change="datetimeUpdated()" step="60" type="datetime-local" id="timeControl" x-model="newTimeString"
+              class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-1.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+          </div>
+          <div class="mb-4">
+            <label for="colorMode" class="block text-sm font-medium leading-6 text-gray-900">Color Display Mode:</label>
+            <select x-model="settings.display_mode" id="colorMode"
+              class="mt-2 block w-full bg-gray-50 rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 sm:text-sm sm:leading-6">
+              <option value="single_color">Single Colour</option>
+              <option value="rainbow">Rainbow</option>
+              <option value="color_per_word">Word Colours</option>
+            </select>
+          </div>
+          <!-- single color -->
+          <div x-show="settings.display_mode=='single_color'" x-transition x-cloak class="mb-4">
+            <label for="" class="block text-sm font-medium leading-6 text-gray-900">Color:</label>
+            <input type="color" x-model="singeColorHex" list="colorList">
+          </div>
+          <!-- color  per word -->
+          <div x-show="settings.display_mode=='color_per_word'" x-transition x-cloak class="mb-4">
+            <div class="flex justify-between">
+              <div>
+                <label for="" class="block text-sm font-medium leading-6 text-gray-900 mb-1">Minute Color:</label>
+                <input type="color" x-model="minuteColorHex" list="colorList">
+              </div>
+              <div>
+                <label for="" class="block text-sm font-medium leading-6 text-gray-900 mb-1">Past/To Color:</label>
+                <input type="color" x-model="pastToColorHex" list="colorList">
+              </div>
+              <div>
+                <label for="" class="block text-sm font-medium leading-6 text-gray-900 mb-1">Hour Color:</label>
+                <input type="color" x-model="hourColorHex" list="colorList">
+              </div>
+            </div>
+          </div>
+          <datalist id="colorList">
+            <option>#ff0000</option>
+            <option>#00ff00</option>
+            <option>#0000ff</option>
+            <option>#ffff00</option>
+            <option>#00ffff</option>
+            <option>#ff00ff</option>
+            <option>#ff6600</option>
+          </datalist>
+          <div class="flex justify-center mb-2 mt-1">
+            <button @click.prevent="update()"
+              class="bg-green-600 text-white font-semibold py-2 px-4 rounded focus:outline-none hover:bg-green-700">Update</button>
+          </div>
         </div>
       </div>
 
@@ -309,15 +292,17 @@
         hourColorHex: '#ffff00',
         timeChanged: false,
         newWifiPassword: '',
-        options:['Clock Settings','Wi-Fi','Updates'],
-        selectedOption:'Updates',
+        options: ['Clock Settings', 'Wi-Fi', 'Updates'],
+        selectedOption: 'Updates',
         //path: '', //use this for production
         init() {
           console.log('init')
           this.getClockSettings()
           this.newTimeString = this.formatTime(this.dateToArray(new Date()), false)
-          this.selectedOption = 'Clock Settings'
-          this.selectedOption = 'Wi-Fi'
+          // do it on the next alpine tick
+          this.$nextTick(() => {
+            this.selectedOption = 'Wi-Fi'
+          })
         },
         async getClockSettings() {
           const response = await fetch(this.path + '/get-clock-settings')

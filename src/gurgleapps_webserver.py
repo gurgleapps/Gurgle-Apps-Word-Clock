@@ -52,7 +52,7 @@ class GurgleAppsWebserver:
         self.server_running = False
         
 
-    def connect_wifi(self, ssid, password):
+    async def connect_wifi(self, ssid, password):
         try:
             self.wifi_ssid = ssid
             self.wifi_password = password
@@ -62,17 +62,22 @@ class GurgleAppsWebserver:
                 print("Already connected to Wi-Fi. IP: "+self.wlan_sta.ifconfig()[0])
                 self.wlan_sta.disconnect()
                 self.wlan_sta.active(False)
-                time.sleep(1)
+                #time.sleep(1)
+                await asyncio.sleep(1)
                 print("Disconnected from Wi-Fi.")
+            else:
+                print("Not connected to Wi-Fi.")
 
             # Activate Wi-Fi mode and connect
             self.wlan_sta.active(True)
-            time.sleep(1)
+            #time.sleep(1)
+            await asyncio.sleep(1)
             self.wlan_sta.connect(ssid, password)
             # Wait for connection
             print("Connecting to Wi-Fi...")
             for _ in range(self.timeout):
-                time.sleep(1)
+                #time.sleep(1)
+                await asyncio.sleep(1)
                 if self.wlan_sta.isconnected():
                     self.ip_address = self.wlan_sta.ifconfig()[0]
                     print(f"Connected to Wi-Fi. IP: {self.ip_address}")

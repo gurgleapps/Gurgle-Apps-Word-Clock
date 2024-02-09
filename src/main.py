@@ -186,6 +186,7 @@ async def set_brightness_request(request, response):
     await response.send_json(settings, 200)
 
 async def set_wifi_settings_request(request, response):
+    global config
     print(request.post_data)
     wifi_ssid = request.post_data['wifi_ssid']
     wifi_password = request.post_data['wifi_password']
@@ -199,7 +200,7 @@ async def set_wifi_settings_request(request, response):
         'settings': settings_object()
     }
     await response.send_json(json.dumps(response_data), 200)
-    connect_to_wifi()
+    await connect_to_wifi()
 
 async def set_clock_settings_request(request, response):
     global current_display_mode
@@ -267,14 +268,14 @@ def setup_routes(server):
     server.add_function_route('/set-clock-settings', set_clock_settings_request)
     server.add_function_route('/set-wifi-settings', set_wifi_settings_request)
 
-def connect_to_wifi():
+async def connect_to_wifi():
     # Check if Wi-Fi SSID is set and not blank
     wifi_ssid = config.get('WIFI_SSID', '').strip()
     if wifi_ssid:
         # Password could be blank for open networks
         wifi_password = config.get('WIFI_PASSWORD', None)
         print("Connecting to Wi-Fi")
-        success = server.connect_wifi(wifi_ssid, wifi_password)
+        success = await server.connect_wifi(wifi_ssid, wifi_password)
         if success:
             print("Connected to Wi-Fi")
         else:
@@ -286,6 +287,8 @@ def connect_to_wifi():
 
         
 async def main():
+    await connect_to_wifi()
+    sync_ntp_time()
     while True:
         time_to_matrix()
         if ntp_synced_at < (time.time() - 3600) and server.is_wifi_connected(): # Sync time every hour
@@ -338,8 +341,6 @@ server.set_default_index_pages(["time.html"])
 server.set_cors(True)
 setup_routes(server)
 
-connect_to_wifi()
-sync_ntp_time()
 print("starting access point")
 success = server.start_access_point('gurgleapps', 'gurgleapps')
 if success:

@@ -7,6 +7,7 @@ import utime as time
 from gurgleapps_webserver import GurgleAppsWebserver
 import uasyncio as asyncio
 import json
+import matrix_fonts
 
 config_file = 'config.json'
 
@@ -186,6 +187,36 @@ async def show_string(string):
             ws2812b_matrix.show_char(clockFont[char])
         await asyncio.sleep(0.5)
 
+async def scroll_message(font, message='hello', delay=0.1):
+    message += '  '  # Add extra space for a clear end.
+    for char_pos in range(len(message)-1):  # Adjust for loop to avoid IndexError
+        char = font[message[char_pos]]
+        next_char = font[message[char_pos + 1]]
+        for shift in range(8):
+            # Initialize a new character representation for the shift
+            shifted_char = []
+            for row in range(len(char)):
+                # Shift current row and add part of the next row
+                current_row = char[row] << 1
+                next_row = next_char[row] >> (7 - shift) if row < len(next_char) else 0
+                # Combine the bits from current and next character rows
+                shifted_row = current_row & 0xFF | next_row
+                shifted_char.append(shifted_row)
+            
+            # Display logic for different display types
+            if config['ENABLE_MAX7219']:
+                spi_matrix.show_char(shifted_char)
+            if config['ENABLE_HT16K33']:
+                i2c_matrix.show_char(i2c_matrix.reverse_char(shifted_char))
+            if config['ENABLE_WS2812B']:
+                ws2812b_matrix.show_char(shifted_char)
+            
+            await asyncio.sleep(delay)
+
+            # Update char to the newly shifted_char for the next iteration
+            char = shifted_char
+
+
 def show_char(char):
     if config['ENABLE_MAX7219']:
         spi_matrix.show_char(char)
@@ -317,6 +348,7 @@ def setup_routes(server):
     server.add_function_route('/set-wifi-settings', set_wifi_settings_request)
 
 async def connect_to_wifi():
+    await scroll_message(matrix_fonts.textFont1, "Wifi", 0.05)
     show_char(clockFont['wifi'])
     # Check if Wi-Fi SSID is set and not blank
     wifi_ssid = config.get('WIFI_SSID', '').strip()
@@ -336,9 +368,11 @@ async def connect_to_wifi():
 
         
 async def main():
+    #await scroll_message(matrix_fonts.textFont1, "GurgleApps", 0.05)
     await connect_to_wifi()
     if server.is_wifi_connected():
         await show_string(server.get_wifi_ip_address())
+        await scroll_message(matrix_fonts.textFont1, server.get_wifi_ip_address(), 0.05)
     sync_ntp_time()
     while True:
         time_to_matrix()

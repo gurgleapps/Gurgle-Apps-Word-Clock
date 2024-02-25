@@ -283,8 +283,8 @@
       return {
         settings: { 'brightness': 5, 'display_mode': 'single_color', 'rainbow': [255, 0, 0], 'wifi_connected': false },
         timeDisplay: [0, 0, 0, 0, 0, 0],
-        path: 'http://192.168.1.161', // use this for development
-        //path: '',
+        //path: 'http://192.168.1.161', // use this for development
+        path: '',
         newTimeString: '2099-01-02T03:04:05',
         singeColorHex: '#ff0000',
         minuteColorHex: '#00ff00',
@@ -293,7 +293,7 @@
         timeChanged: false,
         newWifiPassword: '',
         options: ['Clock Settings', 'Wi-Fi', 'Updates'],
-        selectedOption: 'Updates',
+        selectedOption: 'Clock Settings',
         //path: '', //use this for production
         init() {
           console.log('init')
@@ -301,7 +301,8 @@
           this.newTimeString = this.formatTime(this.dateToArray(new Date()), false)
           // do it on the next alpine tick
           this.$nextTick(() => {
-            this.selectedOption = 'Wi-Fi'
+            //this.selectedOption = 'Wi-Fi'
+             tihs.selectedOption = 'Clock Settings'
           })
         },
         async getClockSettings() {

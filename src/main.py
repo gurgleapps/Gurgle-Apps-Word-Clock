@@ -65,6 +65,7 @@ clockFont = {
     '8': [0x7c,0xc6,0xc6,0x7c,0xc6,0xc6,0x7c,0x00],
     '9': [0x7c,0xc6,0xc6,0x7e,0x06,0x0c,0x78,0x00],
     '.': [0x00,0x00,0x00,0x00,0x00,0x18,0x18,0x00],
+    'wifi': [0x3c,0x42,0x99,0xa5,0x24,0x00,0x18,0x18]
 }
 
 def read_config():
@@ -184,6 +185,14 @@ async def show_string(string):
         if config['ENABLE_WS2812B']:
             ws2812b_matrix.show_char(clockFont[char])
         await asyncio.sleep(0.5)
+
+def show_char(char):
+    if config['ENABLE_MAX7219']:
+        spi_matrix.show_char(char)
+    if config['ENABLE_HT16K33']:
+        i2c_matrix.show_char(i2c_matrix.reverse_char(char))
+    if config['ENABLE_WS2812B']:
+        ws2812b_matrix.show_char(char)
 
 
 def merge_color_array(color_array, char, color):
@@ -308,6 +317,7 @@ def setup_routes(server):
     server.add_function_route('/set-wifi-settings', set_wifi_settings_request)
 
 async def connect_to_wifi():
+    show_char(clockFont['wifi'])
     # Check if Wi-Fi SSID is set and not blank
     wifi_ssid = config.get('WIFI_SSID', '').strip()
     if wifi_ssid:
@@ -391,3 +401,4 @@ if success:
     asyncio.run(server.start_server_with_background_task(main))
 else:
     print("Failed to start access point")
+    show_char(clockFont['error'])

@@ -174,7 +174,7 @@ def startup_animation():
         if config['ENABLE_HT16K33']:
             i2c_matrix.show_char(i2c_matrix.reverse_char(char))
         if config['ENABLE_WS2812B']:
-            ws2812b_matrix.show_char(char)
+            ws2812b_matrix.show_char_with_color_array(char, ws2812b_matrix.get_rainbow_array())
         time.sleep(0.1)
 
 async def show_string(string):
@@ -184,7 +184,7 @@ async def show_string(string):
         if config['ENABLE_HT16K33']:
             i2c_matrix.show_char(i2c_matrix.reverse_char(clockFont[char]))
         if config['ENABLE_WS2812B']:
-            ws2812b_matrix.show_char(clockFont[char])
+            ws2812b_matrix.show_char_with_color_array(clockFont[char], ws2812b_matrix.get_rainbow_array())
         await asyncio.sleep(0.5)
 
 async def scroll_message(font, message='hello', delay=0.1):
@@ -209,7 +209,7 @@ async def scroll_message(font, message='hello', delay=0.1):
             if config['ENABLE_HT16K33']:
                 i2c_matrix.show_char(i2c_matrix.reverse_char(shifted_char))
             if config['ENABLE_WS2812B']:
-                ws2812b_matrix.show_char(shifted_char)
+                ws2812b_matrix.show_char_with_color_array(shifted_char, ws2812b_matrix.get_rainbow_array())
             
             await asyncio.sleep(delay)
 
@@ -349,7 +349,10 @@ def setup_routes(server):
 
 async def connect_to_wifi():
     await scroll_message(matrix_fonts.textFont1, "Wifi", 0.05)
-    show_char(clockFont['wifi'])
+    if config['ENABLE_WS2812B']:
+        ws2812b_matrix.show_char_with_color_array(clockFont['wifi'], ws2812b_matrix.get_rainbow_array())
+    else:
+        show_char(clockFont['wifi'])
     # Check if Wi-Fi SSID is set and not blank
     wifi_ssid = config.get('WIFI_SSID', '').strip()
     if wifi_ssid:
@@ -373,7 +376,9 @@ async def main():
     if server.is_wifi_connected():
         await show_string(server.get_wifi_ip_address())
         await scroll_message(matrix_fonts.textFont1, server.get_wifi_ip_address(), 0.05)
-    sync_ntp_time()
+        sync_ntp_time()
+    else:
+        await scroll_message(matrix_fonts.textFont1, "Error No Wi-Fi", 0.05)
     while True:
         time_to_matrix()
         if ntp_synced_at < (time.time() - 3600) and server.is_wifi_connected(): # Sync time every hour
@@ -417,8 +422,6 @@ if config['ENABLE_WS2812B']:
 startup_animation()
 
 server = GurgleAppsWebserver(
-    None,
-    None,
     port=80,
     timeout=20,
     doc_root="/www",

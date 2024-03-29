@@ -1,10 +1,18 @@
 
 
+# GurgleApps Color Word Clock
+
+This code is for our [GurgleApps Color Word Clock Kit project.](https://gurgleapps.com/reviews/electronics/wifi-controlled-color-word-clock-kit-micropython) You can buy our kit or make your own, it works with various matrix displays and microcontrollers. It has a web interface to set the time, colors, and other settings.
+
+- [GurgleApps Color Word Clock](#gurgleapps-color-word-clock)
+  - [Misc Notes](#misc-notes)
+    - [ESP32-C3 super mini pinouts view from top](#esp32-c3-super-mini-pinouts-view-from-top)
+    - [Development Environment](#development-environment)
 
 
+## Misc Notes
 
-
-## ESP32-C3 super mini pinouts view from top
+### ESP32-C3 super mini pinouts view from top
 
 ```
          USB-C Port
@@ -21,7 +29,7 @@ GPIO 21 [o]     [o] GPIO 00
          |_______|
 ```
 
-## Development Environment
+### Development Environment
 
 Set up test python web server for quick look and feel rather than copying files to the microcontroller repeatedly.
 

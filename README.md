@@ -36,5 +36,3 @@ Set up test python web server for quick look and feel rather than copying files 
 ```bash
 python3 -m http.server 8000 -d ./src/www
 ```
-
-

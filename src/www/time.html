@@ -121,8 +121,19 @@
           Updates Coming Soon ...
         </div>
         <!-- clock settings -->
+
         <div x-show="selectedOption=='Clock Settings'" x-collapse
           class=" rounded-lg ring-1 ring-gray-100 p-3 my-4">
+          <div class="mb-4">
+            <label for="timeControl" class="block text-sm font-medium leading-6 text-gray-900">Time:</label>
+            <input @change="datetimeUpdated()" step="60" type="datetime-local" id="timeControl" x-model="newTimeString"
+              class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-1.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+          </div>
+          <div class="flex justify-center mb-2 mt-1">
+            <button @click.prevent="updateTime()"
+              class="bg-green-600 text-white font-semibold py-2 px-4 rounded focus:outline-none hover:bg-green-700">Update Time</button>
+          </div>
+
           <div class="mb-4">
             <label for="brightnessControl" class="block text-sm font-medium leading-6 text-gray-900">Brightness: <span
                 x-text="settings.brightness"></span></label>
@@ -159,11 +170,6 @@
           [&::-moz-range-track]:bg-gray-100
           [&::-moz-range-track]:rounded-full
                 ">
-          </div>
-          <div class="mb-4">
-            <label for="timeControl" class="block text-sm font-medium leading-6 text-gray-900">Time:</label>
-            <input @change="datetimeUpdated()" step="60" type="datetime-local" id="timeControl" x-model="newTimeString"
-              class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-1.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
           </div>
           <div class="mb-4">
             <label for="colorMode" class="block text-sm font-medium leading-6 text-gray-900">Color Display Mode:</label>
@@ -207,7 +213,7 @@
           </datalist>
           <div class="flex justify-center mb-2 mt-1">
             <button @click.prevent="update()"
-              class="bg-green-600 text-white font-semibold py-2 px-4 rounded focus:outline-none hover:bg-green-700">Update</button>
+              class="bg-green-600 text-white font-semibold py-2 px-4 rounded focus:outline-none hover:bg-green-700">Update Settings</button>
           </div>
         </div>
       </div>
@@ -300,7 +306,7 @@
           // do it on the next alpine tick
           this.$nextTick(() => {
             //this.selectedOption = 'Wi-Fi'
-             tihs.selectedOption = 'Clock Settings'
+             this.selectedOption = 'Clock Settings'
           })
         },
         async getClockSettings() {
@@ -345,11 +351,30 @@
             }, 10000)
           }
         },
+        async updateTime() {
+          const postData = { 'time': this.timeDisplay }
+          const response = await fetch(this.path + '/set-time', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(postData)
+          })
+          if (response.ok) {
+            console.log('time updated')
+            json = await response.json()
+            this.settings = json.settings
+            this.timeDisplay = json.settings.time
+            console.log(json)
+          }
+        },
         async updateSettings() {
           if (this.timeChanged) {
             this.settings.newTime = this.timeDisplay
           }
-          this.settings.timeChanged = this.timeChanged
+          //this.settings.timeChanged = this.timeChanged
+          // changed set time to another endpoint
+          this.settings.timeChanged = false
           this.settings.single_color = this.hexToRgbArray(this.singeColorHex)
           this.settings.minute_color = this.hexToRgbArray(this.minuteColorHex)
           this.settings.past_to_color = this.hexToRgbArray(this.pastToColorHex)
@@ -366,7 +391,7 @@
             console.log('settings updated')
             json = await response.json()
             this.settings = json.settings
-            this.timeDisplay = json.settings.time
+            //this.timeDisplay = json.settings.time
             this.timeChanged = false
             console.log(json)
           }

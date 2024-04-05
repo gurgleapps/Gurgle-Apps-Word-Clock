@@ -281,6 +281,19 @@ async def set_wifi_settings_request(request, response):
     await response.send_json(json.dumps(response_data), 200)
     await connect_to_wifi()
 
+async def set_time_request(request, response):
+    print(request.post_data)
+    time_data = request.post_data['time']
+    set_manual_time(int(time_data[0]), int(time_data[1]), int(time_data[2]), int(time_data[3]), int(time_data[4]), 0)
+    time_to_matrix()
+    response_data = {
+        'status': 'OK',
+        'success': True,
+        'message': 'Time updated',
+        'settings': settings_object()
+    }
+    await response.send_json(json.dumps(response_data), 200)
+
 async def set_clock_settings_request(request, response):
     global current_display_mode
     global single_color
@@ -346,6 +359,7 @@ def setup_routes(server):
     server.add_function_route('/get-clock-settings', get_clock_settings_request)
     server.add_function_route('/set-clock-settings', set_clock_settings_request)
     server.add_function_route('/set-wifi-settings', set_wifi_settings_request)
+    server.add_function_route('/set-time', set_time_request)
 
 async def connect_to_wifi():
     await scroll_message(matrix_fonts.textFont1, "Wifi", 0.05)

@@ -124,6 +124,7 @@
 
         <div x-show="selectedOption=='Clock Settings'" x-collapse
           class=" rounded-lg ring-1 ring-gray-100 p-3 my-4">
+          <!-- time -->
           <div class="mb-4">
             <label for="timeControl" class="block text-sm font-medium leading-6 text-gray-900">Time:</label>
             <input @change="datetimeUpdated()" step="60" type="datetime-local" id="timeControl" x-model="newTimeString"
@@ -137,7 +138,7 @@
               </svg>              
               <span>Update Time</span></button>
           </div>
-
+          <!-- brightness -->
           <div class="mb-4">
             <label for="brightnessControl" class="block text-sm font-medium leading-6 text-gray-900">Brightness: <span
                 x-text="settings.brightness"></span></label>
@@ -306,7 +307,8 @@
         init() {
           console.log('init')
           this.getClockSettings()
-          this.newTimeString = this.formatTime(this.dateToArray(new Date()), false)
+          //this.newTimeString = this.formatTime(this.dateToArray(new Date()), false)
+          this.newTimeString = this.dateToString(new Date())
           // do it on the next alpine tick
           this.$nextTick(() => {
             //this.selectedOption = 'Wi-Fi'
@@ -356,6 +358,8 @@
           }
         },
         async updateTime() {
+          console.log('update time',this.newTimeString)
+          this.timeDisplay = this.dateStringToArray(this.newTimeString)
           const postData = { 'time': this.timeDisplay }
           const response = await fetch(this.path + '/set-time', {
             method: 'POST',
@@ -421,6 +425,16 @@
             return `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')} ${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
           }
           return `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}T${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}:${second.toString().padStart(2, '0')}`;
+        },
+        dateToString(date) {
+          const year = date.getFullYear()
+          const month = (date.getMonth() + 1).toString().padStart(2, '0')
+          const day = date.getDate().toString().padStart(2, '0')
+          const hour = date.getHours().toString().padStart(2, '0')
+          const minute = date.getMinutes().toString().padStart(2, '0')
+          //const second = date.getSeconds().toString().padStart(2, '0')
+          //return `${year}-${month}-${day}T${hour}:${minute}:${second}`
+          return `${year}-${month}-${day}T${hour}:${minute}`
         },
         ...e
       }

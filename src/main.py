@@ -66,7 +66,8 @@ clockFont = {
     '8': [0x7c,0xc6,0xc6,0x7c,0xc6,0xc6,0x7c,0x00],
     '9': [0x7c,0xc6,0xc6,0x7e,0x06,0x0c,0x78,0x00],
     '.': [0x00,0x00,0x00,0x00,0x00,0x18,0x18,0x00],
-    'wifi': [0x3c,0x42,0x99,0xa5,0x24,0x00,0x18,0x18]
+    'wifi': [0x3c,0x42,0x99,0xa5,0x24,0x00,0x18,0x18],
+    'full': [0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff]
 }
 
 def read_config():
@@ -176,6 +177,19 @@ def startup_animation():
         if config['ENABLE_WS2812B']:
             ws2812b_matrix.show_char_with_color_array(char, ws2812b_matrix.get_rainbow_array())
         time.sleep(0.1)
+    test_pattern()
+
+def test_pattern():
+    colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255)]
+    for color in colors:
+        if config['ENABLE_WS2812B']:
+            ws2812b_matrix.show_char(clockFont['full'], color)
+        if config['ENABLE_MAX7219']:
+            spi_matrix.show_char(clockFont['full'])
+        if config['ENABLE_HT16K33']:
+            i2c_matrix.show_char(i2c_matrix.reverse_char(clockFont['full']))
+        time.sleep(0.5)
+
 
 async def show_string(string):
     for char in string:
@@ -294,6 +308,15 @@ async def set_time_request(request, response):
     }
     await response.send_json(json.dumps(response_data), 200)
 
+async def test_pattern_request(request, response):
+    response_data = {
+        'status': 'OK',
+        'success': True,
+        'message': 'Test pattern started',
+    }
+    await response.send_json(json.dumps(response_data), 200)
+    test_pattern()
+
 async def set_clock_settings_request(request, response):
     global current_display_mode
     global single_color
@@ -360,6 +383,7 @@ def setup_routes(server):
     server.add_function_route('/set-clock-settings', set_clock_settings_request)
     server.add_function_route('/set-wifi-settings', set_wifi_settings_request)
     server.add_function_route('/set-time', set_time_request)
+    server.add_function_route('/test-pattern', test_pattern_request)
 
 async def connect_to_wifi():
     await scroll_message(matrix_fonts.textFont1, "Wifi", 0.05)

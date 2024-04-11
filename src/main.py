@@ -488,7 +488,7 @@ if config['ENABLE_MAX7219']:
 
 if config['ENABLE_WS2812B']:
     ws2812b_matrix = ws2812b_matrix(config['WS2812B_PIN'], 8, 8)
-    ws2812b_matrix.set_brightness(1)
+    ws2812b_matrix.set_brightness(brightness)
 
 startup_animation()
 

@@ -304,7 +304,7 @@ async def set_wifi_settings_request(request, response):
         'message': 'Updated Wi-Fi',
         'settings': settings_object()
     }
-    asyncio.create_task(server.connect_wifi(wifi_ssid, wifi_password))
+    asyncio.create_task(connect_to_wifi())
     await response.send_json(json.dumps(response_data), 200)
 
 async def set_time_request(request, response):
@@ -412,6 +412,8 @@ async def connect_to_wifi():
         success = await server.connect_wifi(wifi_ssid, wifi_password)
         if success:
             print("Connected to Wi-Fi")
+            await show_string(server.get_wifi_ip_address())
+            await scroll_message(matrix_fonts.textFont1, server.get_wifi_ip_address(), 0.05)
         else:
             print("Failed to connect to Wi-Fi")
         return success
@@ -429,8 +431,8 @@ async def main():
         ap_connnected = server.start_access_point('gurgleapps', 'gurgleapps')
     print("Access Point active: " + str(ap_connnected)) 
     if server.is_wifi_connected():
-        await show_string(server.get_wifi_ip_address())
-        await scroll_message(matrix_fonts.textFont1, server.get_wifi_ip_address(), 0.05)
+        #await show_string(server.get_wifi_ip_address())
+        #await scroll_message(matrix_fonts.textFont1, server.get_wifi_ip_address(), 0.05)
         sync_ntp_time()
     else:
         await scroll_message(matrix_fonts.textFont1, "Error No Wi-Fi", 0.05)

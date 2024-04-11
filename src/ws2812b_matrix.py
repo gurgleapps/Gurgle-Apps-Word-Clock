@@ -7,13 +7,14 @@ class ws2812b_matrix:
         self.width = width
         self.height = height
         self.np = neopixel.NeoPixel(machine.Pin(pin), width*height)
-        self.gamma = 1.8
-        self.gamma_table = [int(pow(x / 255.0, self.gamma) * 255.0 + 0.5) for x in range(256)]
+        self.gamma = 2.2
+        self.gamma_table = [int(pow(x / 255.0, self.gamma) * 255.0 + 1.0) for x in range(256)]
+        self.gamma_table[0] = 0
         self.char = [0x3c,0x56,0x93,0xdb,0xff,0xff,0xdd,0x89]
         self.brightness = 7
         self.max_brightness = 15
         self.set_brightness(self.brightness)
-        self.gama_correction = False
+        self.gama_correction = True
 
 
     def show_char(self, char, color=(255, 255, 255)):

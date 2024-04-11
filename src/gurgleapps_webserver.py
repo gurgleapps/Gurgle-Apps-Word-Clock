@@ -113,7 +113,6 @@ class GurgleAppsWebserver:
     
     def get_ap_ssid(self):
         return self.wlan_ap.config('essid')
-        return self.ap_ssid
     
     def get_ap_ip_address(self):
         return self.wlan_ap.ifconfig()[0]
@@ -150,7 +149,7 @@ class GurgleAppsWebserver:
                 for listener in self.listeners:
                     listener({"event": self.EVENT_WIFI_DISCONNECTED})
                 print("Lost connection to Wi-Fi. Attempting to reconnect...")
-                self.connect_wifi(self.wifi_ssid, self.wifi_password)
+                await self.connect_wifi(self.wifi_ssid, self.wifi_password)
             await asyncio.sleep(20)
 
 

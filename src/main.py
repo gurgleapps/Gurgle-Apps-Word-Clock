@@ -304,7 +304,7 @@ async def set_wifi_settings_request(request, response):
         'message': 'Updated Wi-Fi',
         'settings': settings_object()
     }
-    server.connect_wifi(wifi_ssid,wifi_password)
+    asyncio.create_task(server.connect_wifi(wifi_ssid, wifi_password))
     await response.send_json(json.dumps(response_data), 200)
 
 async def set_time_request(request, response):

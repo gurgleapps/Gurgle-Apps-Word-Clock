@@ -28,6 +28,9 @@ past_to_color = (0, 0, 255)
 # Ready to hold color data for each word
 colour_per_word_array = []
 
+last_wifi_connected_time = 0
+last_wifi_disconnected_time = 0
+
 clockFont = {
     'past': [0x00, 0x00, 0x1e, 0x00, 0x00, 0x00, 0x00, 0x00],
     'to': [0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00],
@@ -97,13 +100,14 @@ def scan_for_devices():
         print('no i2c devices')
 
 def sync_ntp_time():
-    global time_offset, ntp_synced_at, config
+    global time_offset, ntp_synced_at, config, last_wifi_connected_time
     remember_time = time.localtime()
     ntptime.host = "pool.ntp.org"
     try:
         ntptime.settime()
         ntp_synced_at = time.time()
         config['NTP_SYNCED_AT'] = ntp_synced_at
+        last_wifi_connected_time = time.ticks_ms()
         save_config(config)
     except OSError:
         print("Error setting time")
@@ -270,6 +274,14 @@ def display_single_color_mode(word):
 def display_color_per_word_mode(word):
     ws2812b_matrix.show_char_with_color_array(word, colour_per_word_array)
 
+def webserver_event_handler(event):
+    if event['event'] == GurgleAppsWebserver.EVENT_WIFI_CONNECTED:
+        last_wifi_connected_time = time.ticks_ms()
+        print("E: Wi-Fi connected")
+    elif event['event'] == GurgleAppsWebserver.EVENT_WIFI_DISCONNECTED:
+        last_wifi_disconnected_time = time.ticks_ms()
+        print("E: Wi-Fi disconnected")
+
 async def set_brightness_request(request, response):
     new_brightness = int(request.post_data['brightness'])
     print("Setting brightness to " + str(new_brightness))
@@ -292,8 +304,8 @@ async def set_wifi_settings_request(request, response):
         'message': 'Updated Wi-Fi',
         'settings': settings_object()
     }
+    server.connect_wifi(wifi_ssid,wifi_password)
     await response.send_json(json.dumps(response_data), 200)
-    await connect_to_wifi()
 
 async def set_time_request(request, response):
     print(request.post_data)
@@ -410,7 +422,12 @@ async def connect_to_wifi():
         
 async def main():
     #await scroll_message(matrix_fonts.textFont1, "GurgleApps", 0.05)
-    await connect_to_wifi()
+    ap_connnected = False
+    wifi_connected = await connect_to_wifi()
+    print("Connected to Wi-Fi: " + str(wifi_connected))
+    if not wifi_connected:
+        ap_connnected = server.start_access_point('gurgleapps', 'gurgleapps')
+    print("Access Point active: " + str(ap_connnected)) 
     if server.is_wifi_connected():
         await show_string(server.get_wifi_ip_address())
         await scroll_message(matrix_fonts.textFont1, server.get_wifi_ip_address(), 0.05)
@@ -418,6 +435,20 @@ async def main():
     else:
         await scroll_message(matrix_fonts.textFont1, "Error No Wi-Fi", 0.05)
     while True:
+        if server.is_access_point_active():
+            if server.is_wifi_connected():
+                delta = time.ticks_diff(time.ticks_ms(), last_wifi_connected_time)
+                print("Connected to Wi-Fi for " + str(delta // 1000) + " seconds")
+                if delta > 10:
+                    server.stop_access_point() # Stop access point after 10 seconds of Wi-Fi connection
+                    print("Access Point stopped")
+        if not server.is_wifi_connected():
+            if not server.is_access_point_active():
+                delta = time.ticks_diff(time.ticks_ms(), last_wifi_disconnected_time)
+                print("Disconnected from Wi-Fi for " + str(delta // 1000) + " seconds")
+                if delta > 60: # Start access point after 60 seconds of Wi-Fi disconnection
+                    ap_connnected = server.start_access_point('gurgleapps', 'gurgleapps')
+                    print("Access Point started: " + str(ap_connnected))
         time_to_matrix()
         if ntp_synced_at < (time.time() - 3600) and server.is_wifi_connected(): # Sync time every hour
             sync_ntp_time()
@@ -465,15 +496,10 @@ server = GurgleAppsWebserver(
     doc_root="/www",
     log_level=2
 )
+server.add_event_listener(webserver_event_handler)
 server.set_default_index_pages(["time.html"])
 server.set_cors(True)
 setup_routes(server)
 
-print("Starting access point")
-success = server.start_access_point('gurgleapps', 'gurgleapps')
-if success:
-    print(success)
-    asyncio.run(server.start_server_with_background_task(main))
-else:
-    print("Failed to start access point")
-    show_char(clockFont['error'])
+asyncio.run(server.start_server_with_background_task(main))
+

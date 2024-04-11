@@ -20,8 +20,12 @@ import machine
 
 class GurgleAppsWebserver:
 
+    EVENT_WIFI_CONNECTED = "EVENT_WIFI_CONNECTED"
+    EVENT_WIFI_DISCONNECTED = "EVENT_WIFI_DISCONNECTED"
+
     def __init__(self, port=80, timeout=20, doc_root="/www", log_level=0):
         print("GurgleApps.com Webserver")
+        self.listeners = []
         self.default_index_pages = [] # ["index.html", "index.htm"]
         self.ip_address = '1.1.1.1'
         self.port = port
@@ -35,6 +39,7 @@ class GurgleAppsWebserver:
         self.log_level = log_level
         self.wlan_sta = network.WLAN(network.STA_IF)
         self.wlan_ap = network.WLAN(network.AP_IF)
+        self.wlan_ap.active(False)
         self.enable_cors = False
         self.html = """<!DOCTYPE html>
         <html>
@@ -76,12 +81,17 @@ class GurgleAppsWebserver:
                 if self.wlan_sta.isconnected():
                     self.ip_address = self.wlan_sta.ifconfig()[0]
                     print(f"Connected to Wi-Fi. IP: {self.ip_address}")
+                    for listener in self.listeners:
+                        listener({"event": self.EVENT_WIFI_CONNECTED})
                     return True
             print("Failed to connect to Wi-Fi.")
             return False
         except OSError as e:
             print(f"Error connecting to Wi-Fi: {e}")
             return False
+        
+    def add_event_listener(self, listener):
+        self.listeners.append(listener)
         
     def is_wifi_connected(self):
         return self.wlan_sta.isconnected()
@@ -91,6 +101,12 @@ class GurgleAppsWebserver:
     
     def get_wifi_ssid(self):
         return self.wifi_ssid
+    
+    def set_wifi_ssid(self, ssid):
+        self.wifi_ssid = ssid
+
+    def set_wifi_password(self, password):
+        self.wifi_password = password
     
     def get_wifi_ip_address(self):
         return self.wlan_sta.ifconfig()[0]
@@ -123,9 +139,16 @@ class GurgleAppsWebserver:
             machine.reset()
         return True
     
+    def stop_access_point(self):
+        self.wlan_ap.active(False)
+        print("AP Mode stopped.")
+        return True
+    
     async def maintain_connection(self):
         while True:
             if self.wlan_sta.isconnected() == False and self.wifi_ssid != None:
+                for listener in self.listeners:
+                    listener({"event": self.EVENT_WIFI_DISCONNECTED})
                 print("Lost connection to Wi-Fi. Attempting to reconnect...")
                 self.connect_wifi(self.wifi_ssid, self.wifi_password)
             await asyncio.sleep(20)

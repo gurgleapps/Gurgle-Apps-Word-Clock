@@ -1,4 +1,9 @@
-import utime
+try:
+    import utime as time
+except ImportError:
+    import time
+from time import gmtime
+import machine
 try:
     import usocket as socket
 except ImportError:
@@ -14,15 +19,18 @@ except ImportError:
 
 # Default NTP server and constants
 NTP_SERVER = 'pool.ntp.org'
-NTP_DELTA = 2208988800  # Unix time is seconds since 1970, not 1900
+NTP_DELTA = 3155673600 if gmtime(0)[0] == 2000 else 2208988800
 
 def get_ntp_time(server=NTP_SERVER, timeout=1):
     NTP_QUERY = bytearray(48)
     NTP_QUERY[0] = 0x1B  # NTP packet mode: Client, version 3
-    addr = socket.getaddrinfo(server, 123)[0][-1]
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
-        s.settimeout(timeout)
+        addr = socket.getaddrinfo(server, 123)[0][-1]
+    except OSError as e:
+        raise ValueError(f"Failed to resolve NTP server address: {e}")
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        #s.settimeout(timeout)
         poller = select.poll()
         poller.register(s, select.POLLIN)
         s.sendto(NTP_QUERY, addr)
@@ -31,7 +39,7 @@ def get_ntp_time(server=NTP_SERVER, timeout=1):
             if len(msg) < 48:
                 raise ValueError("Received incomplete NTP response.")
             timestamp = struct.unpack("!I", msg[40:44])[0]
-            return utime.time() + timestamp - NTP_DELTA
+            return timestamp - NTP_DELTA
         else:
             raise TimeoutError("NTP request timed out.")
     finally:
@@ -40,8 +48,7 @@ def get_ntp_time(server=NTP_SERVER, timeout=1):
 def settime(server=NTP_SERVER, timeout=1):
     try:
         t = get_ntp_time(server, timeout)
-        tm = utime.gmtime(t)
-        import machine
+        tm = time.gmtime(t)
         rtc = machine.RTC()
         rtc.datetime((tm[0], tm[1], tm[2], tm[6] + 1, tm[3], tm[4], tm[5], 0))
         print("Time successfully synchronized.")

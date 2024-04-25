@@ -33,6 +33,8 @@ last_wifi_connected_time = 0
 last_wifi_disconnected_time = 0
 
 ntp_synced_at = 0
+# So we don't spam the NTP server
+last_ntp_sync_attempt = None
 
 clockFont = {
     'past': [0x00, 0x00, 0x1e, 0x00, 0x00, 0x00, 0x00, 0x00],
@@ -103,13 +105,17 @@ def scan_for_devices():
         print('no i2c devices')
 
 async def sync_ntp_time(use_alternative=False):
-    global ntp_synced_at, config, last_wifi_connected_time
-    mtp_hosts = ['pool.ntp.org', 'time.nist.gov', 'time.google.com']
-    ntptime.timeout = 3
+    global ntp_synced_at, last_ntp_sync_attempt, config, last_wifi_connected_time
+    ntp_retry_interval = 300
+    if last_ntp_sync_attempt and (time.time() - last_ntp_sync_attempt) < ntp_retry_interval:
+        print(f"Last NTP sync attempt was less than {ntp_retry_interval} seconds ago.")
+        return
+    mtp_hosts = ['pool.ntp.org', 'time.nist.gov', 'time.google.com', 'time.windows.com']
+    ntptime.timeout = 2
     for ntp_host in mtp_hosts:
         try:
             if use_alternative:
-                alt_ntptime.settime(ntp_host, 3)
+                alt_ntptime.settime(ntp_host, 2.0)
             else:
                 ntptime.host = ntp_host
                 ntptime.settime()
@@ -117,14 +123,15 @@ async def sync_ntp_time(use_alternative=False):
             config['NTP_SYNCED_AT'] = ntp_synced_at
             last_wifi_connected_time = time.ticks_ms()
             save_config(config)
-            print(f"Time synced with {ntp_host} successfully using {'alternative ' if use_alternative else ''}server.")
+            print(f"Time synced with {ntp_host} successfully using alternative method: {use_alternative}")
             return
         except OSError as e:
-            asyncio.sleep(0)
-            print(f"Error syncing time with {ntp_host}: {e} using alternative server.{use_alternative}")
+            await asyncio.sleep(3)
+            print(f"Error syncing time with {ntp_host}: {e} using alternative method.{use_alternative}")
     if not use_alternative:
         print("Standard methods failed, trying alternative methods.")
-        sync_ntp_time(use_alternative=True)
+        await sync_ntp_time(use_alternative=True)
+        last_ntp_sync_attempt = time.time()
 
 
 def get_corrected_time():

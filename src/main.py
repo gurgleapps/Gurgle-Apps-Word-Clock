@@ -3,6 +3,7 @@ from ht16k33_matrix import ht16k33_matrix
 from max7219_matrix import max7219_matrix
 from ws2812b_matrix import ws2812b_matrix
 import ntptime
+import alt_ntptime
 import utime as time
 from gurgleapps_webserver import GurgleAppsWebserver
 import uasyncio as asyncio
@@ -30,6 +31,8 @@ colour_per_word_array = []
 
 last_wifi_connected_time = 0
 last_wifi_disconnected_time = 0
+
+ntp_synced_at = 0
 
 clockFont = {
     'past': [0x00, 0x00, 0x1e, 0x00, 0x00, 0x00, 0x00, 0x00],
@@ -99,18 +102,29 @@ def scan_for_devices():
     else:
         print('no i2c devices')
 
-def sync_ntp_time():
-    global time_offset, ntp_synced_at, config, last_wifi_connected_time
-    remember_time = time.localtime()
-    ntptime.host = "pool.ntp.org"
-    try:
-        ntptime.settime()
-        ntp_synced_at = time.time()
-        config['NTP_SYNCED_AT'] = ntp_synced_at
-        last_wifi_connected_time = time.ticks_ms()
-        save_config(config)
-    except OSError:
-        print("Error setting time")
+async def sync_ntp_time(use_alternative=False):
+    global ntp_synced_at, config, last_wifi_connected_time
+    mtp_hosts = ['pool.ntp.org', 'time.nist.gov', 'time.google.com']
+    ntptime.timeout = 3
+    for ntp_host in mtp_hosts:
+        try:
+            if use_alternative:
+                alt_ntptime.settime(ntp_host, 3)
+            else:
+                ntptime.host = ntp_host
+                ntptime.settime()
+            ntp_synced_at = time.time()
+            config['NTP_SYNCED_AT'] = ntp_synced_at
+            last_wifi_connected_time = time.ticks_ms()
+            save_config(config)
+            print(f"Time synced with {ntp_host} successfully using {'alternative ' if use_alternative else ''}server.")
+            return
+        except OSError as e:
+            asyncio.sleep(0)
+            print(f"Error syncing time with {ntp_host}: {e} using alternative server.{use_alternative}")
+    if not use_alternative:
+        print("Standard methods failed, trying alternative methods.")
+        sync_ntp_time(use_alternative=True)
 
 
 def get_corrected_time():
@@ -423,6 +437,7 @@ async def connect_to_wifi():
 
         
 async def main():
+    global ntp_synced_at
     #await scroll_message(matrix_fonts.textFont1, "GurgleApps", 0.05)
     ap_connnected = False
     wifi_connected = await connect_to_wifi()
@@ -433,7 +448,7 @@ async def main():
     if server.is_wifi_connected():
         #await show_string(server.get_wifi_ip_address())
         #await scroll_message(matrix_fonts.textFont1, server.get_wifi_ip_address(), 0.05)
-        sync_ntp_time()
+        await sync_ntp_time()
     else:
         await scroll_message(matrix_fonts.textFont1, "Error No Wi-Fi", 0.05)
     while True:
@@ -453,7 +468,7 @@ async def main():
                     print("Access Point started: " + str(ap_connnected))
         time_to_matrix()
         if ntp_synced_at < (time.time() - 3600) and server.is_wifi_connected(): # Sync time every hour
-            sync_ntp_time()
+            await sync_ntp_time()
         await asyncio.sleep(10)
 
 display_modes = {

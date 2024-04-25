@@ -9,6 +9,8 @@ from gurgleapps_webserver import GurgleAppsWebserver
 import uasyncio as asyncio
 import json
 import matrix_fonts
+import urandom as random
+from board import Board
 
 config_file = 'config.json'
 
@@ -16,6 +18,7 @@ config_file = 'config.json'
 DISPLAY_MODE_RAINBOW = 'rainbow'
 DISPLAY_MODE_SINGLE_COLOR = 'single_color'
 DISPLAY_MODE_COLOR_PER_WORD = 'color_per_word'
+DISPLAY_MODE_RANDOM = 'random'
 
 current_display_mode = DISPLAY_MODE_RAINBOW
 
@@ -103,6 +106,13 @@ def scan_for_devices():
             print(hex(d))
     else:
         print('no i2c devices')
+
+def read_temperature():
+    # pico only
+    if Board().type != Board.BoardType.PICO_W:
+        return 0
+    reading = machine.ADC(4).read_u16() * 3.3 / 65536
+    return 27 - (reading - 0.706) / 0.001721
 
 async def sync_ntp_time(use_alternative=False):
     global ntp_synced_at, last_ntp_sync_attempt, config, last_wifi_connected_time
@@ -289,6 +299,13 @@ def set_brightness(new_brightness):
 def display_rainbow_mode(word):
     ws2812b_matrix.show_char_with_color_array(word, ws2812b_matrix.get_rainbow_array())
 
+def display_random_mode(word):
+    random_array = ws2812b_matrix.get_rainbow_array()
+    for i in range(len(random_array)):
+        j = random.randint(0, len(random_array) - 1)
+        random_array[i], random_array[j] = random_array[j], random_array[i]
+    ws2812b_matrix.show_char_with_color_array(word, random_array)
+
 def display_single_color_mode(word):
     ws2812b_matrix.show_char(word, single_color)
 
@@ -404,6 +421,7 @@ def settings_object():
         'ap_address': server.get_ap_ip_address(),
         'ap_ssid': server.get_ap_ssid(),
         'ap_active': server.is_access_point_active(),
+        'cpu_temp': read_temperature(),
         'status': 'OK'
     }
 
@@ -481,7 +499,8 @@ async def main():
 display_modes = {
     DISPLAY_MODE_RAINBOW: display_rainbow_mode,
     DISPLAY_MODE_SINGLE_COLOR: display_single_color_mode,
-    DISPLAY_MODE_COLOR_PER_WORD: display_color_per_word_mode
+    DISPLAY_MODE_COLOR_PER_WORD: display_color_per_word_mode,
+    DISPLAY_MODE_RANDOM: display_random_mode
 }
 
 config = read_config()

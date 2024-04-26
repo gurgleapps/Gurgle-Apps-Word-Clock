@@ -11,6 +11,7 @@ import json
 import matrix_fonts
 import urandom as random
 from board import Board
+import socket
 
 config_file = 'config.json'
 
@@ -38,6 +39,7 @@ last_wifi_disconnected_time = 0
 ntp_synced_at = 0
 # So we don't spam the NTP server
 last_ntp_sync_attempt = None
+last_dns_check_status = None
 
 clockFont = {
     'past': [0x00, 0x00, 0x1e, 0x00, 0x00, 0x00, 0x00, 0x00],
@@ -114,18 +116,30 @@ def read_temperature():
     reading = machine.ADC(4).read_u16() * 3.3 / 65536
     return 27 - (reading - 0.706) / 0.001721
 
-async def sync_ntp_time(use_alternative=False):
+def test_dns():
+    global last_dns_check_status
+    try:
+        ip = socket.getaddrinfo('www.google.com', 80)
+        print("DNS resolution successful, IP:", ip)
+        last_dns_check_status = True
+    except OSError as e:
+        print("DNS resolution failed:", e)
+        last_dns_check_status = False
+    return last_dns_check_status
+
+
+async def sync_ntp_time(use_alternative=False, timeout=2.0):
     global ntp_synced_at, last_ntp_sync_attempt, config, last_wifi_connected_time
     ntp_retry_interval = 300
     if last_ntp_sync_attempt and (time.time() - last_ntp_sync_attempt) < ntp_retry_interval:
         print(f"Last NTP sync attempt was less than {ntp_retry_interval} seconds ago.")
         return
     mtp_hosts = ['pool.ntp.org', 'time.nist.gov', 'time.google.com', 'time.windows.com']
-    ntptime.timeout = 2
+    ntptime.timeout = timeout
     for ntp_host in mtp_hosts:
         try:
             if use_alternative:
-                alt_ntptime.settime(ntp_host, 2.0)
+                alt_ntptime.settime(ntp_host, timeout=timeout)
             else:
                 ntptime.host = ntp_host
                 ntptime.settime()
@@ -141,7 +155,23 @@ async def sync_ntp_time(use_alternative=False):
     if not use_alternative:
         print("Standard methods failed, trying alternative methods.")
         await sync_ntp_time(use_alternative=True)
-        last_ntp_sync_attempt = time.time()
+    else:
+        # both methods failed
+        print(f"Failed to sync time with all NTP servers. DNS check status: {test_dns()}")
+        try:
+            ntp_test = alt_ntptime.test_ntp_server()
+            print(f"NTP test result: {ntp_test}")
+        except Exception as e:
+            print(f"Failed to test NTP server: {e}")
+        try:
+            http_time = alt_ntptime.get_time_via_http()
+            print(f"HTTP time: {http_time}")
+        except Exception as e:
+            print(f"Failed to get time via HTTP: {e}")
+        if server.is_wifi_connected() and test_dns():
+            print('wifi up, dns ok, but still failed to sync time rebooting')
+            machine.reset()
+    last_ntp_sync_attempt = time.time()
 
 
 def get_corrected_time():
@@ -405,6 +435,7 @@ async def get_clock_settings_request(request, response):
     await response.send_json(settings_to_json())
 
 def settings_object():
+    global ntp_synced_at, last_ntp_sync_attempt
     return {
         'brightness': brightness,
         'display_mode': current_display_mode,
@@ -414,6 +445,7 @@ def settings_object():
         'past_to_color': past_to_color,
         'time': get_corrected_time(),
         'local_time': time.localtime(),
+        'unix_time': time.time(),
         'time_offset': time_offset,
         'wifi_connected': server.is_wifi_connected(),
         'wifi_ip_address': server.get_wifi_ip_address(),
@@ -422,6 +454,9 @@ def settings_object():
         'ap_ssid': server.get_ap_ssid(),
         'ap_active': server.is_access_point_active(),
         'cpu_temp': read_temperature(),
+        'ntp_synced_at': ntp_synced_at,
+        'last_ntp_sync_attempt': last_ntp_sync_attempt,
+        'dns_check_status': last_dns_check_status,
         'status': 'OK'
     }
 
@@ -462,19 +497,14 @@ async def connect_to_wifi():
 
         
 async def main():
-    global ntp_synced_at
-    #await scroll_message(matrix_fonts.textFont1, "GurgleApps", 0.05)
+    global ntp_synced_at, last_wifi_connected_time, last_wifi_disconnected_time
     ap_connnected = False
     wifi_connected = await connect_to_wifi()
     print("Connected to Wi-Fi: " + str(wifi_connected))
     if not wifi_connected:
         ap_connnected = server.start_access_point('gurgleapps', 'gurgleapps')
     print("Access Point active: " + str(ap_connnected)) 
-    if server.is_wifi_connected():
-        #await show_string(server.get_wifi_ip_address())
-        #await scroll_message(matrix_fonts.textFont1, server.get_wifi_ip_address(), 0.05)
-        await sync_ntp_time()
-    else:
+    if not server.is_wifi_connected():
         await scroll_message(matrix_fonts.textFont1, "Error No Wi-Fi", 0.05)
     while True:
         if server.is_access_point_active():

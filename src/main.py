@@ -144,9 +144,7 @@ async def sync_ntp_time(use_alternative=False, timeout=2.0):
                 ntptime.host = ntp_host
                 ntptime.settime()
             ntp_synced_at = time.time()
-            config['NTP_SYNCED_AT'] = ntp_synced_at
             last_wifi_connected_time = time.ticks_ms()
-            save_config(config)
             print(f"Time synced with {ntp_host} successfully using alternative method: {use_alternative}")
             return
         except OSError as e:
@@ -545,7 +543,6 @@ hour_color = config.get('HOUR_COLOR', (255, 0, 0))
 past_to_color = config.get('PAST_TO_COLOR', (0, 0, 255))
 current_display_mode = config.get('DISPLAY_MODE', DISPLAY_MODE_RAINBOW)
 time_offset = config.get('TIME_OFFSET', 0)
-ntp_synced_at = config.get('NTP_SYNCED_AT', 0)
 
         
 if config['ENABLE_HT16K33']:

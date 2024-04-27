@@ -341,6 +341,7 @@ def display_color_per_word_mode(word):
     ws2812b_matrix.show_char_with_color_array(word, colour_per_word_array)
 
 def webserver_event_handler(event):
+    global last_wifi_connected_time, last_wifi_disconnected_time
     if event['event'] == GurgleAppsWebserver.EVENT_WIFI_CONNECTED:
         last_wifi_connected_time = time.ticks_ms()
         print("E: Wi-Fi connected")
@@ -481,14 +482,15 @@ async def connect_to_wifi():
         # Password could be blank for open networks
         wifi_password = config.get('WIFI_PASSWORD', None)
         print("Connecting to Wi-Fi")
-        success = await server.connect_wifi(wifi_ssid, wifi_password)
-        if success:
-            print("Connected to Wi-Fi")
+        server.connect_wifi(wifi_ssid, wifi_password)
+        if server.is_wifi_connected():
+            print(f"Connected to Wi-Fi ip: {server.get_wifi_ip_address()}")
             await show_string(server.get_wifi_ip_address())
             await scroll_message(matrix_fonts.textFont1, server.get_wifi_ip_address(), 0.05)
+            return True
         else:
             print("Failed to connect to Wi-Fi")
-        return success
+            return False
     else:
         print("No Wi-Fi SSID set")
         return False
@@ -497,13 +499,11 @@ async def connect_to_wifi():
 async def main():
     global ntp_synced_at, last_wifi_connected_time, last_wifi_disconnected_time
     ap_connnected = False
-    wifi_connected = await connect_to_wifi()
-    print("Connected to Wi-Fi: " + str(wifi_connected))
-    if not wifi_connected:
-        ap_connnected = server.start_access_point('gurgleapps', 'gurgleapps')
-    print("Access Point active: " + str(ap_connnected)) 
+    await connect_to_wifi()
     if not server.is_wifi_connected():
-        await scroll_message(matrix_fonts.textFont1, "Error No Wi-Fi", 0.05)
+        ap_connnected = server.start_access_point('gurgleapps', 'gurgleapps')
+        await scroll_message(matrix_fonts.textFont1, "No Wi-Fi", 0.05)
+    print("Access Point active: " + str(ap_connnected)) 
     while True:
         if server.is_access_point_active():
             if server.is_wifi_connected():

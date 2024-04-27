@@ -3,11 +3,15 @@ from ht16k33_matrix import ht16k33_matrix
 from max7219_matrix import max7219_matrix
 from ws2812b_matrix import ws2812b_matrix
 import ntptime
+import alt_ntptime
 import utime as time
 from gurgleapps_webserver import GurgleAppsWebserver
 import uasyncio as asyncio
 import json
 import matrix_fonts
+import urandom as random
+from board import Board
+import socket
 
 config_file = 'config.json'
 
@@ -15,6 +19,7 @@ config_file = 'config.json'
 DISPLAY_MODE_RAINBOW = 'rainbow'
 DISPLAY_MODE_SINGLE_COLOR = 'single_color'
 DISPLAY_MODE_COLOR_PER_WORD = 'color_per_word'
+DISPLAY_MODE_RANDOM = 'random'
 
 current_display_mode = DISPLAY_MODE_RAINBOW
 
@@ -30,6 +35,11 @@ colour_per_word_array = []
 
 last_wifi_connected_time = 0
 last_wifi_disconnected_time = 0
+
+ntp_synced_at = 0
+# So we don't spam the NTP server
+last_ntp_sync_attempt = None
+last_dns_check_status = None
 
 clockFont = {
     'past': [0x00, 0x00, 0x1e, 0x00, 0x00, 0x00, 0x00, 0x00],
@@ -99,18 +109,67 @@ def scan_for_devices():
     else:
         print('no i2c devices')
 
-def sync_ntp_time():
-    global time_offset, ntp_synced_at, config, last_wifi_connected_time
-    remember_time = time.localtime()
-    ntptime.host = "pool.ntp.org"
+def read_temperature():
+    # pico only
+    if Board().type != Board.BoardType.PICO_W:
+        return 0
+    reading = machine.ADC(4).read_u16() * 3.3 / 65536
+    return 27 - (reading - 0.706) / 0.001721
+
+def test_dns():
+    global last_dns_check_status
     try:
-        ntptime.settime()
-        ntp_synced_at = time.time()
-        config['NTP_SYNCED_AT'] = ntp_synced_at
-        last_wifi_connected_time = time.ticks_ms()
-        save_config(config)
-    except OSError:
-        print("Error setting time")
+        ip = socket.getaddrinfo('www.google.com', 80)
+        print("DNS resolution successful, IP:", ip)
+        last_dns_check_status = True
+    except OSError as e:
+        print("DNS resolution failed:", e)
+        last_dns_check_status = False
+    return last_dns_check_status
+
+
+async def sync_ntp_time(use_alternative=False, timeout=2.0):
+    global ntp_synced_at, last_ntp_sync_attempt, config, last_wifi_connected_time
+    ntp_retry_interval = 300
+    if last_ntp_sync_attempt and (time.time() - last_ntp_sync_attempt) < ntp_retry_interval:
+        print(f"Last NTP sync attempt was less than {ntp_retry_interval} seconds ago.")
+        return
+    mtp_hosts = ['pool.ntp.org', 'time.nist.gov', 'time.google.com', 'time.windows.com']
+    ntptime.timeout = timeout
+    for ntp_host in mtp_hosts:
+        try:
+            if use_alternative:
+                alt_ntptime.settime(ntp_host, timeout=timeout)
+            else:
+                ntptime.host = ntp_host
+                ntptime.settime()
+            ntp_synced_at = time.time()
+            last_wifi_connected_time = time.ticks_ms()
+            print(f"Time synced with {ntp_host} successfully using alternative method: {use_alternative}")
+            return
+        except OSError as e:
+            await asyncio.sleep(3)
+            print(f"Error syncing time with {ntp_host}: {e} using alternative method.{use_alternative}")
+    if not use_alternative:
+        print("Standard methods failed, trying alternative methods.")
+        await sync_ntp_time(use_alternative=True)
+    else:
+        # both methods failed
+        print(f"Failed to sync time with all NTP servers. DNS check status: {test_dns()}")
+        try:
+            ntp_test = alt_ntptime.test_ntp_server()
+            print(f"NTP test result: {ntp_test}")
+        except Exception as e:
+            print(f"Failed to test NTP server: {e}")
+        try:
+            http_time = alt_ntptime.get_time_via_http()
+            print(f"HTTP time: {http_time}")
+        except Exception as e:
+            print(f"Failed to get time via HTTP: {e}")
+        if server.is_wifi_connected() and test_dns():
+            print('wifi up, dns ok, but still failed to sync time rebooting')
+            machine.reset()
+    last_ntp_sync_attempt = time.time()
 
 
 def get_corrected_time():
@@ -268,6 +327,13 @@ def set_brightness(new_brightness):
 def display_rainbow_mode(word):
     ws2812b_matrix.show_char_with_color_array(word, ws2812b_matrix.get_rainbow_array())
 
+def display_random_mode(word):
+    random_array = ws2812b_matrix.get_rainbow_array()
+    for i in range(len(random_array)):
+        j = random.randint(0, len(random_array) - 1)
+        random_array[i], random_array[j] = random_array[j], random_array[i]
+    ws2812b_matrix.show_char_with_color_array(word, random_array)
+
 def display_single_color_mode(word):
     ws2812b_matrix.show_char(word, single_color)
 
@@ -275,6 +341,7 @@ def display_color_per_word_mode(word):
     ws2812b_matrix.show_char_with_color_array(word, colour_per_word_array)
 
 def webserver_event_handler(event):
+    global last_wifi_connected_time, last_wifi_disconnected_time
     if event['event'] == GurgleAppsWebserver.EVENT_WIFI_CONNECTED:
         last_wifi_connected_time = time.ticks_ms()
         print("E: Wi-Fi connected")
@@ -367,6 +434,7 @@ async def get_clock_settings_request(request, response):
     await response.send_json(settings_to_json())
 
 def settings_object():
+    global ntp_synced_at, last_ntp_sync_attempt
     return {
         'brightness': brightness,
         'display_mode': current_display_mode,
@@ -376,6 +444,7 @@ def settings_object():
         'past_to_color': past_to_color,
         'time': get_corrected_time(),
         'local_time': time.localtime(),
+        'unix_time': time.time(),
         'time_offset': time_offset,
         'wifi_connected': server.is_wifi_connected(),
         'wifi_ip_address': server.get_wifi_ip_address(),
@@ -383,6 +452,10 @@ def settings_object():
         'ap_address': server.get_ap_ip_address(),
         'ap_ssid': server.get_ap_ssid(),
         'ap_active': server.is_access_point_active(),
+        'cpu_temp': read_temperature(),
+        'ntp_synced_at': ntp_synced_at,
+        'last_ntp_sync_attempt': last_ntp_sync_attempt,
+        'dns_check_status': last_dns_check_status,
         'status': 'OK'
     }
 
@@ -409,33 +482,28 @@ async def connect_to_wifi():
         # Password could be blank for open networks
         wifi_password = config.get('WIFI_PASSWORD', None)
         print("Connecting to Wi-Fi")
-        success = await server.connect_wifi(wifi_ssid, wifi_password)
-        if success:
-            print("Connected to Wi-Fi")
+        server.connect_wifi(wifi_ssid, wifi_password)
+        if server.is_wifi_connected():
+            print(f"Connected to Wi-Fi ip: {server.get_wifi_ip_address()}")
             await show_string(server.get_wifi_ip_address())
             await scroll_message(matrix_fonts.textFont1, server.get_wifi_ip_address(), 0.05)
+            return True
         else:
             print("Failed to connect to Wi-Fi")
-        return success
+            return False
     else:
         print("No Wi-Fi SSID set")
         return False
 
         
 async def main():
-    #await scroll_message(matrix_fonts.textFont1, "GurgleApps", 0.05)
+    global ntp_synced_at, last_wifi_connected_time, last_wifi_disconnected_time
     ap_connnected = False
-    wifi_connected = await connect_to_wifi()
-    print("Connected to Wi-Fi: " + str(wifi_connected))
-    if not wifi_connected:
+    await connect_to_wifi()
+    if not server.is_wifi_connected():
         ap_connnected = server.start_access_point('gurgleapps', 'gurgleapps')
+        await scroll_message(matrix_fonts.textFont1, "No Wi-Fi", 0.05)
     print("Access Point active: " + str(ap_connnected)) 
-    if server.is_wifi_connected():
-        #await show_string(server.get_wifi_ip_address())
-        #await scroll_message(matrix_fonts.textFont1, server.get_wifi_ip_address(), 0.05)
-        sync_ntp_time()
-    else:
-        await scroll_message(matrix_fonts.textFont1, "Error No Wi-Fi", 0.05)
     while True:
         if server.is_access_point_active():
             if server.is_wifi_connected():
@@ -453,13 +521,14 @@ async def main():
                     print("Access Point started: " + str(ap_connnected))
         time_to_matrix()
         if ntp_synced_at < (time.time() - 3600) and server.is_wifi_connected(): # Sync time every hour
-            sync_ntp_time()
+            await sync_ntp_time()
         await asyncio.sleep(10)
 
 display_modes = {
     DISPLAY_MODE_RAINBOW: display_rainbow_mode,
     DISPLAY_MODE_SINGLE_COLOR: display_single_color_mode,
-    DISPLAY_MODE_COLOR_PER_WORD: display_color_per_word_mode
+    DISPLAY_MODE_COLOR_PER_WORD: display_color_per_word_mode,
+    DISPLAY_MODE_RANDOM: display_random_mode
 }
 
 config = read_config()
@@ -474,7 +543,6 @@ hour_color = config.get('HOUR_COLOR', (255, 0, 0))
 past_to_color = config.get('PAST_TO_COLOR', (0, 0, 255))
 current_display_mode = config.get('DISPLAY_MODE', DISPLAY_MODE_RAINBOW)
 time_offset = config.get('TIME_OFFSET', 0)
-ntp_synced_at = config.get('NTP_SYNCED_AT', 0)
 
         
 if config['ENABLE_HT16K33']:

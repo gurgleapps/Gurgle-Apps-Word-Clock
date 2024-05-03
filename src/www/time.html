@@ -93,6 +93,8 @@
 
       <div> <!-- tab content -->
         <div x-show="selectedOption=='Wi-Fi'" x-collapse class=" rounded-lg ring-1 ring-gray-100 p-3 my-4">
+
+
           <div class="mb-4 inline-flex gap-x-4 border-b border-gray-300 w-full pb-2">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
               <path fill-rule="evenodd"
@@ -101,6 +103,9 @@
             </svg>
             Wi-Fi
           </div>
+
+
+
           <div class="mb-4">
             <label for="ssid" class="block text-sm font-medium leading-6 text-gray-900">SSID:</label>
             <input type="text" id="ssid" x-model="settings.wifi_ssid" autocapitalize="none"
@@ -116,14 +121,40 @@
               class="bg-green-600 text-white font-semibold py-2 px-4 rounded focus:outline-none hover:bg-green-700">Update
               Wifi</button>
           </div>
+
+
+          <!-- ap -->
+          <div class="mb-4 inline-flex gap-x-4 border-b border-gray-300 w-full pb-2">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
+              <path fill-rule="evenodd"
+                d="M1.371 8.143c5.858-5.857 15.356-5.857 21.213 0a.75.75 0 0 1 0 1.061l-.53.53a.75.75 0 0 1-1.06 0c-4.98-4.979-13.053-4.979-18.032 0a.75.75 0 0 1-1.06 0l-.53-.53a.75.75 0 0 1 0-1.06Zm3.182 3.182c4.1-4.1 10.749-4.1 14.85 0a.75.75 0 0 1 0 1.061l-.53.53a.75.75 0 0 1-1.062 0 8.25 8.25 0 0 0-11.667 0 .75.75 0 0 1-1.06 0l-.53-.53a.75.75 0 0 1 0-1.06Zm3.204 3.182a6 6 0 0 1 8.486 0 .75.75 0 0 1 0 1.061l-.53.53a.75.75 0 0 1-1.061 0 3.75 3.75 0 0 0-5.304 0 .75.75 0 0 1-1.06 0l-.53-.53a.75.75 0 0 1 0-1.06Zm3.182 3.182a1.5 1.5 0 0 1 2.122 0 .75.75 0 0 1 0 1.061l-.53.53a.75.75 0 0 1-1.061 0l-.53-.53a.75.75 0 0 1 0-1.06Z"
+                clip-rule="evenodd" />
+            </svg>
+            AP
+          </div>
+
+
+          <!-- AP disable -->
+          <div class="flex items-center mb-4">
+            <span class="text-sm mr-3" id="annual-billing-label">
+              <span class="font-medium text-gray-900 dark:text-slate-50">Access Point Disabled</span>
+            </span>
+            <button @click="toggleAccessPointDisabled" type="button"
+              :class="settings.disable_access_point ? 'bg-blue-600' : 'bg-gray-200'"
+              class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ">
+              <span aria-hidden="true" :class="settings.disable_access_point ? 'translate-x-5' : 'translate-x-0'"
+                class=" pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"></span>
+            </button>
+          </div>
+
+
         </div>
         <div x-show="selectedOption=='Updates'" x-collapse class=" rounded-lg ring-1 ring-gray-100 p-3 my-4">
-          Updates Coming Soon ...
+          Updates Coming Soon ... Regular bug fixes and feature updates Please keep an eye on the <a href="https://github.com/gurgleapps/Gurgle-Apps-Word-Clock">Github Repo</a> for updates.
         </div>
         <!-- clock settings -->
 
-        <div x-show="selectedOption=='Clock Settings'" x-collapse
-          class=" rounded-lg ring-1 ring-gray-100 p-3 my-4">
+        <div x-show="selectedOption=='Clock Settings'" x-collapse class=" rounded-lg ring-1 ring-gray-100 p-3 my-4">
           <!-- time -->
           <div class="mb-4">
             <label for="timeControl" class="block text-sm font-medium leading-6 text-gray-900">Time:</label>
@@ -134,8 +165,10 @@
             <button @click.prevent="updateTime()"
               class="bg-green-600 inline-flex text-white font-semibold py-2 px-4 rounded focus:outline-none hover:bg-green-700">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 mr-2">
-                <path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25ZM12.75 6a.75.75 0 0 0-1.5 0v6c0 .414.336.75.75.75h4.5a.75.75 0 0 0 0-1.5h-3.75V6Z" clip-rule="evenodd" />
-              </svg>              
+                <path fill-rule="evenodd"
+                  d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25ZM12.75 6a.75.75 0 0 0-1.5 0v6c0 .414.336.75.75.75h4.5a.75.75 0 0 0 0-1.5h-3.75V6Z"
+                  clip-rule="evenodd" />
+              </svg>
               <span>Update Time</span></button>
           </div>
           <!-- brightness -->
@@ -219,7 +252,8 @@
           </datalist>
           <div class="flex justify-center mb-2 mt-1">
             <button @click.prevent="update()"
-              class="bg-green-600 text-white font-semibold py-2 px-4 rounded focus:outline-none hover:bg-green-700">Update Settings</button>
+              class="bg-green-600 text-white font-semibold py-2 px-4 rounded focus:outline-none hover:bg-green-700">Update
+              Settings</button>
           </div>
         </div>
       </div>
@@ -229,7 +263,9 @@
           <div class="flex items-center space-x-2">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-6 h-6">
               <path d="M14 6H6v8h8V6Z" />
-              <path fill-rule="evenodd" d="M9.25 3V1.75a.75.75 0 0 1 1.5 0V3h1.5V1.75a.75.75 0 0 1 1.5 0V3h.5A2.75 2.75 0 0 1 17 5.75v.5h1.25a.75.75 0 0 1 0 1.5H17v1.5h1.25a.75.75 0 0 1 0 1.5H17v1.5h1.25a.75.75 0 0 1 0 1.5H17v.5A2.75 2.75 0 0 1 14.25 17h-.5v1.25a.75.75 0 0 1-1.5 0V17h-1.5v1.25a.75.75 0 0 1-1.5 0V17h-1.5v1.25a.75.75 0 0 1-1.5 0V17h-.5A2.75 2.75 0 0 1 3 14.25v-.5H1.75a.75.75 0 0 1 0-1.5H3v-1.5H1.75a.75.75 0 0 1 0-1.5H3v-1.5H1.75a.75.75 0 0 1 0-1.5H3v-.5A2.75 2.75 0 0 1 5.75 3h.5V1.75a.75.75 0 0 1 1.5 0V3h1.5ZM4.5 5.75c0-.69.56-1.25 1.25-1.25h8.5c.69 0 1.25.56 1.25 1.25v8.5c0 .69-.56 1.25-1.25 1.25h-8.5c-.69 0-1.25-.56-1.25-1.25v-8.5Z" clip-rule="evenodd" />
+              <path fill-rule="evenodd"
+                d="M9.25 3V1.75a.75.75 0 0 1 1.5 0V3h1.5V1.75a.75.75 0 0 1 1.5 0V3h.5A2.75 2.75 0 0 1 17 5.75v.5h1.25a.75.75 0 0 1 0 1.5H17v1.5h1.25a.75.75 0 0 1 0 1.5H17v1.5h1.25a.75.75 0 0 1 0 1.5H17v.5A2.75 2.75 0 0 1 14.25 17h-.5v1.25a.75.75 0 0 1-1.5 0V17h-1.5v1.25a.75.75 0 0 1-1.5 0V17h-1.5v1.25a.75.75 0 0 1-1.5 0V17h-.5A2.75 2.75 0 0 1 3 14.25v-.5H1.75a.75.75 0 0 1 0-1.5H3v-1.5H1.75a.75.75 0 0 1 0-1.5H3v-1.5H1.75a.75.75 0 0 1 0-1.5H3v-.5A2.75 2.75 0 0 1 5.75 3h.5V1.75a.75.75 0 0 1 1.5 0V3h1.5ZM4.5 5.75c0-.69.56-1.25 1.25-1.25h8.5c.69 0 1.25.56 1.25 1.25v8.5c0 .69-.56 1.25-1.25 1.25h-8.5c-.69 0-1.25-.56-1.25-1.25v-8.5Z"
+                clip-rule="evenodd" />
             </svg>
             <div>System</div>
           </div>
@@ -301,6 +337,25 @@
     </div>
   </div>
 
+
+<!-- Warning Modal -->
+<div x-cloak x-show="showWarningModal" class=" fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4"
+x-transition:enter="transition-opacity duration-1000" x-transition:enter-start="opacity-0"
+x-transition:enter-end="opacity-100" x-transition:leave="transition-opacity duration-500"
+x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+  <div class="bg-white p-5 rounded-lg shadow-lg max-w-sm w-full">
+    <h2 class="text-lg font-bold">Warning!</h2>
+    <p class="my-4">Disabling the Access Point will prevent re-enabling it unless you are connected to Wi-Fi or you manually edit the config.json on your device.</p>
+    <div class="flex justify-end space-x-4">
+      <button @click="showWarningModal=false" class="bg-gray-300 hover:bg-gray-400 text-black py-2 px-4 rounded">Cancel</button>
+      <button @click="toggleAccessPointDisabled" class="bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded">Disable AP</button>
+    </div>
+  </div>
+</div>
+
+
+
+
   <script src="/js/collapse.min.js" defer></script>
   <script src="/js/alpine.min.js" defer></script>
 
@@ -309,10 +364,17 @@
 
     function clock(e) {
       return {
-        settings: { 'brightness': 5, 'display_mode': 'single_color', 'rainbow': [255, 0, 0], 'wifi_connected': false, 'cpu_temp':0 },
+        settings: {
+          'brightness': 5,
+          'display_mode': 'single_color',
+          'rainbow': [255, 0, 0],
+          'wifi_connected': false,
+          'cpu_temp': 0,
+          'disable_access_point': false,
+        },
         timeDisplay: [0, 0, 0, 0, 0, 0],
-        //path: 'http://192.168.1.161', // use this for development
-        path: '',
+        //path: 'http://192.168.1.77', // use this for development
+        path: '', //use this for production
         newTimeString: '2099-01-02T03:04:05',
         singeColorHex: '#ff0000',
         minuteColorHex: '#00ff00',
@@ -322,17 +384,18 @@
         newWifiPassword: '',
         options: ['Clock Settings', 'Wi-Fi', 'Updates'],
         selectedOption: 'Clock Settings',
-        //path: '', //use this for production
+        //selectedOption: 'Wi-Fi',
+        showWarningModal: false,
         init() {
           console.log('init')
           this.getClockSettings()
           //this.newTimeString = this.formatTime(this.dateToArray(new Date()), false)
           this.newTimeString = this.dateToString(new Date())
           // do it on the next alpine tick
-          this.$nextTick(() => {
-            //this.selectedOption = 'Wi-Fi'
-             this.selectedOption = 'Clock Settings'
-          })
+          /*   this.$nextTick(() => {
+              //this.selectedOption = 'Wi-Fi'
+              //this.selectedOption = 'Clock Settings'
+            }) */
         },
         async getClockSettings() {
           const response = await fetch(this.path + '/get-clock-settings')
@@ -377,7 +440,7 @@
           }
         },
         async updateTime() {
-          console.log('update time',this.newTimeString)
+          console.log('update time', this.newTimeString)
           this.timeDisplay = this.dateStringToArray(this.newTimeString)
           const postData = { 'time': this.timeDisplay }
           const response = await fetch(this.path + '/set-time', {
@@ -425,6 +488,26 @@
         },
         update() {
           this.updateSettings()
+        },
+        async toggleAccessPointDisabled() {
+          if (!this.settings.disable_access_point && this.showWarningModal === false) {
+            this.showWarningModal = true
+            return
+          } 
+          this.showWarningModal = false
+          const response = fetch(this.path + (this.settings.disable_access_point ? '/enable-access-point' : '/disable-access-point'), {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          }).then(response => {
+            if (response.ok) {
+             return response.json()
+            }
+          }).then(json => {
+            this.settings = json.settings
+            console.log(json)
+          })
         },
         rgbArrayToHex(rgbArray) {
           return '#' + rgbArray.map(v => v.toString(16).padStart(2, '0')).join('')

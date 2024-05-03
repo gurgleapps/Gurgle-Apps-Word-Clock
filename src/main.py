@@ -23,6 +23,7 @@ DISPLAY_MODE_RANDOM = 'random'
 
 current_display_mode = DISPLAY_MODE_RAINBOW
 
+disable_access_point = False
 brightness = 2
 # Color data for different modes
 single_color = (0, 0, 255)
@@ -374,6 +375,32 @@ async def set_wifi_settings_request(request, response):
     asyncio.create_task(connect_to_wifi())
     await response.send_json(json.dumps(response_data), 200)
 
+async def disable_access_point_request(request, response):
+    global disable_access_point
+    disable_access_point = True
+    config['DISABLE_ACCESS_POINT'] = True
+    save_config(config)
+    response_data = {
+        'status': 'OK',
+        'success': True,
+        'message': 'Access Point disabled',
+        'settings': settings_object()
+    }
+    await response.send_json(json.dumps(response_data), 200)
+
+async def enable_access_point_request(request, response):
+    global disable_access_point
+    disable_access_point = False
+    config['DISABLE_ACCESS_POINT'] = False
+    save_config(config)
+    response_data = {
+        'status': 'OK',
+        'success': True,
+        'message': 'Access Point enabled',
+        'settings': settings_object()
+    }
+    await response.send_json(json.dumps(response_data), 200)
+
 async def set_time_request(request, response):
     print(request.post_data)
     time_data = request.post_data['time']
@@ -456,6 +483,7 @@ def settings_object():
         'ntp_synced_at': ntp_synced_at,
         'last_ntp_sync_attempt': last_ntp_sync_attempt,
         'dns_check_status': last_dns_check_status,
+        'disable_access_point': disable_access_point,
         'status': 'OK'
     }
 
@@ -469,6 +497,8 @@ def setup_routes(server):
     server.add_function_route('/set-wifi-settings', set_wifi_settings_request)
     server.add_function_route('/set-time', set_time_request)
     server.add_function_route('/test-pattern', test_pattern_request)
+    server.add_function_route('/disable-access-point', disable_access_point_request)
+    server.add_function_route('/enable-access-point', enable_access_point_request)
 
 async def connect_to_wifi():
     await scroll_message(matrix_fonts.textFont1, "Wifi", 0.05)
@@ -497,10 +527,10 @@ async def connect_to_wifi():
 
         
 async def main():
-    global ntp_synced_at, last_wifi_connected_time, last_wifi_disconnected_time
+    global ntp_synced_at, last_wifi_connected_time, last_wifi_disconnected_time, disable_access_point
     ap_connnected = False
     await connect_to_wifi()
-    if not server.is_wifi_connected():
+    if not server.is_wifi_connected() and not disable_access_point:
         ap_connnected = server.start_access_point('gurgleapps', 'gurgleapps')
         await scroll_message(matrix_fonts.textFont1, "No Wi-Fi", 0.05)
     print("Access Point active: " + str(ap_connnected)) 
@@ -512,7 +542,7 @@ async def main():
                 if delta > 10:
                     server.stop_access_point() # Stop access point after 10 seconds of Wi-Fi connection
                     print("Access Point stopped")
-        if not server.is_wifi_connected():
+        if not server.is_wifi_connected() and not disable_access_point:
             if not server.is_access_point_active():
                 delta = time.ticks_diff(time.ticks_ms(), last_wifi_disconnected_time)
                 print("Disconnected from Wi-Fi for " + str(delta // 1000) + " seconds")
@@ -543,6 +573,7 @@ hour_color = config.get('HOUR_COLOR', (255, 0, 0))
 past_to_color = config.get('PAST_TO_COLOR', (0, 0, 255))
 current_display_mode = config.get('DISPLAY_MODE', DISPLAY_MODE_RAINBOW)
 time_offset = config.get('TIME_OFFSET', 0)
+disable_access_point = config.get('DISABLE_ACCESS_POINT', False)
 
         
 if config['ENABLE_HT16K33']:

@@ -140,6 +140,7 @@ class GurgleAppsWebserver:
     
     def stop_access_point(self):
         self.wlan_ap.active(False)
+        self.wlan_ap.disconnect()
         print("AP Mode stopped.")
         return True
     

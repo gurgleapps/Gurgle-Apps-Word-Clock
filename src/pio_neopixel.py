@@ -2,22 +2,22 @@ import array, machine, rp2
 
 # PIO program for WS2812
 @rp2.asm_pio(
-    sideset_init=rp2.PIO.OUT_LOW,
-    out_shiftdir=rp2.PIO.SHIFT_LEFT,
-    autopull=True,
-    pull_thresh=24,
+    sideset_init=rp2.PIO.OUT_LOW, # Data line starts low
+    out_shiftdir=rp2.PIO.SHIFT_LEFT, # Shift bits out left to right
+    autopull=True, # Automatically pull data from TX FIFO
+    pull_thresh=24, # 24 bits per pixel (8 bits each for G,R,B
 )
 def ws2812():
-    T1 = 2
-    T2 = 5
-    T3 = 3
-    label("bitloop")
-    out(x, 1).side(0) [T3 - 1]
-    jmp(not_x, "do_zero").side(1) [T1 - 1]
-    jmp("bitloop").side(1) [T2 - 1]
-    label("do_zero")
-    nop().side(0) [T2 - 1]
-    jmp("bitloop")
+    T1 = 2 # 0.625us
+    T2 = 5 # 1.25us
+    T3 = 3 # 0.375us
+    label("bitloop") # Loop for each bit
+    out(x, 1).side(0) [T3 - 1] # Shift out 1 bit to x
+    jmp(not_x, "do_zero").side(1) [T1 - 1] # If bit is 1
+    jmp("bitloop").side(1) [T2 - 1] # Continue with bitloop
+    label("do_zero") # If bit is 0
+    nop().side(0) [T2 - 1] # Stay low
+    jmp("bitloop") # Continue with bitloop
 
 class PioNeoMatrix:
     """

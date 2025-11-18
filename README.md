@@ -8,7 +8,26 @@ It runs on multiple boards including **Raspberry Pi Pico W**, **Pico 2 W**, and 
 > Both WiFi interrupts **and** differences in RP2040 / RP2350 timing can cause corrupted colors or flicker.  
 > This project therefore uses a fast, stable **PIO NeoPixel driver (`pio_neopixel.py`)** to guarantee perfectly timed LED output.
 
+> **⚠️ Pin Change (v1 → v2):**  
+> The default `WS2812B_PIN` in `config.json` changed from **2** to **27**.  
+> If you are upgrading from an older version, be sure to update your `config.json` accordingly.
+
+[GurgleApps Color Word Clock](#gurgleapps-color-word-clock)
+- [GurgleApps Color Word Clock](#gurgleapps-color-word-clock)
+  - [📚 Help Articles](#-help-articles)
+  - [✨ Features](#-features)
+  - [🚀 Quick Start](#-quick-start)
+  - [🧰 Compatibility Notes](#-compatibility-notes)
+    - [Raspberry Pi Pico W / Pico 2 W](#raspberry-pi-pico-w--pico-2-w)
+    - [ESP32, ESP32‑C3, ESP32‑S2, ESP8266](#esp32-esp32c3-esp32s2-esp8266)
+  - [🧩 Hardware Reference](#-hardware-reference)
+    - [ESP32‑C3 Super Mini — Pinout (Top View)](#esp32c3-super-mini--pinout-top-view)
+  - [🖥 Development Environment](#-development-environment)
+  - [🚀 Project Links](#-project-links)
+
+
 ---
+
 
 ## 📚 Help Articles
 
@@ -22,7 +41,10 @@ Click for full build guides and setup instructions:
 
 ## ✨ Features
 
+
 The Color Word Clock is designed to be fun, reliable, and easy to customise—whether you're assembling a full kit or building from scratch.
+
+It's also an ideal starter project for makers, students, and hobbyists who want a hands‑on introduction to MicroPython, LEDs, and WiFi‑enabled electronics.
 
 - **Dual Wi-Fi Mode**  
   The clock connects to your home WiFi while also running its own access point, so you can *always* access the admin panel.
@@ -38,6 +60,31 @@ The Color Word Clock is designed to be fun, reliable, and easy to customise—wh
 
 - **Rock‑Solid LED Output**  
   Uses PIO‑based NeoPixel driver for glitch‑free lighting on Pico W / Pico 2 W.
+
+---
+
+## 🚀 Quick Start
+
+1. **Flash MicroPython**  
+   Install the latest MicroPython firmware on your Pico W, Pico 2 W, or ESP32.
+
+2. **Copy the Project Files**  
+   Upload all files from the `src` directory to your device using Thonny or `mpremote`.
+
+3. **Edit `config.json`**  
+   Set:
+   - `WIFI_SSID`
+   - `WIFI_PASSWORD`
+   - `WS2812B_PIN` (27 for V2 kits and later; 2 for V1 kits) 
+
+4. **Reboot the Board**  
+   After restarting, the clock will start automatically.
+
+5. **Connect to the Web Dashboard**  
+   Use either:
+   - Your home WiFi network if you set it up in `config.json`, or
+   - The clock’s built-in AP  
+   to open the admin panel in your browser.
 
 ---
 

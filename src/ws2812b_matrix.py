@@ -1,12 +1,14 @@
 import machine
-import neopixel
+#import neopixel # Using PioNeoMatrix instead of neopixel due to picow2 issues 
+from pio_neopixel import PioNeoMatrix
 
 class ws2812b_matrix:
 
     def __init__(self, pin, width, height):
         self.width = width
         self.height = height
-        self.np = neopixel.NeoPixel(machine.Pin(pin), width*height)
+        #self.np = neopixel.NeoPixel(machine.Pin(pin), width*height) # Original line using neopixel
+        self.np = PioNeoMatrix(pin, width*height) # Using PioNeoMatrix instead of neopixel due to picow2 issues
         self.gamma = 2.2
         self.gamma_table = [int(pow(x / 255.0, self.gamma) * 255.0 + 1.0) for x in range(256)]
         self.gamma_table[0] = 0

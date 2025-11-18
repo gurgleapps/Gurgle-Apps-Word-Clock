@@ -1,3 +1,4 @@
 src/config.local.py
 build/node_modules
 .DS_Store
+._*

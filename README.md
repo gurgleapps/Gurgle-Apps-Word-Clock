@@ -27,6 +27,9 @@ This code is for our [GurgleApps Color Word Clock Kit project.](https://gurgleap
 
 ## Misc Notes
 
+We used pio_neopixel.py as a drop-in replacement for neopixel due to issues with neopixel on the picow2 board.
+If you are not using a picow or picow2 board, you can revert to using the standard neopixel library by replacing the import and initialization lines in ws2812b_matrix.py.
+
 ### ESP32-C3 super mini pinouts view from top
 
 ```

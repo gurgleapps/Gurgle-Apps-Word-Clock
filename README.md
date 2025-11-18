@@ -1,39 +1,76 @@
-
-
 # GurgleApps Color Word Clock
 
-This code is for our [GurgleApps Color Word Clock Kit project.](https://gurgleapps.com/reviews/electronics/wifi-controlled-color-word-clock-kit-micropython) You can buy our kit or make your own, it works with various matrix displays and microcontrollers. It has a web interface to set the time, colors, and other settings.
+This repository contains the **MicroPython source code** for the GurgleApps WiFi‑Controlled Color Word Clock.  
+It runs on multiple boards including **Raspberry Pi Pico W**, **Pico 2 W**, and **ESP32-based boards**, and supports WS2812B / NeoPixel LED matrices.
 
-- [GurgleApps Color Word Clock](#gurgleapps-color-word-clock)
-  - [Help Articles](#help-articles)
-  - [Features](#features)
-  - [Misc Notes](#misc-notes)
-    - [ESP32-C3 super mini pinouts view from top](#esp32-c3-super-mini-pinouts-view-from-top)
-    - [Development Environment](#development-environment)
+> **Pico W / Pico 2 W Users:**  
+> MicroPython’s built‑in `neopixel` driver is not reliably timed on Pico W / Pico 2 W.  
+> Both WiFi interrupts **and** differences in RP2040 / RP2350 timing can cause corrupted colors or flicker.  
+> This project therefore uses a fast, stable **PIO NeoPixel driver (`pio_neopixel.py`)** to guarantee perfectly timed LED output.
 
-## Help Articles
+---
+
+## 📚 Help Articles
+
+Click for full build guides and setup instructions:
 
 [<img width="480px" src="https://gurgleapps.com/assets/image-c/6a/6ad8f434848ca3c80c485122c52f9b3c9e1734db.jpg">](https://gurgleapps.com/learn/projects/configuring-wifi-word-clock-software)
 
 [<img width="480px" src="https://gurgleapps.com/assets/image-c/19/19ca210702bff2adc577a6032224d2285e5c9a63-960w.webp">](https://gurgleapps.com/learn/projects/wifi-color-word-clock-instructions)
 
-## Features
+---
 
-- Based on our [MicroPython Web Server](https://github.com/gurgleapps/pico-web-server-control).
-- Dual WiFi Mode: The Word Clock can connect to your home network while also creating its own access point. This ensures you can always manage your clock, even if it's disconnected from the home network.
-- Customizable Display: Through the admin panel, adjust settings like brightness, color, and display mode to match your style or mood.
-- Seamless Integration: Easily connect the Word Clock to your home WiFi for uninterrupted functionality.
-- Full Control: The admin panel gives you full control over customization and settings, allowing for a truly personalized experience.
+## ✨ Features
 
-## Misc Notes
+The Color Word Clock is designed to be fun, reliable, and easy to customise—whether you're assembling a full kit or building from scratch.
 
-We used pio_neopixel.py as a drop-in replacement for neopixel due to issues with neopixel on the picow2 board.
-If you are not using a picow or picow2 board, you can revert to using the standard neopixel library by replacing the import and initialization lines in ws2812b_matrix.py.
+- **Dual Wi-Fi Mode**  
+  The clock connects to your home WiFi while also running its own access point, so you can *always* access the admin panel.
 
-### ESP32-C3 super mini pinouts view from top
+- **Web‑Based Control Panel**  
+  Adjust brightness, colors, animations, and time settings from your phone or laptop.
+
+- **Customizable Display**  
+  Choose color themes, effects, per‑pixel patterns, special modes, and more.
+
+- **Matrix‑Agnostic**  
+  Works with many WS2812B matrix sizes (8×8 recommended for classic Word Clock layout).
+
+- **Rock‑Solid LED Output**  
+  Uses PIO‑based NeoPixel driver for glitch‑free lighting on Pico W / Pico 2 W.
+
+---
+
+## 🧰 Compatibility Notes
+
+### Raspberry Pi Pico W / Pico 2 W  
+Use the PIO driver:
 
 ```
-         USB-C Port
+from pio_neopixel import PioNeoMatrix
+```
+
+This is a **drop‑in replacement** for `neopixel.NeoPixel`.
+
+### ESP32, ESP32‑C3, ESP32‑S2, ESP8266  
+These boards do **not** need the PIO driver.  
+You may use the standard MicroPython NeoPixel module:
+
+```
+import neopixel
+np = neopixel.NeoPixel(machine.Pin(pin), width * height)
+```
+
+Edit `ws2812b_matrix.py` accordingly.
+
+---
+
+## 🧩 Hardware Reference
+
+### ESP32‑C3 Super Mini — Pinout (Top View)
+
+```
+         USB‑C Port
           _______
          |       |
 GPIO 05 [o]     [o] 5V
@@ -47,10 +84,25 @@ GPIO 21 [o]     [o] GPIO 00
          |_______|
 ```
 
-### Development Environment
+---
 
-Set up test python web server for quick look and feel rather than copying files to the microcontroller repeatedly.
+## 🖥 Development Environment
 
-```bash
+For fast UI testing without copying files to the microcontroller repeatedly:
+
+```
 python3 -m http.server 8000 -d ./src/www
 ```
+
+This serves the web interface locally.
+
+---
+
+## 🚀 Project Links
+
+- Word Clock Kit: https://gurgleapps.com/reviews/electronics/wifi-controlled-color-word-clock-kit-micropython  
+- MicroPython Web Server Framework: https://github.com/gurgleapps/pico-web-server-control
+
+---
+
+Enjoy building your clock! If you create new animations or improvements, feel free to send a PR.

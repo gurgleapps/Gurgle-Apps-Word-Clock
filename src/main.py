@@ -21,6 +21,14 @@ DISPLAY_MODE_RAINBOW = 'rainbow'
 DISPLAY_MODE_SINGLE_COLOR = 'single_color'
 DISPLAY_MODE_COLOR_PER_WORD = 'color_per_word'
 DISPLAY_MODE_RANDOM = 'random'
+MAX_BRIGHTNESS = 15
+
+SCENE_MODE_FIELDS = {
+    DISPLAY_MODE_RAINBOW: (),
+    DISPLAY_MODE_SINGLE_COLOR: ('single_color',),
+    DISPLAY_MODE_COLOR_PER_WORD: ('minute_color', 'hour_color', 'past_to_color'),
+    DISPLAY_MODE_RANDOM: ()
+}
 
 current_display_mode = DISPLAY_MODE_RAINBOW
 current_scene_name = None
@@ -117,6 +125,36 @@ def log_boot_summary():
     log_boot("Wi-Fi configured: " + ('yes' if wifi_ssid else 'no'))
     log_boot("Access point disabled: " + str(disable_access_point))
 
+def apply_color_field(scene, field_name):
+    global single_color
+    global minute_color
+    global hour_color
+    global past_to_color
+
+    color = normalise_color(scene[field_name])
+    if color is None:
+        log_scene("Invalid " + field_name + " in scene")
+        return
+
+    if field_name == 'single_color':
+        single_color = color
+    elif field_name == 'minute_color':
+        minute_color = color
+    elif field_name == 'hour_color':
+        hour_color = color
+    elif field_name == 'past_to_color':
+        past_to_color = color
+
+def apply_mode_specific_scene_fields(scene, mode):
+    allowed_fields = SCENE_MODE_FIELDS.get(mode)
+    if allowed_fields is None:
+        log_scene("No scene field metadata for mode: " + str(mode))
+        return
+
+    for field_name in allowed_fields:
+        if field_name in scene:
+            apply_color_field(scene, field_name)
+
 def normalise_color(value):
     if not isinstance(value, (list, tuple)) or len(value) != 3:
         return None
@@ -152,10 +190,6 @@ def set_display_mode(mode, persist=False):
 
 def apply_scene(scene_name_or_object):
     global current_scene_name
-    global single_color
-    global minute_color
-    global hour_color
-    global past_to_color
 
     scene_name = None
     if isinstance(scene_name_or_object, str):
@@ -183,7 +217,7 @@ def apply_scene(scene_name_or_object):
             log_scene("Invalid display_enabled in scene")
 
     if 'brightness' in scene:
-        if isinstance(scene['brightness'], int) and 0 <= scene['brightness'] <= 15:
+        if isinstance(scene['brightness'], int) and 0 <= scene['brightness'] <= MAX_BRIGHTNESS:
             set_brightness(scene['brightness'], persist=False)
         else:
             log_scene("Invalid brightness in scene")
@@ -191,31 +225,7 @@ def apply_scene(scene_name_or_object):
     if 'display_mode' in scene:
         set_display_mode(next_mode, persist=False)
 
-    if next_mode == DISPLAY_MODE_SINGLE_COLOR and 'single_color' in scene:
-        color = normalise_color(scene['single_color'])
-        if color is None:
-            log_scene("Invalid single_color in scene")
-        else:
-            single_color = color
-    elif next_mode == DISPLAY_MODE_COLOR_PER_WORD:
-        if 'minute_color' in scene:
-            color = normalise_color(scene['minute_color'])
-            if color is None:
-                log_scene("Invalid minute_color in scene")
-            else:
-                minute_color = color
-        if 'hour_color' in scene:
-            color = normalise_color(scene['hour_color'])
-            if color is None:
-                log_scene("Invalid hour_color in scene")
-            else:
-                hour_color = color
-        if 'past_to_color' in scene:
-            color = normalise_color(scene['past_to_color'])
-            if color is None:
-                log_scene("Invalid past_to_color in scene")
-            else:
-                past_to_color = color
+    apply_mode_specific_scene_fields(scene, next_mode)
 
     current_scene_name = scene_name
 

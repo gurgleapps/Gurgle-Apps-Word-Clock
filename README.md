@@ -143,6 +143,15 @@ python3 -m http.server 8000 -d ./src/www
 
 This serves the web interface locally.
 
+If you want to hack on the code more quickly, there is also a simple advanced flashing workflow:
+
+```sh
+./setup-flash.sh
+./flash.sh
+```
+
+Use `./flash.sh --with-config` only when you want to replace the device `config.json`.
+
 ---
 
 ## 🚀 Project Links

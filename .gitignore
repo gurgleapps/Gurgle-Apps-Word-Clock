@@ -1,4 +1,5 @@
 src/config.local.py
 build/node_modules
+.venv/
 .DS_Store
 ._*

@@ -24,6 +24,8 @@ DISPLAY_MODE_SINGLE_COLOR = 'single_color'
 DISPLAY_MODE_COLOR_PER_WORD = 'color_per_word'
 DISPLAY_MODE_RANDOM = 'random'
 MAX_BRIGHTNESS = 15
+SCHEDULE_ACTION_TYPES = ('display_on', 'display_off', 'set_brightness', 'apply_scene')
+WEEKDAY_NAMES = ('mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun')
 
 SCENE_MODE_FIELDS = {
     DISPLAY_MODE_RAINBOW: (),
@@ -54,6 +56,8 @@ ntp_synced_at = 0
 # So we don't spam the NTP server
 last_ntp_sync_attempt = None
 last_dns_check_status = None
+last_schedule_evaluation_key = None
+valid_schedules = []
 
 clockFont = {
     'past': [0x00, 0x00, 0x1e, 0x00, 0x00, 0x00, 0x00, 0x00],
@@ -103,6 +107,9 @@ def log_boot(message):
 def log_scene(message):
     print("[SCENE] " + message)
 
+def log_schedule(message):
+    print("[SCHEDULE] " + message)
+
 def enabled_display_backends():
     backends = []
     if config.get('ENABLE_WS2812B'):
@@ -124,6 +131,7 @@ def log_boot_summary():
     log_boot("Display mode: " + str(current_display_mode) + ", brightness: " + str(brightness))
     log_boot("Time offset: " + str(time_offset) + " seconds")
     log_boot("Scenes loaded: " + str(len(scenes)))
+    log_boot("Valid schedules loaded: " + str(len(valid_schedules)))
     log_boot("Wi-Fi configured: " + ('yes' if wifi_ssid else 'no'))
     log_boot("Access point disabled: " + str(disable_access_point))
 
@@ -259,6 +267,136 @@ def read_optional_json(filename, default_value):
     except ValueError:
         print("Optional JSON file is invalid: " + filename)
         return default_value
+
+def parse_schedule_time(time_string):
+    if not isinstance(time_string, str) or len(time_string) != 5 or time_string[2] != ':':
+        return None
+    try:
+        hour = int(time_string[:2])
+        minute = int(time_string[3:])
+    except ValueError:
+        return None
+    if hour < 0 or hour > 23 or minute < 0 or minute > 59:
+        return None
+    return (hour, minute)
+
+def normalise_schedule_days(days):
+    if not isinstance(days, list) or not days:
+        return None
+    normalised_days = []
+    for day in days:
+        if not isinstance(day, str):
+            return None
+        day_name = day.lower()
+        if day_name == 'all':
+            return tuple(range(7))
+        if day_name not in WEEKDAY_NAMES:
+            return None
+        day_index = WEEKDAY_NAMES.index(day_name)
+        if day_index not in normalised_days:
+            normalised_days.append(day_index)
+    return tuple(normalised_days)
+
+def validate_schedule_action(action, schedule_index):
+    if not isinstance(action, dict):
+        log_schedule("Ignoring schedule " + str(schedule_index) + ": action must be an object")
+        return None
+
+    action_type = action.get('type')
+    if action_type not in SCHEDULE_ACTION_TYPES:
+        log_schedule("Ignoring schedule " + str(schedule_index) + ": unsupported action type " + str(action_type))
+        return None
+
+    validated_action = {'type': action_type}
+    if action_type == 'set_brightness':
+        value = action.get('value')
+        if not isinstance(value, int) or value < 0 or value > MAX_BRIGHTNESS:
+            log_schedule("Ignoring schedule " + str(schedule_index) + ": invalid brightness value")
+            return None
+        validated_action['value'] = value
+    elif action_type == 'apply_scene':
+        scene_name = action.get('scene')
+        if not isinstance(scene_name, str) or not scene_name:
+            log_schedule("Ignoring schedule " + str(schedule_index) + ": invalid scene name")
+            return None
+        if scene_name not in scenes:
+            log_schedule("Ignoring schedule " + str(schedule_index) + ": unknown scene " + scene_name)
+            return None
+        validated_action['scene'] = scene_name
+
+    return validated_action
+
+def validate_schedule_entry(entry, schedule_index):
+    if not isinstance(entry, dict):
+        log_schedule("Ignoring schedule " + str(schedule_index) + ": entry must be an object")
+        return None
+
+    enabled = entry.get('enabled', True)
+    if not isinstance(enabled, bool):
+        log_schedule("Ignoring schedule " + str(schedule_index) + ": enabled must be a boolean")
+        return None
+    if not enabled:
+        return None
+
+    days = normalise_schedule_days(entry.get('days'))
+    if days is None:
+        log_schedule("Ignoring schedule " + str(schedule_index) + ": invalid days")
+        return None
+
+    parsed_time = parse_schedule_time(entry.get('time'))
+    if parsed_time is None:
+        log_schedule("Ignoring schedule " + str(schedule_index) + ": invalid time")
+        return None
+
+    action = validate_schedule_action(entry.get('action'), schedule_index)
+    if action is None:
+        return None
+
+    return {
+        'index': schedule_index,
+        'days': days,
+        'time': parsed_time,
+        'time_string': entry.get('time'),
+        'action': action
+    }
+
+def validate_schedules(schedule_entries):
+    validated = []
+    for index, entry in enumerate(schedule_entries):
+        validated_entry = validate_schedule_entry(entry, index)
+        if validated_entry is not None:
+            validated.append(validated_entry)
+    return validated
+
+def describe_schedule_action(action):
+    action_type = action['type']
+    if action_type == 'set_brightness':
+        return action_type + "(" + str(action['value']) + ")"
+    if action_type == 'apply_scene':
+        return action_type + "(" + action['scene'] + ")"
+    return action_type
+
+def evaluate_schedules():
+    global last_schedule_evaluation_key
+    if not schedules_enabled or not valid_schedules:
+        return
+
+    now = get_corrected_time()
+    evaluation_key = (now[0], now[1], now[2], now[3], now[4])
+    if evaluation_key == last_schedule_evaluation_key:
+        return
+    last_schedule_evaluation_key = evaluation_key
+
+    weekday = now[6]
+    hour = now[3]
+    minute = now[4]
+    for schedule in valid_schedules:
+        if weekday in schedule['days'] and (hour, minute) == schedule['time']:
+            log_schedule(
+                "Matched " + schedule['time_string'] +
+                " on " + WEEKDAY_NAMES[weekday] +
+                " -> would run " + describe_schedule_action(schedule['action'])
+            )
 
 def save_config(data):
     try:
@@ -601,15 +739,18 @@ async def set_clock_settings_request(request, response):
     global minute_color
     global hour_color
     global past_to_color
+    global schedules_enabled
     print(request.post_data)
     set_brightness(int(request.post_data['brightness']))
     current_display_mode = request.post_data['display_mode']
+    schedules_enabled = bool(request.post_data.get('schedules_enabled', False))
     single_color = (int(request.post_data['single_color'][0]), int(request.post_data['single_color'][1]), int(request.post_data['single_color'][2]))
     minute_color = (int(request.post_data['minute_color'][0]), int(request.post_data['minute_color'][1]), int(request.post_data['minute_color'][2]))
     hour_color = (int(request.post_data['hour_color'][0]), int(request.post_data['hour_color'][1]), int(request.post_data['hour_color'][2]))
     past_to_color = (int(request.post_data['past_to_color'][0]), int(request.post_data['past_to_color'][1]), int(request.post_data['past_to_color'][2]))
     config['BRIGHTNESS'] = brightness
     config['DISPLAY_MODE'] = current_display_mode
+    config['SCHEDULES_ENABLED'] = schedules_enabled
     config['SINGLE_COLOR'] = single_color
     config['MINUTE_COLOR'] = minute_color
     config['HOUR_COLOR'] = hour_color
@@ -641,7 +782,7 @@ def settings_object():
         'current_scene': current_scene_name,
         'scene_names': list(scenes.keys()),
         'schedules_enabled': schedules_enabled,
-        'schedule_count': len(schedules),
+        'schedule_count': len(valid_schedules),
         'single_color': single_color,
         'minute_color': minute_color,
         'hour_color': hour_color,
@@ -727,6 +868,7 @@ async def main():
                 if delta > 60: # Start access point after 60 seconds of Wi-Fi disconnection
                     ap_connnected = server.start_access_point('gurgleapps', 'gurgleapps')
                     print("Access Point started: " + str(ap_connnected))
+        evaluate_schedules()
         time_to_matrix()
         if ntp_synced_at < (time.time() - 3600) and server.is_wifi_connected(): # Sync time every hour
             await sync_ntp_time()
@@ -764,6 +906,7 @@ schedules = read_optional_json(schedules_file, config.get('SCHEDULES', []))
 if not isinstance(schedules, list):
     log_boot("Invalid schedules config, ignoring it")
     schedules = []
+valid_schedules = validate_schedules(schedules)
 
 log_boot_summary()
 

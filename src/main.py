@@ -198,7 +198,7 @@ def set_display_mode(mode, persist=False):
     if persist:
         config['DISPLAY_MODE'] = current_display_mode
 
-def apply_scene(scene_name_or_object):
+def apply_scene(scene_name_or_object, fallback_name=None):
     global current_scene_name
 
     scene_name = None
@@ -237,7 +237,7 @@ def apply_scene(scene_name_or_object):
 
     apply_mode_specific_scene_fields(scene, next_mode)
 
-    current_scene_name = scene_name
+    current_scene_name = scene_name if scene_name is not None else fallback_name
 
     if display_enabled:
         time_to_matrix()
@@ -246,6 +246,8 @@ def apply_scene(scene_name_or_object):
 
     if scene_name:
         log_scene("Applied scene: " + scene_name)
+    elif fallback_name:
+        log_scene("Applied scene preview: " + fallback_name)
     else:
         log_scene("Applied inline scene")
     return True
@@ -839,6 +841,41 @@ async def set_scenes_request(request, response):
     }
     await response.send_json(json.dumps(response_data), 200)
 
+async def test_scene_request(request, response):
+    scene_payload = request.post_data.get('scene')
+    scene_name = request.post_data.get('scene_name')
+
+    if not isinstance(scene_payload, dict):
+        response_data = {
+            'status': 'ERROR',
+            'success': False,
+            'message': 'Scene payload must be an object',
+            'settings': settings_object()
+        }
+        await response.send_json(json.dumps(response_data), 400)
+        return
+
+    if scene_name is not None and not isinstance(scene_name, str):
+        scene_name = None
+
+    if not apply_scene(scene_payload, fallback_name=scene_name):
+        response_data = {
+            'status': 'ERROR',
+            'success': False,
+            'message': 'Failed to test scene',
+            'settings': settings_object()
+        }
+        await response.send_json(json.dumps(response_data), 400)
+        return
+
+    response_data = {
+        'status': 'OK',
+        'success': True,
+        'message': 'Scene tested',
+        'settings': settings_object()
+    }
+    await response.send_json(json.dumps(response_data), 200)
+
 async def set_clock_settings_request(request, response):
     global current_display_mode
     global current_scene_name
@@ -923,6 +960,7 @@ def setup_routes(server):
     server.add_function_route('/get-clock-settings', get_clock_settings_request)
     server.add_function_route('/set-clock-settings', set_clock_settings_request)
     server.add_function_route('/set-scenes', set_scenes_request)
+    server.add_function_route('/test-scene', test_scene_request)
     server.add_function_route('/set-schedules', set_schedules_request)
     server.add_function_route('/set-wifi-settings', set_wifi_settings_request)
     server.add_function_route('/set-time', set_time_request)

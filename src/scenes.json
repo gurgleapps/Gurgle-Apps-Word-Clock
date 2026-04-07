@@ -1,19 +1,95 @@
 {
     "classic_words": {
+        "brightness": 2,
         "display_enabled": true,
         "display_mode": "color_per_word",
-        "brightness": 2,
-        "minute_color": [0, 255, 0],
-        "hour_color": [255, 0, 0],
-        "past_to_color": [0, 0, 255]
+        "hour_color": [
+            255,
+            0,
+            0
+        ],
+        "minute_color": [
+            0,
+            255,
+            0
+        ],
+        "past_to_color": [
+            0,
+            0,
+            255
+        ]
     },
-    "warm_evening": {
+    "ice_blue": {
+        "brightness": 2,
         "display_enabled": true,
         "display_mode": "single_color",
+        "single_color": [
+            90,
+            210,
+            255
+        ]
+    },
+    "late_night_words": {
         "brightness": 1,
-        "single_color": [255, 120, 40]
+        "display_enabled": true,
+        "display_mode": "color_per_word",
+        "hour_color": [
+            70,
+            130,
+            255
+        ],
+        "minute_color": [
+            0,
+            180,
+            150
+        ],
+        "past_to_color": [
+            0,
+            90,
+            170
+        ]
     },
     "night_off": {
         "display_enabled": false
+    },
+    "party_random": {
+        "brightness": 4,
+        "display_enabled": true,
+        "display_mode": "random"
+    },
+    "rainbow_day": {
+        "brightness": 3,
+        "display_enabled": true,
+        "display_mode": "rainbow"
+    },
+    "romance": {
+        "brightness": 1,
+        "display_enabled": true,
+        "display_mode": "single_color",
+        "single_color": [
+            255,
+            120,
+            40
+        ]
+    },
+    "sunset": {
+        "brightness": 1,
+        "display_enabled": true,
+        "display_mode": "color_per_word",
+        "hour_color": [
+            255,
+            255,
+            0
+        ],
+        "minute_color": [
+            255,
+            0,
+            0
+        ],
+        "past_to_color": [
+            255,
+            102,
+            0
+        ]
     }
 }

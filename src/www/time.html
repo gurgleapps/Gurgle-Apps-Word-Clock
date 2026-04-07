@@ -471,7 +471,8 @@
               </div>
 
               <div x-show="scene.expanded" x-collapse style="display:none;" class="mt-4">
-              <div class="flex justify-end mb-3">
+              <div class="flex justify-end gap-3 mb-3">
+                <button @click.prevent="testScene(scene)" class="text-sm text-blue-600 hover:text-blue-700">Test Scene</button>
                 <button @click.prevent="removeScene(index)" class="text-sm text-red-600 hover:text-red-700">Remove</button>
               </div>
 
@@ -897,6 +898,20 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
           this.hourColorHex = this.rgbArrayToHex(this.settings.hour_color)
           console.log(this.settings)
         },
+        applySettingsPreservingSceneDrafts(nextSettings) {
+          const existingScenes = this.scenes.map(scene => ({ ...scene }))
+          const existingSceneNames = existingScenes.map(scene => scene.name)
+          this.settings = nextSettings
+          this.scenes = existingScenes
+          this.settings.scene_names = existingSceneNames
+          this.settings.schedules = (this.settings.schedules || []).map(schedule => this.normaliseSchedule(schedule))
+          this.timeDisplay = this.settings.time
+          this.singeColorHex = this.rgbArrayToHex(this.settings.single_color)
+          this.minuteColorHex = this.rgbArrayToHex(this.settings.minute_color)
+          this.pastToColorHex = this.rgbArrayToHex(this.settings.past_to_color)
+          this.hourColorHex = this.rgbArrayToHex(this.settings.hour_color)
+          console.log(this.settings)
+        },
         async brigtnessUpdated() {
           //this.updateSettings()
         },
@@ -1040,6 +1055,28 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
           const state = scene.display_enabled ? 'On' : 'Off'
           return state + ' · ' + this.modeLabel(scene.display_mode) + ' · Brightness ' + scene.brightness
         },
+        buildSingleScenePayload(scene) {
+          const scenePayload = {
+            display_enabled: !!scene.display_enabled,
+            display_mode: scene.display_mode,
+            brightness: Number(scene.brightness)
+          }
+
+          if (this.sceneSupportsField(scene, 'single_color')) {
+            scenePayload.single_color = this.hexToRgbArray(scene.single_color_hex)
+          }
+          if (this.sceneSupportsField(scene, 'minute_color')) {
+            scenePayload.minute_color = this.hexToRgbArray(scene.minute_color_hex)
+          }
+          if (this.sceneSupportsField(scene, 'hour_color')) {
+            scenePayload.hour_color = this.hexToRgbArray(scene.hour_color_hex)
+          }
+          if (this.sceneSupportsField(scene, 'past_to_color')) {
+            scenePayload.past_to_color = this.hexToRgbArray(scene.past_to_color_hex)
+          }
+
+          return scenePayload
+        },
         buildScenesPayload() {
           const payload = {}
           const seenNames = {}
@@ -1054,29 +1091,34 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
               return null
             }
             seenNames[name] = true
-
-            const scenePayload = {
-              display_enabled: !!scene.display_enabled,
-              display_mode: scene.display_mode,
-              brightness: Number(scene.brightness)
-            }
-
-            if (this.sceneSupportsField(scene, 'single_color')) {
-              scenePayload.single_color = this.hexToRgbArray(scene.single_color_hex)
-            }
-            if (this.sceneSupportsField(scene, 'minute_color')) {
-              scenePayload.minute_color = this.hexToRgbArray(scene.minute_color_hex)
-            }
-            if (this.sceneSupportsField(scene, 'hour_color')) {
-              scenePayload.hour_color = this.hexToRgbArray(scene.hour_color_hex)
-            }
-            if (this.sceneSupportsField(scene, 'past_to_color')) {
-              scenePayload.past_to_color = this.hexToRgbArray(scene.past_to_color_hex)
-            }
-
-            payload[name] = scenePayload
+            payload[name] = this.buildSingleScenePayload(scene)
           }
           return payload
+        },
+        async testScene(scene) {
+          const name = (scene.name || '').trim()
+          if (!name) {
+            alert('Give the scene a name before testing it.')
+            return
+          }
+          const response = await fetch(this.path + '/test-scene', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              scene_name: name,
+              scene: this.buildSingleScenePayload(scene)
+            })
+          })
+          if (response.ok) {
+            const json = await response.json()
+            this.applySettingsPreservingSceneDrafts(json.settings)
+            this.showNotice('Testing scene: ' + name)
+            console.log(json)
+            return
+          }
+          this.showNotice('Failed to test scene', 'error')
         },
         async updateScenes() {
           const scenesPayload = this.buildScenesPayload()

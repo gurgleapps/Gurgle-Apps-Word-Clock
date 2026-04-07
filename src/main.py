@@ -268,6 +268,16 @@ def read_optional_json(filename, default_value):
         print("Optional JSON file is invalid: " + filename)
         return default_value
 
+def save_json_file(filename, data):
+    try:
+        with open(filename, 'w') as file:
+            json.dump(data, file)
+            print("Saved " + filename)
+            return True
+    except OSError as e:
+        print("Error saving " + filename + ": " + str(e))
+        return False
+
 def parse_schedule_time(time_string):
     if not isinstance(time_string, str) or len(time_string) != 5 or time_string[2] != ':':
         return None
@@ -421,12 +431,8 @@ def evaluate_schedules():
                 log_schedule("Failed to run action: " + action_description)
 
 def save_config(data):
-    try:
-        with open(config_file, 'w') as file:
-            json.dump(data, file)
-            print("Configuration saved.")
-    except OSError as e:
-        print(f"Error saving configuration: {e}")
+    if save_json_file(config_file, data):
+        print("Configuration saved.")
 
 def scan_for_devices():
     i2c = machine.I2C(config['I2C_BUS'], sda=machine.Pin(config['I2C_SDA']), scl=machine.Pin(config['I2C_SCL']))
@@ -758,6 +764,39 @@ async def test_pattern_request(request, response):
     await response.send_json(json.dumps(response_data), 200)
     test_pattern()
 
+async def set_schedules_request(request, response):
+    global schedules, valid_schedules
+    new_schedules = request.post_data.get('schedules', [])
+    if not isinstance(new_schedules, list):
+        response_data = {
+            'status': 'ERROR',
+            'success': False,
+            'message': 'Schedules payload must be a list',
+            'settings': settings_object()
+        }
+        await response.send_json(json.dumps(response_data), 400)
+        return
+
+    if not save_json_file(schedules_file, new_schedules):
+        response_data = {
+            'status': 'ERROR',
+            'success': False,
+            'message': 'Failed to save schedules',
+            'settings': settings_object()
+        }
+        await response.send_json(json.dumps(response_data), 500)
+        return
+
+    schedules = new_schedules
+    valid_schedules = validate_schedules(schedules)
+    response_data = {
+        'status': 'OK',
+        'success': True,
+        'message': 'Schedules updated',
+        'settings': settings_object()
+    }
+    await response.send_json(json.dumps(response_data), 200)
+
 async def set_clock_settings_request(request, response):
     global current_display_mode
     global current_scene_name
@@ -808,6 +847,7 @@ def settings_object():
         'display_mode': current_display_mode,
         'current_scene': current_scene_name,
         'scene_names': list(scenes.keys()),
+        'schedules': schedules,
         'schedules_enabled': schedules_enabled,
         'schedule_count': len(valid_schedules),
         'single_color': single_color,
@@ -839,6 +879,7 @@ def setup_routes(server):
     server.add_function_route('/set-brightness', set_brightness_request)
     server.add_function_route('/get-clock-settings', get_clock_settings_request)
     server.add_function_route('/set-clock-settings', set_clock_settings_request)
+    server.add_function_route('/set-schedules', set_schedules_request)
     server.add_function_route('/set-wifi-settings', set_wifi_settings_request)
     server.add_function_route('/set-time', set_time_request)
     server.add_function_route('/test-pattern', test_pattern_request)

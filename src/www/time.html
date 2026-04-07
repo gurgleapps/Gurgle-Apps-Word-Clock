@@ -9,9 +9,9 @@
 </head>
 
 <body class="bg-gray-100" x-data="clock()">
-  <div class="min-h-screen flex flex-col items-center justify-start mt-8 mx-2">
+  <div class="flex flex-col items-center justify-start min-h-screen mx-2 mt-8">
 
-    <div class="bg-white p-5 rounded-lg shadow-md w-full max-w-md">
+    <div class="w-full p-5 bg-white rounded-lg shadow-md" style="max-width: 32rem;">
 
 
       <div class="flex justify-center mb-8">
@@ -20,46 +20,46 @@
 
       <!-- flip clock -->
       <div class="flex justify-center">
-        <div class="text-white font-mono font-extrabold mx-auto text-4xl bg-black rounded-2xl p-1">
-          <div class=" inline-flex flex-col items-center">
+        <div class="p-1 mx-auto font-mono text-4xl font-extrabold text-white bg-black rounded-2xl">
+          <div class="inline-flex flex-col items-center ">
             <!-- year -->
-            <div class="mx-auto  text-2xl my-1">
+            <div class="mx-auto my-1 text-2xl">
               <div class="relative">
-                <div class="absolute inset-0 h-full grid grid-rows-2">
+                <div class="absolute inset-0 grid h-full grid-rows-2">
                   <div class="bg-gradient-to-br from-gray-800 to-gray-900"></div>
                   <div class="bg-gradient-to-br from-gray-700 to-gray-900"></div>
                 </div>
                 <div class="relative px-1" id="flipClockYear" x-text="timeDisplay[0].toString().padStart(4, '0')">0000
                 </div>
-                <div class="absolute inset-0 w-full  h-full flex items-center justify-center">
-                  <div class="h-px w-full  bg-gray-800"></div>
+                <div class="absolute inset-0 flex items-center justify-center w-full h-full">
+                  <div class="w-full h-px bg-gray-800"></div>
                 </div>
               </div>
             </div>
             <div class="flex justify-center">
               <!-- hours -->
-              <div class="relative py-3 px-2">
-                <div class="absolute inset-0 w-full h-full grid grid-rows-2">
+              <div class="relative px-2 py-3">
+                <div class="absolute inset-0 grid w-full h-full grid-rows-2">
                   <div class="bg-gradient-to-br from-gray-800 to-gray-900"></div>
                   <div class="bg-gradient-to-br from-gray-700 to-gray-900"></div>
                 </div>
                 <div id="flipClockHours" class="relative" x-text="timeDisplay[3].toString().padStart(2,0)">05</div>
-                <div class="absolute inset-0 w-full h-full flex items-center justify-center">
-                  <div class="h-px w-full bg-gray-800"></div>
+                <div class="absolute inset-0 flex items-center justify-center w-full h-full">
+                  <div class="w-full h-px bg-gray-800"></div>
                 </div>
               </div>
-              <div class=" bg-black py-3">
+              <div class="py-3 bg-black ">
                 <div class="-mt-[3px]">:</div>
               </div>
               <!-- mins -->
-              <div class="relative py-3 px-2">
-                <div class="absolute inset-0 w-full h-full grid grid-rows-2">
+              <div class="relative px-2 py-3">
+                <div class="absolute inset-0 grid w-full h-full grid-rows-2">
                   <div class="bg-gradient-to-br from-gray-800 to-gray-900"></div>
                   <div class="bg-gradient-to-br from-gray-700 to-gray-900"></div>
                 </div>
                 <div id="flipClockMins" class="relative" x-text="timeDisplay[4].toString().padStart(2, '0')">05</div>
-                <div class="absolute inset-0 w-full h-full flex items-center justify-center">
-                  <div class="h-px w-full bg-gray-800"></div>
+                <div class="absolute inset-0 flex items-center justify-center w-full h-full">
+                  <div class="w-full h-px bg-gray-800"></div>
                 </div>
               </div>
             </div>
@@ -70,32 +70,72 @@
 
       <!-- tabs -->
       <div class="my-4">
-        <div class="xs:hidden">
-          <select x-model="selectedOption"
-            class="block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm">
-            <template x-for="(option, index) in options" :key="index">
-              <option x-text="option" :value="option"></option>
-            </template>
-          </select>
-        </div>
-        <div class="hidden xs:block">
-          <div class="border-b border-gray-200">
-            <nav class="-mb-px flex space-x-8x" aria-label="Tabs">
-              <template x-for="(option, index ) in options" :key="index">
-                <a :class="{'border-indigo-500 text-indigo-600': selectedOption == option, 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700': selectedOption != option, 'ml-0' : index === 0, 'ml-6' : index > 0}"
-                  href="#" x-text="option" @click.prevent="selectedOption = option"
-                  class="whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium"></a>
+        <nav x-ref="tabNav" class="border-b border-gray-200" @click.outside="overflowOpen = false" aria-label="Tabs">
+          <div class="flex items-center gap-1">
+            <div class="flex items-center flex-1 min-w-0 gap-1 overflow-hidden">
+              <template x-for="tab in tabItems" :key="tab.label">
+                <button
+                  type="button"
+                  :data-tab="tab.label"
+                  x-show="isTabVisible(tab.label)"
+                  @click="selectTab(tab.label)"
+                  class="flex shrink-0 items-center gap-2 px-3 py-3 text-sm font-medium transition-colors border-b-2 whitespace-nowrap"
+                  :class="isTabActive(tab)
+                    ? 'border-indigo-500 text-indigo-600'
+                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'">
+                  <span x-html="tab.icon" class="shrink-0"></span>
+                  <span x-text="tab.label"></span>
+                </button>
               </template>
-            </nav>
+            </div>
+
+            <div x-show="overflowTabs.length > 0" style="display:none;" class="relative shrink-0">
+              <button
+                type="button"
+                data-overflow-button
+                @click="overflowOpen = !overflowOpen"
+                class="flex shrink-0 items-center gap-2 px-3 py-3 text-sm font-medium text-gray-500 border-b-2 border-transparent hover:border-gray-300 hover:text-gray-700">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0"/>
+                </svg>
+                <span>More</span>
+              </button>
+
+              <div
+                x-show="overflowOpen"
+                style="display:none;"
+                x-transition:enter="transition ease-out duration-100"
+                x-transition:enter-start="transform opacity-0 scale-95"
+                x-transition:enter-end="transform opacity-100 scale-100"
+                x-transition:leave="transition ease-in duration-75"
+                x-transition:leave-start="transform opacity-100 scale-100"
+                x-transition:leave-end="transform opacity-0 scale-95"
+                class="absolute right-0 z-50 py-1 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg top-full w-52"
+              >
+                <template x-for="tab in tabItems" :key="`overflow-${tab.label}`">
+                  <button
+                    type="button"
+                    x-show="isTabOverflow(tab.label)"
+                    @click="selectTab(tab.label); overflowOpen = false"
+                    class="flex items-center w-full gap-3 px-4 py-2 text-sm text-left"
+                    :class="isTabActive(tab)
+                      ? 'bg-indigo-50 text-indigo-600 font-medium'
+                      : 'text-gray-700 hover:bg-gray-50'">
+                    <span x-html="tab.icon" class="shrink-0"></span>
+                    <span x-text="tab.label"></span>
+                  </button>
+                </template>
+              </div>
+            </div>
           </div>
-        </div>
+        </nav>
       </div>
 
       <div> <!-- tab content -->
-        <div x-show="selectedOption=='Wi-Fi'" x-collapse class=" rounded-lg ring-1 ring-gray-100 p-3 my-4">
+        <div x-show="selectedOption=='Wi-Fi'" x-collapse class="p-3 my-4 rounded-lg ring-1 ring-gray-100">
 
 
-          <div class="mb-4 inline-flex gap-x-4 border-b border-gray-300 w-full pb-2">
+          <div class="inline-flex w-full pb-2 mb-4 border-b border-gray-300 gap-x-4">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
               <path fill-rule="evenodd"
                 d="M1.371 8.143c5.858-5.857 15.356-5.857 21.213 0a.75.75 0 0 1 0 1.061l-.53.53a.75.75 0 0 1-1.06 0c-4.98-4.979-13.053-4.979-18.032 0a.75.75 0 0 1-1.06 0l-.53-.53a.75.75 0 0 1 0-1.06Zm3.182 3.182c4.1-4.1 10.749-4.1 14.85 0a.75.75 0 0 1 0 1.061l-.53.53a.75.75 0 0 1-1.062 0 8.25 8.25 0 0 0-11.667 0 .75.75 0 0 1-1.06 0l-.53-.53a.75.75 0 0 1 0-1.06Zm3.204 3.182a6 6 0 0 1 8.486 0 .75.75 0 0 1 0 1.061l-.53.53a.75.75 0 0 1-1.061 0 3.75 3.75 0 0 0-5.304 0 .75.75 0 0 1-1.06 0l-.53-.53a.75.75 0 0 1 0-1.06Zm3.182 3.182a1.5 1.5 0 0 1 2.122 0 .75.75 0 0 1 0 1.061l-.53.53a.75.75 0 0 1-1.061 0l-.53-.53a.75.75 0 0 1 0-1.06Z"
@@ -116,15 +156,15 @@
             <input type="password" id="password" x-model="newWifiPassword"
               class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-1.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
           </div>
-          <div class="flex justify-center mb-2 mt-1">
+          <div class="flex justify-center mt-1 mb-2">
             <button @click.prevent="updateWifi()"
-              class="bg-green-600 text-white font-semibold py-2 px-4 rounded focus:outline-none hover:bg-green-700">Update
+              class="px-4 py-2 font-semibold text-white bg-green-600 rounded focus:outline-none hover:bg-green-700">Update
               Wifi</button>
           </div>
 
 
           <!-- ap -->
-          <div class="mb-4 inline-flex gap-x-4 border-b border-gray-300 w-full pb-2">
+          <div class="inline-flex w-full pb-2 mb-4 border-b border-gray-300 gap-x-4">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
               <path fill-rule="evenodd"
                 d="M1.371 8.143c5.858-5.857 15.356-5.857 21.213 0a.75.75 0 0 1 0 1.061l-.53.53a.75.75 0 0 1-1.06 0c-4.98-4.979-13.053-4.979-18.032 0a.75.75 0 0 1-1.06 0l-.53-.53a.75.75 0 0 1 0-1.06Zm3.182 3.182c4.1-4.1 10.749-4.1 14.85 0a.75.75 0 0 1 0 1.061l-.53.53a.75.75 0 0 1-1.062 0 8.25 8.25 0 0 0-11.667 0 .75.75 0 0 1-1.06 0l-.53-.53a.75.75 0 0 1 0-1.06Zm3.204 3.182a6 6 0 0 1 8.486 0 .75.75 0 0 1 0 1.061l-.53.53a.75.75 0 0 1-1.061 0 3.75 3.75 0 0 0-5.304 0 .75.75 0 0 1-1.06 0l-.53-.53a.75.75 0 0 1 0-1.06Zm3.182 3.182a1.5 1.5 0 0 1 2.122 0 .75.75 0 0 1 0 1.061l-.53.53a.75.75 0 0 1-1.061 0l-.53-.53a.75.75 0 0 1 0-1.06Z"
@@ -136,34 +176,34 @@
 
           <!-- AP disable -->
           <div class="flex items-center mb-4">
-            <span class="text-sm mr-3" id="annual-billing-label">
+            <span class="mr-3 text-sm" id="annual-billing-label">
               <span class="font-medium text-gray-900 dark:text-slate-50">Access Point Disabled</span>
             </span>
             <button @click="toggleAccessPointDisabled" type="button"
               :class="settings.disable_access_point ? 'bg-blue-600' : 'bg-gray-200'"
-              class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ">
+              class="relative inline-flex flex-shrink-0 h-6 transition-colors duration-200 ease-in-out border-2 border-transparent rounded-full cursor-pointer w-11 ">
               <span aria-hidden="true" :class="settings.disable_access_point ? 'translate-x-5' : 'translate-x-0'"
-                class=" pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"></span>
+                class="inline-block w-5 h-5 transition duration-200 ease-in-out transform bg-white rounded-full shadow pointer-events-none ring-0"></span>
             </button>
           </div>
 
 
         </div>
-        <div x-show="selectedOption=='Updates'" x-collapse class=" rounded-lg ring-1 ring-gray-100 p-3 my-4">
+        <div x-show="selectedOption=='Updates'" x-collapse class="p-3 my-4 rounded-lg ring-1 ring-gray-100">
           Updates Coming Soon ... Regular bug fixes and feature updates Please keep an eye on the <a href="https://github.com/gurgleapps/Gurgle-Apps-Word-Clock">Github Repo</a> for updates.
         </div>
         <!-- clock settings -->
 
-        <div x-show="selectedOption=='Clock Settings'" x-collapse class=" rounded-lg ring-1 ring-gray-100 p-3 my-4">
+        <div x-show="selectedOption=='Clock Settings'" x-collapse class="p-3 my-4 rounded-lg ring-1 ring-gray-100">
           <!-- time -->
           <div class="mb-4">
             <label for="timeControl" class="block text-sm font-medium leading-6 text-gray-900">Time:</label>
             <input @change="datetimeUpdated()" step="60" type="datetime-local" id="timeControl" x-model="newTimeString"
               class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-1.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
           </div>
-          <div class="flex justify-center mb-2 mt-1">
+          <div class="flex justify-center mt-1 mb-2">
             <button @click.prevent="updateTime()"
-              class="bg-green-600 inline-flex text-white font-semibold py-2 px-4 rounded focus:outline-none hover:bg-green-700">
+              class="inline-flex px-4 py-2 font-semibold text-white bg-green-600 rounded focus:outline-none hover:bg-green-700">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 mr-2">
                 <path fill-rule="evenodd"
                   d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25ZM12.75 6a.75.75 0 0 0-1.5 0v6c0 .414.336.75.75.75h4.5a.75.75 0 0 0 0-1.5h-3.75V6Z"
@@ -220,36 +260,36 @@
             </select>
           </div>
           <div class="flex items-center justify-between mb-4">
-            <span class="flex flex-grow flex-col">
+            <span class="flex flex-col flex-grow">
               <span class="text-sm font-medium leading-6 text-gray-900">Schedules Enabled</span>
               <span class="text-sm text-gray-500">Allow `schedules.json` automation to run.</span>
             </span>
             <button type="button"
               @click="settings.schedules_enabled = !settings.schedules_enabled"
               :class="settings.schedules_enabled ? 'bg-blue-600' : 'bg-gray-200'"
-              class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ">
+              class="relative inline-flex flex-shrink-0 h-6 transition-colors duration-200 ease-in-out border-2 border-transparent rounded-full cursor-pointer w-11 ">
               <span aria-hidden="true" :class="settings.schedules_enabled ? 'translate-x-5' : 'translate-x-0'"
-                class=" pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"></span>
+                class="inline-block w-5 h-5 transition duration-200 ease-in-out transform bg-white rounded-full shadow pointer-events-none ring-0"></span>
             </button>
           </div>
           <!-- single color -->
-          <div x-show="settings.display_mode=='single_color'" x-transition x-cloak class="mb-4">
+          <div x-show="settings.display_mode=='single_color'" x-transition style="display:none;" class="mb-4">
             <label for="" class="block text-sm font-medium leading-6 text-gray-900">Color:</label>
             <input type="color" x-model="singeColorHex" list="colorList">
           </div>
           <!-- color  per word -->
-          <div x-show="settings.display_mode=='color_per_word'" x-transition x-cloak class="mb-4">
+          <div x-show="settings.display_mode=='color_per_word'" x-transition style="display:none;" class="mb-4">
             <div class="flex justify-between">
               <div>
-                <label for="" class="block text-sm font-medium leading-6 text-gray-900 mb-1">Minute Color:</label>
+                <label for="" class="block mb-1 text-sm font-medium leading-6 text-gray-900">Minute Color:</label>
                 <input type="color" x-model="minuteColorHex" list="colorList">
               </div>
               <div>
-                <label for="" class="block text-sm font-medium leading-6 text-gray-900 mb-1">Past/To Color:</label>
+                <label for="" class="block mb-1 text-sm font-medium leading-6 text-gray-900">Past/To Color:</label>
                 <input type="color" x-model="pastToColorHex" list="colorList">
               </div>
               <div>
-                <label for="" class="block text-sm font-medium leading-6 text-gray-900 mb-1">Hour Color:</label>
+                <label for="" class="block mb-1 text-sm font-medium leading-6 text-gray-900">Hour Color:</label>
                 <input type="color" x-model="hourColorHex" list="colorList">
               </div>
             </div>
@@ -263,16 +303,107 @@
             <option>#ff00ff</option>
             <option>#ff6600</option>
           </datalist>
-          <div class="flex justify-center mb-2 mt-1">
+          <div class="flex justify-center mt-1 mb-2">
             <button @click.prevent="update()"
-              class="bg-green-600 text-white font-semibold py-2 px-4 rounded focus:outline-none hover:bg-green-700">Update
+              class="px-4 py-2 font-semibold text-white bg-green-600 rounded focus:outline-none hover:bg-green-700">Update
               Settings</button>
+          </div>
+        </div>
+        <div x-show="selectedOption=='Schedules'" x-collapse class="p-3 my-4 rounded-lg ring-1 ring-gray-100">
+          <div class="flex flex-wrap items-start justify-between gap-3 mb-4">
+            <div class="min-w-0" style="flex: 1 1 14rem;">
+              <div class="text-sm font-medium leading-6 text-gray-900">Schedules</div>
+              <div class="text-sm text-gray-500">Edit the contents of <code>schedules.json</code>.</div>
+            </div>
+            <button @click.prevent="addSchedule()"
+              class="w-full px-4 py-2 font-semibold text-white bg-blue-600 rounded focus:outline-none hover:bg-blue-700">
+              Add Schedule
+            </button>
+          </div>
+
+          <template x-if="!settings.schedules || settings.schedules.length === 0">
+            <div class="mb-4 text-sm text-gray-500">No schedules yet.</div>
+          </template>
+
+          <template x-for="(schedule, index) in settings.schedules" :key="index">
+            <div class="p-3 mb-4 border border-gray-200 rounded-lg bg-gray-50">
+              <div class="flex items-center justify-between mb-3">
+                <div class="font-medium text-gray-900" x-text="'Schedule ' + (index + 1)"></div>
+                <button @click.prevent="removeSchedule(index)" class="text-sm text-red-600 hover:text-red-700">Remove</button>
+              </div>
+
+              <div class="flex items-center justify-between mb-3">
+                <span class="text-sm font-medium leading-6 text-gray-900">Enabled</span>
+                <button type="button"
+                  @click="schedule.enabled = !schedule.enabled"
+                  :class="schedule.enabled ? 'bg-blue-600' : 'bg-gray-200'"
+                  class="relative inline-flex flex-shrink-0 h-6 transition-colors duration-200 ease-in-out border-2 border-transparent rounded-full cursor-pointer w-11 ">
+                  <span aria-hidden="true" :class="schedule.enabled ? 'translate-x-5' : 'translate-x-0'"
+                    class="inline-block w-5 h-5 transition duration-200 ease-in-out transform bg-white rounded-full shadow pointer-events-none ring-0"></span>
+                </button>
+              </div>
+
+              <div class="mb-3">
+                <label class="block mb-1 text-sm font-medium leading-6 text-gray-900">Days</label>
+                <div class="grid gap-2" style="grid-template-columns: repeat(7, minmax(0, 1fr));">
+                  <template x-for="day in weekdays" :key="day.value">
+                    <button type="button"
+                      @click="toggleScheduleDay(schedule, day.value)"
+                      :class="schedule.days.includes(day.value) ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 border border-gray-300'"
+                      class="inline-flex items-center justify-center p-0 mx-auto text-sm font-medium rounded-full shadow-sm"
+                      style="width: 2.5rem; height: 2.5rem; line-height: 1;">
+                      <span x-text="day.label"></span>
+                    </button>
+                  </template>
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label class="block mb-1 text-sm font-medium leading-6 text-gray-900">Time</label>
+                <input type="time" x-model="schedule.time"
+                  class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-1.5">
+              </div>
+
+              <div class="mb-3">
+                <label class="block mb-1 text-sm font-medium leading-6 text-gray-900">Action</label>
+                <select x-model="schedule.action.type" @change="scheduleActionChanged(schedule)"
+                  class="mt-2 block w-full bg-white rounded-md border border-gray-300 py-1.5 pl-3 pr-10 text-gray-900 sm:text-sm sm:leading-6">
+                  <option value="display_off">Display Off</option>
+                  <option value="display_on">Display On</option>
+                  <option value="set_brightness">Set Brightness</option>
+                  <option value="apply_scene">Apply Scene</option>
+                </select>
+              </div>
+
+              <div x-show="schedule.action.type === 'set_brightness'" class="mb-3">
+                <label class="block mb-1 text-sm font-medium leading-6 text-gray-900">Brightness</label>
+                <input type="range" min="0" max="15" step="1" x-model.number="schedule.action.value" class="w-full">
+                <div class="text-sm text-gray-500" x-text="schedule.action.value"></div>
+              </div>
+
+              <div x-show="schedule.action.type === 'apply_scene'" class="mb-3">
+                <label class="block mb-1 text-sm font-medium leading-6 text-gray-900">Scene</label>
+                <select x-model="schedule.action.scene"
+                  class="mt-2 block w-full bg-white rounded-md border border-gray-300 py-1.5 pl-3 pr-10 text-gray-900 sm:text-sm sm:leading-6">
+                  <template x-for="sceneName in settings.scene_names" :key="sceneName">
+                    <option :value="sceneName" x-text="sceneName"></option>
+                  </template>
+                </select>
+              </div>
+            </div>
+          </template>
+
+          <div class="flex justify-center mt-1 mb-2">
+            <button @click.prevent="updateSchedules()"
+              class="w-full px-4 py-2 font-semibold text-white bg-green-600 rounded focus:outline-none hover:bg-green-700">
+              Save Schedules
+            </button>
           </div>
         </div>
       </div>
 
-      <div class="rounded-lg bg-gray-50 shadow-sm ring-1 ring-gray-200 text-gray-500 p-4 mb-2">
-        <div class="flex items-center justify-between space-x-4 border-b border-gray-200 pb-2">
+      <div class="p-4 mb-2 text-gray-500 rounded-lg shadow-sm bg-gray-50 ring-1 ring-gray-200">
+        <div class="flex items-center justify-between pb-2 space-x-4 border-b border-gray-200">
           <div class="flex items-center space-x-2">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-6 h-6">
               <path d="M14 6H6v8h8V6Z" />
@@ -284,19 +415,19 @@
           </div>
         </div>
 
-        <div class="flex items-center justify-between space-x-4 mt-2">
+        <div class="flex items-center justify-between mt-2 space-x-4">
           <div>CPU Temp:</div>
           <div x-text="settings.cpu_temp==0 ? 'n/a' : settings.cpu_temp.toFixed(2)+'°C'">n/a</div>
         </div>
-        <div class="flex items-center justify-between space-x-4 mt-1">
+        <div class="flex items-center justify-between mt-1 space-x-4">
           <div>Current Scene:</div>
           <div x-text="settings.current_scene || 'manual'">manual</div>
         </div>
-        <div class="flex items-center justify-between space-x-4 mt-1">
+        <div class="flex items-center justify-between mt-1 space-x-4">
           <div>Schedules:</div>
           <div x-text="settings.schedules_enabled ? 'Enabled' : 'Disabled'">Disabled</div>
         </div>
-        <div class="flex items-center justify-between space-x-4 mt-1">
+        <div class="flex items-center justify-between mt-1 space-x-4">
           <div>Valid Schedules:</div>
           <div x-text="settings.schedule_count">0</div>
         </div>
@@ -304,8 +435,8 @@
       </div>
 
       <!-- wifi details -->
-      <div class="rounded-lg bg-gray-50 shadow-sm ring-1 ring-gray-200 text-gray-500 p-4">
-        <div class="flex items-center justify-between space-x-4 border-b border-gray-200 pb-2">
+      <div class="p-4 text-gray-500 rounded-lg shadow-sm bg-gray-50 ring-1 ring-gray-200">
+        <div class="flex items-center justify-between pb-2 space-x-4 border-b border-gray-200">
           <div class="flex items-center space-x-2">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
               <path fill-rule="evenodd"
@@ -316,23 +447,23 @@
           </div>
           <div x-text="settings.wifi_connected ? 'Connected' : 'Not Connected'"
             :class="{'bg-green-50 text-green-700 ring-green-600/20': settings.wifi_connected, 'bg-red-50 text-red-700 ring-red-600/20': !settings.wifi_connected}"
-            class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium  ring-1 ring-inset ">
+            class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-md ring-1 ring-inset ">
             Not Connected</div>
         </div>
 
-        <div class="flex items-center justify-between space-x-4 mt-2">
+        <div class="flex items-center justify-between mt-2 space-x-4">
           <div>IP:</div>
           <div x-text="settings.wifi_connected ? settings.wifi_ip_address : 'n/a'">n/a</div>
         </div>
 
-        <div class="flex items-center justify-between space-x-4 mt-1">
+        <div class="flex items-center justify-between mt-1 space-x-4">
           <div>SSID:</div>
           <div x-text="settings.wifi_connected ? settings.wifi_ssid : 'n/a'">n/a</div>
         </div>
       </div>
 
-      <div class="rounded-lg bg-gray-50 shadow-sm ring-1 ring-gray-200 text-gray-500 p-4 mt-3">
-        <div class="flex items-center justify-between space-x-4 border-b border-gray-200 pb-2">
+      <div class="p-4 mt-3 text-gray-500 rounded-lg shadow-sm bg-gray-50 ring-1 ring-gray-200">
+        <div class="flex items-center justify-between pb-2 space-x-4 border-b border-gray-200">
           <div class="flex items-center space-x-2">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
               <path fill-rule="evenodd"
@@ -343,16 +474,16 @@
           </div>
           <div x-text="settings.ap_active ? 'Active' : 'Not Active'"
             :class="{'bg-green-50 text-green-700 ring-green-600/20': settings.ap_active, 'bg-red-50 text-red-700 ring-red-600/20': !settings.ap_active}"
-            class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium  ring-1 ring-inset ">
+            class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-md ring-1 ring-inset ">
             Not Active</div>
         </div>
 
-        <div class="flex items-center justify-between space-x-4 mt-2">
+        <div class="flex items-center justify-between mt-2 space-x-4">
           <div>IP:</div>
           <div x-text="settings.ap_active ? settings.ap_address : 'n/a'">n/a</div>
         </div>
 
-        <div class="flex items-center justify-between space-x-4 mt-1">
+        <div class="flex items-center justify-between mt-1 space-x-4">
           <div>SSID:</div>
           <div x-text="settings.ap_active ? settings.ap_ssid : 'n/a'">n/a</div>
         </div>
@@ -364,16 +495,16 @@
 
 
 <!-- Warning Modal -->
-<div x-cloak x-show="showWarningModal" class=" fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4"
+<div x-show="showWarningModal" style="display:none;" class="fixed inset-0 flex items-center justify-center p-4 bg-gray-500 bg-opacity-75 "
 x-transition:enter="transition-opacity duration-1000" x-transition:enter-start="opacity-0"
 x-transition:enter-end="opacity-100" x-transition:leave="transition-opacity duration-500"
 x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
-  <div class="bg-white p-5 rounded-lg shadow-lg max-w-sm w-full">
+  <div class="w-full max-w-sm p-5 bg-white rounded-lg shadow-lg">
     <h2 class="text-lg font-bold">Warning!</h2>
     <p class="my-4">Disabling the Access Point will prevent re-enabling it unless you are connected to Wi-Fi or you manually edit the config.json on your device.</p>
     <div class="flex justify-end space-x-4">
-      <button @click="showWarningModal=false" class="bg-gray-300 hover:bg-gray-400 text-black py-2 px-4 rounded">Cancel</button>
-      <button @click="toggleAccessPointDisabled" class="bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded">Disable AP</button>
+      <button @click="showWarningModal=false" class="px-4 py-2 text-black bg-gray-300 rounded hover:bg-gray-400">Cancel</button>
+      <button @click="toggleAccessPointDisabled" class="px-4 py-2 text-white bg-red-600 rounded hover:bg-red-700">Disable AP</button>
     </div>
   </div>
 </div>
@@ -396,6 +527,9 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
           'wifi_connected': false,
           'cpu_temp': 0,
           'disable_access_point': false,
+          'schedules': [],
+          'scene_names': [],
+          'schedules_enabled': false,
         },
         timeDisplay: [0, 0, 0, 0, 0, 0],
         //path: 'http://192.168.1.77', // use this for development
@@ -407,13 +541,54 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
         hourColorHex: '#ffff00',
         timeChanged: false,
         newWifiPassword: '',
-        options: ['Clock Settings', 'Wi-Fi', 'Updates'],
+        tabItems: [
+          {
+            label: 'Clock Settings',
+            icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6l4 2M22 12a10 10 0 11-20 0 10 10 0 0120 0z"/>
+            </svg>`
+          },
+                    {
+            label: 'Wi-Fi',
+            icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M5.283 13.576a9.5 9.5 0 0113.434 0M2.454 10.747c5.273-5.273 13.82-5.273 19.092 0M12 20h.01"/>
+            </svg>`
+          },
+          {
+            label: 'Schedules',
+            icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10m-11 9h12a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2v11a2 2 0 002 2z"/>
+            </svg>`
+          },
+          {
+            label: 'Updates',
+            icon: `<svg class="size-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+  <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
+</svg>
+`
+          }
+        ],
         selectedOption: 'Clock Settings',
+        visibleTabs: [],
+        overflowTabs: [],
+        overflowOpen: false,
+        tabResizeTimeout: null,
+        tabResizeHandler: null,
+        weekdays: [
+          { value: 'mon', label: 'Mon' },
+          { value: 'tue', label: 'Tue' },
+          { value: 'wed', label: 'Wed' },
+          { value: 'thu', label: 'Thu' },
+          { value: 'fri', label: 'Fri' },
+          { value: 'sat', label: 'Sat' },
+          { value: 'sun', label: 'Sun' }
+        ],
         //selectedOption: 'Wi-Fi',
         showWarningModal: false,
         init() {
           console.log('init')
           this.getClockSettings()
+          this.setupTabOverflow()
           //this.newTimeString = this.formatTime(this.dateToArray(new Date()), false)
           this.newTimeString = this.dateToString(new Date())
           // do it on the next alpine tick
@@ -422,11 +597,149 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
               //this.selectedOption = 'Clock Settings'
             }) */
         },
+        destroy() {
+          if (this.tabResizeHandler) {
+            window.removeEventListener('resize', this.tabResizeHandler)
+          }
+        },
+        setupTabOverflow() {
+          this.visibleTabs = this.tabItems.map(tab => tab.label)
+          this.overflowTabs = []
+          this.tabResizeHandler = () => {
+            clearTimeout(this.tabResizeTimeout)
+            this.tabResizeTimeout = setTimeout(() => this.checkTabOverflow(), 250)
+          }
+          window.addEventListener('resize', this.tabResizeHandler)
+          this.$nextTick(() => {
+            setTimeout(() => this.checkTabOverflow(), 250)
+          })
+        },
+        isTabActive(tab) {
+          return this.selectedOption === tab.label
+        },
+        isTabVisible(label) {
+          return this.visibleTabs.includes(label)
+        },
+        isTabOverflow(label) {
+          return this.overflowTabs.includes(label)
+        },
+        selectTab(label) {
+          this.selectedOption = label
+          this.overflowOpen = false
+          this.$nextTick(() => {
+            setTimeout(() => this.checkTabOverflow(), 0)
+          })
+        },
+        measureTabs() {
+          const wrapper = this.$refs.tabNav
+          if (!wrapper) return null
+
+          const clone = wrapper.cloneNode(true)
+          clone.style.position = 'absolute'
+          clone.style.visibility = 'hidden'
+          clone.style.pointerEvents = 'none'
+          clone.style.left = '-9999px'
+          clone.style.top = '0'
+
+          clone.querySelectorAll('[data-tab]').forEach((tab) => {
+            tab.style.display = 'inline-flex'
+            tab.style.visibility = 'hidden'
+          })
+
+          const overflowButton = clone.querySelector('[data-overflow-button]')
+          if (overflowButton) {
+            overflowButton.style.display = 'inline-flex'
+            overflowButton.style.visibility = 'hidden'
+          }
+
+          document.body.appendChild(clone)
+
+          const tabData = Array.from(clone.querySelectorAll('[data-tab]')).map(tab => ({
+            label: tab.dataset.tab,
+            width: Math.ceil(tab.getBoundingClientRect().width)
+          }))
+
+          const overflowWidth = overflowButton
+            ? Math.ceil(overflowButton.getBoundingClientRect().width)
+            : 72
+
+          document.body.removeChild(clone)
+          return { tabData, overflowWidth }
+        },
+        checkTabOverflow() {
+          const wrapper = this.$refs.tabNav
+          if (!wrapper) return
+
+          const measurement = this.measureTabs()
+          if (!measurement || !measurement.tabData || measurement.tabData.length === 0) return
+
+          const { tabData, overflowWidth } = measurement
+          const gap = 4
+          const labels = tabData.map(tab => tab.label)
+          const widthMap = new Map(tabData.map(tab => [tab.label, tab.width]))
+          const containerWidth = wrapper.offsetWidth
+
+          const calcWidth = (labelsList) => labelsList.reduce((sum, label, index) => {
+            const width = widthMap.get(label) ?? 0
+            return sum + width + (index === 0 ? 0 : gap)
+          }, 0)
+
+          const totalWidth = calcWidth(labels)
+          if (totalWidth <= containerWidth) {
+            this.visibleTabs = labels
+            this.overflowTabs = []
+            return
+          }
+
+          const availableWidth = Math.max(containerWidth - overflowWidth - gap, 0)
+          const fitPrefix = (tabs, widthLimit) => {
+            const fit = []
+            let usedWidth = 0
+
+            for (const tab of tabs) {
+              const nextWidth = usedWidth === 0 ? tab.width : usedWidth + gap + tab.width
+              if (nextWidth <= widthLimit) {
+                fit.push(tab)
+                usedWidth = nextWidth
+              }
+            }
+
+            return { fit, usedWidth }
+          }
+
+          const { fit: prefixFit } = fitPrefix(tabData, availableWidth)
+          const visible = prefixFit.map(tab => tab.label)
+
+          const activeLabel = this.selectedOption
+          const activeWidth = activeLabel ? (widthMap.get(activeLabel) ?? 0) : 0
+
+          if (activeLabel && activeWidth > 0 && !visible.includes(activeLabel)) {
+            const trimmed = [...visible]
+            while (
+              trimmed.length > 0 &&
+              calcWidth(trimmed) + (trimmed.length > 0 ? gap : 0) + activeWidth > availableWidth
+            ) {
+              trimmed.pop()
+            }
+
+            if (activeWidth <= availableWidth) {
+              trimmed.push(activeLabel)
+            }
+
+            this.visibleTabs = trimmed
+            this.overflowTabs = labels.filter(label => !trimmed.includes(label))
+            return
+          }
+
+          this.visibleTabs = visible
+          this.overflowTabs = labels.filter(label => !visible.includes(label))
+        },
         async getClockSettings() {
           const response = await fetch(this.path + '/get-clock-settings')
           if (response.ok) {
             this.settings = await response.json()
             console.log(this.settings)
+            this.settings.schedules = (this.settings.schedules || []).map(schedule => this.normaliseSchedule(schedule))
             this.timeDisplay = this.settings.time
             this.singeColorHex = this.rgbArrayToHex(this.settings.single_color)
             this.minuteColorHex = this.rgbArrayToHex(this.settings.minute_color)
@@ -506,8 +819,87 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
             console.log('settings updated')
             json = await response.json()
             this.settings = json.settings
+            this.settings.schedules = (this.settings.schedules || []).map(schedule => this.normaliseSchedule(schedule))
             //this.timeDisplay = json.settings.time
             this.timeChanged = false
+            console.log(json)
+          }
+        },
+        normaliseSchedule(schedule = {}) {
+          const nextSchedule = {
+            enabled: schedule.enabled !== false,
+            days: Array.isArray(schedule.days) && schedule.days.length ? [...schedule.days] : ['mon'],
+            time: typeof schedule.time === 'string' ? schedule.time : '00:00',
+            action: typeof schedule.action === 'object' && schedule.action !== null ? { ...schedule.action } : { type: 'display_off' }
+          }
+          if (!nextSchedule.action.type) {
+            nextSchedule.action.type = 'display_off'
+          }
+          this.scheduleActionChanged(nextSchedule)
+          return nextSchedule
+        },
+        newSchedule() {
+          return this.normaliseSchedule({
+            enabled: true,
+            days: ['mon'],
+            time: '00:00',
+            action: { type: 'display_off' }
+          })
+        },
+        addSchedule() {
+          this.settings.schedules.push(this.newSchedule())
+        },
+        removeSchedule(index) {
+          this.settings.schedules.splice(index, 1)
+        },
+        toggleScheduleDay(schedule, day) {
+          if (schedule.days.includes(day)) {
+            if (schedule.days.length > 1) {
+              schedule.days = schedule.days.filter(value => value !== day)
+            }
+            return
+          }
+          schedule.days.push(day)
+        },
+        scheduleActionChanged(schedule) {
+          if (schedule.action.type === 'set_brightness') {
+            schedule.action = {
+              type: 'set_brightness',
+              value: typeof schedule.action.value === 'number' ? schedule.action.value : 1
+            }
+            return
+          }
+          if (schedule.action.type === 'apply_scene') {
+            schedule.action = {
+              type: 'apply_scene',
+              scene: schedule.action.scene || this.settings.scene_names[0] || ''
+            }
+            return
+          }
+          schedule.action = {
+            type: schedule.action.type
+          }
+        },
+        async updateSchedules() {
+          const payload = {
+            schedules: this.settings.schedules.map(schedule => ({
+              enabled: schedule.enabled,
+              days: schedule.days,
+              time: schedule.time,
+              action: schedule.action
+            }))
+          }
+          const response = await fetch(this.path + '/set-schedules', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+          })
+          if (response.ok) {
+            const json = await response.json()
+            this.settings = json.settings
+            this.settings.schedules = (this.settings.schedules || []).map(schedule => this.normaliseSchedule(schedule))
             console.log(json)
           }
         },

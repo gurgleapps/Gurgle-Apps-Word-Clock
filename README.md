@@ -151,6 +151,7 @@ If you want to hack on the code more quickly, there is also a simple advanced fl
 ```
 
 Use `./flash.sh --with-config` only when you want to replace the device `config.json`.
+While the serial monitor is open, use `Ctrl-C` to interrupt, `Ctrl-D` to soft reboot, and `Ctrl-]` to exit.
 
 ---
 

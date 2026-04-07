@@ -23,7 +23,7 @@ class Board:
         sysname = os.uname().sysname.lower()
         machine = os.uname().machine.lower()
 
-        if sysname == 'rp2' and 'pico w' in machine:
+        if sysname == 'rp2' and (('pico w' in machine) or ('pico 2 w' in machine)):
             return self.BoardType.PICO_W
         elif sysname == 'rp2' and 'pico' in machine:
             return self.BoardType.PICO

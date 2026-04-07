@@ -5,19 +5,25 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DEVICE="auto"
 WITH_CONFIG=0
+NO_MONITOR=0
 MONITOR_PORT=""
 
 usage() {
-    echo "Usage: ./flash.sh [device] [--with-config]"
+    echo "Usage: ./flash.sh [device] [--with-config] [--no-monitor]"
     echo
     echo "Examples:"
     echo "  ./flash.sh"
     echo "  ./flash.sh --with-config"
+    echo "  ./flash.sh --no-monitor"
     echo "  ./flash.sh /dev/tty.usbmodem123401"
     echo "  ./flash.sh /dev/tty.usbmodem123401 --with-config"
 }
 
 resolve_monitor_port() {
+    if [ "$NO_MONITOR" -eq 1 ]; then
+        return
+    fi
+
     if [ "$DEVICE" != "auto" ]; then
         MONITOR_PORT="$DEVICE"
         return
@@ -35,6 +41,9 @@ for arg in "$@"; do
     case "$arg" in
         --with-config)
             WITH_CONFIG=1
+            ;;
+        --no-monitor)
+            NO_MONITOR=1
             ;;
         -h|--help)
             usage
@@ -66,8 +75,12 @@ if [ "$WITH_CONFIG" -eq 1 ]; then
 else
     echo "Preserving config.json already on the device."
 fi
-echo "Opening serial monitor on: $MONITOR_PORT"
-echo "Press Ctrl-] to exit the monitor when you are done."
+if [ "$NO_MONITOR" -eq 1 ]; then
+    echo "Skipping serial monitor."
+else
+    echo "Opening serial monitor on: $MONITOR_PORT"
+    echo "Press Ctrl-] to exit the monitor when you are done."
+fi
 
 CMD=(
     "$MPREMOTE"
@@ -84,6 +97,10 @@ fi
 CMD+=(reset)
 
 "${CMD[@]}"
+
+if [ "$NO_MONITOR" -eq 1 ]; then
+    exit 0
+fi
 
 sleep 2
 

@@ -1,7 +1,7 @@
 [{
     "enabled": true,
     "days": ["mon", "tue", "wed", "thu", "fri"],
-    "time": "19:07",
+    "time": "20:43",
     "action": {
       "type": "display_off"
     }
@@ -9,7 +9,7 @@
   {
     "enabled": true,
     "days": ["mon", "tue", "wed", "thu", "fri"],
-    "time": "19:08",
+    "time": "20:44",
     "action": {
       "type": "display_on"
     }
@@ -17,9 +17,19 @@
   {
     "enabled": true,
     "days": ["mon", "tue", "wed", "thu", "fri"],
-    "time": "06:00",
+    "time": "20:50",
     "action": {
       "type": "apply_scene",
       "scene": "classic_words"
     }
-  }]
+  },
+{
+    "enabled": true,
+    "days": ["mon", "tue", "wed", "thu", "fri"],
+    "time": "20:51",
+    "action": {
+      "type": "apply_scene",
+      "scene": "warm_evening"
+    }
+  }
+]

@@ -760,6 +760,7 @@ async def test_pattern_request(request, response):
 
 async def set_clock_settings_request(request, response):
     global current_display_mode
+    global current_scene_name
     global single_color
     global minute_color
     global hour_color
@@ -768,6 +769,7 @@ async def set_clock_settings_request(request, response):
     print(request.post_data)
     set_brightness(int(request.post_data['brightness']))
     current_display_mode = request.post_data['display_mode']
+    current_scene_name = None
     schedules_enabled = bool(request.post_data.get('schedules_enabled', False))
     single_color = (int(request.post_data['single_color'][0]), int(request.post_data['single_color'][1]), int(request.post_data['single_color'][2]))
     minute_color = (int(request.post_data['minute_color'][0]), int(request.post_data['minute_color'][1]), int(request.post_data['minute_color'][2]))

@@ -288,6 +288,18 @@
           <div>CPU Temp:</div>
           <div x-text="settings.cpu_temp==0 ? 'n/a' : settings.cpu_temp.toFixed(2)+'°C'">n/a</div>
         </div>
+        <div class="flex items-center justify-between space-x-4 mt-1">
+          <div>Current Scene:</div>
+          <div x-text="settings.current_scene || 'manual'">manual</div>
+        </div>
+        <div class="flex items-center justify-between space-x-4 mt-1">
+          <div>Schedules:</div>
+          <div x-text="settings.schedules_enabled ? 'Enabled' : 'Disabled'">Disabled</div>
+        </div>
+        <div class="flex items-center justify-between space-x-4 mt-1">
+          <div>Valid Schedules:</div>
+          <div x-text="settings.schedule_count">0</div>
+        </div>
 
       </div>
 

@@ -23,9 +23,11 @@ DISPLAY_MODE_COLOR_PER_WORD = 'color_per_word'
 DISPLAY_MODE_RANDOM = 'random'
 
 current_display_mode = DISPLAY_MODE_RAINBOW
+current_scene_name = None
 
 disable_access_point = False
 brightness = 2
+display_enabled = True
 # Color data for different modes
 single_color = (0, 0, 255)
 # Color data for different words
@@ -88,6 +90,9 @@ clockFont = {
 def log_boot(message):
     print("[BOOT] " + message)
 
+def log_scene(message):
+    print("[SCENE] " + message)
+
 def enabled_display_backends():
     backends = []
     if config.get('ENABLE_WS2812B'):
@@ -108,8 +113,122 @@ def log_boot_summary():
     log_boot("Displays: " + enabled_display_backends())
     log_boot("Display mode: " + str(current_display_mode) + ", brightness: " + str(brightness))
     log_boot("Time offset: " + str(time_offset) + " seconds")
+    log_boot("Scenes loaded: " + str(len(scenes)))
     log_boot("Wi-Fi configured: " + ('yes' if wifi_ssid else 'no'))
     log_boot("Access point disabled: " + str(disable_access_point))
+
+def normalise_color(value):
+    if not isinstance(value, (list, tuple)) or len(value) != 3:
+        return None
+    colour = []
+    for channel in value:
+        if not isinstance(channel, int) or channel < 0 or channel > 255:
+            return None
+        colour.append(channel)
+    return tuple(colour)
+
+def clear_matrix():
+    blank = [0] * 8
+    if config['ENABLE_MAX7219']:
+        spi_matrix.show_char(blank)
+    if config['ENABLE_HT16K33']:
+        i2c_matrix.show_char(i2c_matrix.reverse_char(blank))
+    if config['ENABLE_WS2812B']:
+        ws2812b_matrix.clear()
+
+def set_display_enabled(enabled):
+    global display_enabled
+    display_enabled = bool(enabled)
+    if not display_enabled:
+        clear_matrix()
+
+def set_display_mode(mode, persist=False):
+    global current_display_mode
+    if mode not in display_modes:
+        raise ValueError("Unsupported display mode: " + str(mode))
+    current_display_mode = mode
+    if persist:
+        config['DISPLAY_MODE'] = current_display_mode
+
+def apply_scene(scene_name_or_object):
+    global current_scene_name
+    global single_color
+    global minute_color
+    global hour_color
+    global past_to_color
+
+    scene_name = None
+    if isinstance(scene_name_or_object, str):
+        scene_name = scene_name_or_object
+        scene = scenes.get(scene_name)
+        if scene is None:
+            log_scene("Scene not found: " + scene_name)
+            return False
+    else:
+        scene = scene_name_or_object
+
+    if not isinstance(scene, dict):
+        log_scene("Invalid scene definition")
+        return False
+
+    next_mode = scene.get('display_mode', current_display_mode)
+    if next_mode not in display_modes:
+        log_scene("Invalid display mode in scene: " + str(next_mode))
+        return False
+
+    if 'display_enabled' in scene:
+        if isinstance(scene['display_enabled'], bool):
+            set_display_enabled(scene['display_enabled'])
+        else:
+            log_scene("Invalid display_enabled in scene")
+
+    if 'brightness' in scene:
+        if isinstance(scene['brightness'], int) and 0 <= scene['brightness'] <= 15:
+            set_brightness(scene['brightness'], persist=False)
+        else:
+            log_scene("Invalid brightness in scene")
+
+    if 'display_mode' in scene:
+        set_display_mode(next_mode, persist=False)
+
+    if next_mode == DISPLAY_MODE_SINGLE_COLOR and 'single_color' in scene:
+        color = normalise_color(scene['single_color'])
+        if color is None:
+            log_scene("Invalid single_color in scene")
+        else:
+            single_color = color
+    elif next_mode == DISPLAY_MODE_COLOR_PER_WORD:
+        if 'minute_color' in scene:
+            color = normalise_color(scene['minute_color'])
+            if color is None:
+                log_scene("Invalid minute_color in scene")
+            else:
+                minute_color = color
+        if 'hour_color' in scene:
+            color = normalise_color(scene['hour_color'])
+            if color is None:
+                log_scene("Invalid hour_color in scene")
+            else:
+                hour_color = color
+        if 'past_to_color' in scene:
+            color = normalise_color(scene['past_to_color'])
+            if color is None:
+                log_scene("Invalid past_to_color in scene")
+            else:
+                past_to_color = color
+
+    current_scene_name = scene_name
+
+    if display_enabled:
+        time_to_matrix()
+    else:
+        clear_matrix()
+
+    if scene_name:
+        log_scene("Applied scene: " + scene_name)
+    else:
+        log_scene("Applied inline scene")
+    return True
 
 def read_config():
     try:
@@ -215,6 +334,9 @@ def set_manual_time(year, month, day, hour, minute, second):
 
 def time_to_matrix():
     global colour_per_word_array
+    if not display_enabled:
+        clear_matrix()
+        return
     word = [0, 0, 0, 0, 0, 0, 0, 0]
     now = get_corrected_time()
     hour = (now[3])
@@ -340,11 +462,12 @@ def merge_color_array(color_array, char, color):
                 color_array[i * 8 + j] = color
     return color_array
 
-def set_brightness(new_brightness):
+def set_brightness(new_brightness, persist=True):
     global brightness
     brightness = new_brightness
-    config['BRIGHTNESS'] = brightness
-    save_config(config)
+    if persist:
+        config['BRIGHTNESS'] = brightness
+        save_config(config)
     if config['ENABLE_MAX7219']:
         spi_matrix.set_brightness(brightness)
     if config['ENABLE_HT16K33']:
@@ -491,7 +614,9 @@ def settings_object():
     global ntp_synced_at, last_ntp_sync_attempt
     return {
         'brightness': brightness,
+        'display_enabled': display_enabled,
         'display_mode': current_display_mode,
+        'current_scene': current_scene_name,
         'single_color': single_color,
         'minute_color': minute_color,
         'hour_color': hour_color,
@@ -603,6 +728,10 @@ past_to_color = config.get('PAST_TO_COLOR', (0, 0, 255))
 current_display_mode = config.get('DISPLAY_MODE', DISPLAY_MODE_RAINBOW)
 time_offset = config.get('TIME_OFFSET', 0)
 disable_access_point = config.get('DISABLE_ACCESS_POINT', False)
+scenes = config.get('SCENES', {})
+if not isinstance(scenes, dict):
+    log_boot("Invalid SCENES config, ignoring it")
+    scenes = {}
 
 log_boot_summary()
 

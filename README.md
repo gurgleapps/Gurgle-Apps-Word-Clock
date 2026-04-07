@@ -151,6 +151,7 @@ If you want to hack on the code more quickly, there is also a simple advanced fl
 ```
 
 Use `./flash.sh --with-config` only when you want to replace the device `config.json`.
+By default, `./flash.sh` also preserves the device `scenes.json` and `schedules.json`. Use `./flash.sh --with-scenes --with-schedules` if you intentionally want to replace them from the repo.
 While the serial monitor is open, use `Ctrl-C` to interrupt, `Ctrl-D` to soft reboot, and `Ctrl-]` to exit.
 
 ---

@@ -131,6 +131,12 @@
         </nav>
       </div>
 
+      <div x-show="saveNoticeText" x-transition style="display:none;"
+        class="px-3 py-2 mb-4 text-sm font-medium rounded-lg ring-1 ring-inset"
+        :class="saveNoticeTone === 'success' ? 'bg-green-50 text-green-700 ring-green-600/20' : 'bg-red-50 text-red-700 ring-red-600/20'">
+        <span x-text="saveNoticeText"></span>
+      </div>
+
       <div> <!-- tab content -->
         <div x-show="selectedOption=='Wi-Fi'" x-collapse class="p-3 my-4 rounded-lg ring-1 ring-gray-100">
 
@@ -451,7 +457,7 @@
                   class="flex items-center flex-1 min-w-0 gap-3 text-left">
                   <div class="min-w-0">
                     <div class="font-medium text-gray-900 truncate" x-text="scene.name || ('Scene ' + (index + 1))"></div>
-                    <div class="text-sm text-gray-500" x-text="scene.display_enabled ? 'Display enabled' : 'Display disabled'"></div>
+                    <div class="text-sm text-gray-500" x-text="sceneSummary(scene)"></div>
                   </div>
                   <div class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-md ring-1 ring-inset"
                     :class="scene.display_enabled ? 'bg-green-50 text-green-700 ring-green-600/20' : 'bg-gray-100 text-gray-600 ring-gray-400/20'">
@@ -528,12 +534,6 @@
             </div>
           </template>
 
-          <div class="flex justify-center mt-1 mb-2">
-            <button @click.prevent="updateScenes()"
-              class="w-full px-4 py-2 font-semibold text-white bg-green-600 rounded focus:outline-none hover:bg-green-700">
-              Save Scenes
-            </button>
-          </div>
         </div>
       </div>
 
@@ -678,6 +678,9 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
         hourColorHex: '#ffff00',
         timeChanged: false,
         newWifiPassword: '',
+        saveNoticeText: '',
+        saveNoticeTone: 'success',
+        saveNoticeTimeout: null,
         sceneModeFields: {
           rainbow: [],
           single_color: ['single_color'],
@@ -1016,6 +1019,27 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
           const supportedFields = this.sceneModeFields[scene.display_mode] || []
           return supportedFields.includes(fieldName)
         },
+        modeLabel(mode) {
+          if (mode === 'single_color') return 'Single colour'
+          if (mode === 'color_per_word') return 'Word colours'
+          if (mode === 'rainbow') return 'Rainbow'
+          if (mode === 'random') return 'Random'
+          return mode || 'Unknown mode'
+        },
+        showNotice(message, tone = 'success') {
+          this.saveNoticeText = message
+          this.saveNoticeTone = tone
+          if (this.saveNoticeTimeout) {
+            clearTimeout(this.saveNoticeTimeout)
+          }
+          this.saveNoticeTimeout = setTimeout(() => {
+            this.saveNoticeText = ''
+          }, 2500)
+        },
+        sceneSummary(scene) {
+          const state = scene.display_enabled ? 'On' : 'Off'
+          return state + ' · ' + this.modeLabel(scene.display_mode) + ' · Brightness ' + scene.brightness
+        },
         buildScenesPayload() {
           const payload = {}
           const seenNames = {}
@@ -1069,8 +1093,11 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
           if (response.ok) {
             const json = await response.json()
             this.applySettings(json.settings)
+            this.showNotice('Scenes saved')
             console.log(json)
+            return
           }
+          this.showNotice('Failed to save scenes', 'error')
         },
         normaliseSchedule(schedule = {}) {
           const nextSchedule = {
@@ -1108,17 +1135,17 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
         },
         scheduleSummary(schedule) {
           const days = Array.isArray(schedule.days) ? schedule.days : []
-          const daySummary = days.length === this.weekdays.length ? 'Every day' : days.map(day => day.slice(0, 3)).join(', ')
+          const daySummary = days.length === this.weekdays.length ? 'Every day' : days.map(day => day.charAt(0).toUpperCase() + day.slice(1, 3)).join(', ')
           if (schedule.action.type === 'set_brightness') {
-            return daySummary + ' at ' + schedule.time + ' · Brightness ' + schedule.action.value
+            return daySummary + ' · ' + schedule.time + ' · Brightness ' + schedule.action.value
           }
           if (schedule.action.type === 'apply_scene') {
-            return daySummary + ' at ' + schedule.time + ' · Scene ' + (schedule.action.scene || '')
+            return daySummary + ' · ' + schedule.time + ' · Scene ' + (schedule.action.scene || '')
           }
           if (schedule.action.type === 'display_on') {
-            return daySummary + ' at ' + schedule.time + ' · Display on'
+            return daySummary + ' · ' + schedule.time + ' · Display on'
           }
-          return daySummary + ' at ' + schedule.time + ' · Display off'
+          return daySummary + ' · ' + schedule.time + ' · Display off'
         },
         toggleScheduleDay(schedule, day) {
           if (schedule.days.includes(day)) {
@@ -1168,8 +1195,11 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
           if (response.ok) {
             const json = await response.json()
             this.applySettings(json.settings)
+            this.showNotice('Schedules saved')
             console.log(json)
+            return
           }
+          this.showNotice('Failed to save schedules', 'error')
         },
         update() {
           this.updateSettings()

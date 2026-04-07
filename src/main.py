@@ -15,6 +15,8 @@ from board import Board
 import socket
 
 config_file = 'config.json'
+scenes_file = 'scenes.json'
+schedules_file = 'schedules.json'
 
 # Display modes
 DISPLAY_MODE_RAINBOW = 'rainbow'
@@ -247,6 +249,16 @@ def read_config():
     except (OSError):
         print(f"Configuration file not found or is invalid. Please create a valid {config_file} file.")
         return None
+
+def read_optional_json(filename, default_value):
+    try:
+        with open(filename, 'r') as file:
+            return json.load(file)
+    except OSError:
+        return default_value
+    except ValueError:
+        print("Optional JSON file is invalid: " + filename)
+        return default_value
 
 def save_config(data):
     try:
@@ -627,6 +639,9 @@ def settings_object():
         'display_enabled': display_enabled,
         'display_mode': current_display_mode,
         'current_scene': current_scene_name,
+        'scene_names': list(scenes.keys()),
+        'schedules_enabled': schedules_enabled,
+        'schedule_count': len(schedules),
         'single_color': single_color,
         'minute_color': minute_color,
         'hour_color': hour_color,
@@ -738,10 +753,17 @@ past_to_color = config.get('PAST_TO_COLOR', (0, 0, 255))
 current_display_mode = config.get('DISPLAY_MODE', DISPLAY_MODE_RAINBOW)
 time_offset = config.get('TIME_OFFSET', 0)
 disable_access_point = config.get('DISABLE_ACCESS_POINT', False)
-scenes = config.get('SCENES', {})
+schedules_enabled = config.get('SCHEDULES_ENABLED', False)
+
+scenes = read_optional_json(scenes_file, config.get('SCENES', {}))
 if not isinstance(scenes, dict):
-    log_boot("Invalid SCENES config, ignoring it")
+    log_boot("Invalid scenes config, ignoring it")
     scenes = {}
+
+schedules = read_optional_json(schedules_file, config.get('SCHEDULES', []))
+if not isinstance(schedules, list):
+    log_boot("Invalid schedules config, ignoring it")
+    schedules = []
 
 log_boot_summary()
 

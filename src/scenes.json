@@ -1,0 +1,19 @@
+{
+    "classic_words": {
+        "display_enabled": true,
+        "display_mode": "color_per_word",
+        "brightness": 2,
+        "minute_color": [0, 255, 0],
+        "hour_color": [255, 0, 0],
+        "past_to_color": [0, 0, 255]
+    },
+    "warm_evening": {
+        "display_enabled": true,
+        "display_mode": "single_color",
+        "brightness": 1,
+        "single_color": [255, 120, 40]
+    },
+    "night_off": {
+        "display_enabled": false
+    }
+}

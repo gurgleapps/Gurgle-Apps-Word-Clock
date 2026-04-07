@@ -87,6 +87,8 @@ CMD=(
     connect "$DEVICE"
     fs cp "$ROOT_DIR"/src/*.py : +
     fs cp "$ROOT_DIR"/src/config_*.json : +
+    fs cp "$ROOT_DIR"/src/scenes.json : +
+    fs cp "$ROOT_DIR"/src/schedules.json : +
     fs cp -r "$ROOT_DIR"/src/www/* :www +
 )
 

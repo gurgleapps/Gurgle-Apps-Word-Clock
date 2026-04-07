@@ -10,6 +10,7 @@ import uasyncio as asyncio
 import json
 import matrix_fonts
 import urandom as random
+import os
 from board import Board
 import socket
 
@@ -83,6 +84,32 @@ clockFont = {
     'wifi': [0x3c,0x42,0x99,0xa5,0x24,0x00,0x18,0x18],
     'full': [0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff]
 }
+
+def log_boot(message):
+    print("[BOOT] " + message)
+
+def enabled_display_backends():
+    backends = []
+    if config.get('ENABLE_WS2812B'):
+        backends.append('WS2812B')
+    if config.get('ENABLE_HT16K33'):
+        backends.append('HT16K33')
+    if config.get('ENABLE_MAX7219'):
+        backends.append('MAX7219')
+    if not backends:
+        backends.append('none')
+    return ', '.join(backends)
+
+def log_boot_summary():
+    uname = os.uname()
+    wifi_ssid = config.get('WIFI_SSID', '').strip()
+    log_boot("Board: " + uname.machine)
+    log_boot("Runtime: " + uname.sysname)
+    log_boot("Displays: " + enabled_display_backends())
+    log_boot("Display mode: " + str(current_display_mode) + ", brightness: " + str(brightness))
+    log_boot("Time offset: " + str(time_offset) + " seconds")
+    log_boot("Wi-Fi configured: " + ('yes' if wifi_ssid else 'no'))
+    log_boot("Access point disabled: " + str(disable_access_point))
 
 def read_config():
     try:
@@ -195,7 +222,7 @@ def time_to_matrix():
     colour_per_word_array.clear()
     # round min to nearest 5
     minute = int(round(minute/5)*5)
-    if minute > 0 and minute < 30:
+    if minute > 0 and minute <= 30:
         word = merge_chars(word, clockFont['past'])
         colour_per_word_array = merge_color_array(colour_per_word_array, clockFont['past'], past_to_color)
     elif minute == 60:
@@ -529,6 +556,7 @@ async def connect_to_wifi():
 async def main():
     global ntp_synced_at, last_wifi_connected_time, last_wifi_disconnected_time, disable_access_point
     ap_connnected = False
+    log_boot("Starting main background task")
     await connect_to_wifi()
     if not server.is_wifi_connected() and not disable_access_point:
         ap_connnected = server.start_access_point('gurgleapps', 'gurgleapps')
@@ -561,6 +589,7 @@ display_modes = {
     DISPLAY_MODE_RANDOM: display_random_mode
 }
 
+log_boot("Loading " + config_file)
 config = read_config()
 
 if config is None:
@@ -575,22 +604,29 @@ current_display_mode = config.get('DISPLAY_MODE', DISPLAY_MODE_RAINBOW)
 time_offset = config.get('TIME_OFFSET', 0)
 disable_access_point = config.get('DISABLE_ACCESS_POINT', False)
 
+log_boot_summary()
+
         
 if config['ENABLE_HT16K33']:
+    log_boot("Initialising HT16K33 matrix")
     scan_for_devices()
     i2c_matrix = ht16k33_matrix(config['I2C_SDA'], config['I2C_SCL'], config['I2C_BUS'],  int(config['I2C_ADDRESS'], 16))
 
 if config['ENABLE_MAX7219']:
+    log_boot("Initialising MAX7219 matrix")
     spi = machine.SPI(config['SPI_PORT'], sck=machine.Pin(config['SPI_SCK']), mosi=machine.Pin(config['SPI_MOSI']))
     spi_matrix = max7219_matrix(spi, machine.Pin(config['SPI_CS'], machine.Pin.OUT, True))
     spi_matrix.set_brightness(17)
 
 if config['ENABLE_WS2812B']:
+    log_boot("Initialising WS2812B matrix")
     ws2812b_matrix = ws2812b_matrix(config['WS2812B_PIN'], 8, 8)
     ws2812b_matrix.set_brightness(brightness)
 
+log_boot("Running startup animation")
 startup_animation()
 
+log_boot("Creating web server")
 server = GurgleAppsWebserver(
     port=80,
     timeout=20,
@@ -602,5 +638,5 @@ server.set_default_index_pages(["time.html"])
 server.set_cors(True)
 setup_routes(server)
 
+log_boot("Boot complete, starting event loop")
 asyncio.run(server.start_server_with_background_task(main))
-

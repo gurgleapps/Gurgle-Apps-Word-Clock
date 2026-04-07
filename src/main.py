@@ -376,6 +376,25 @@ def describe_schedule_action(action):
         return action_type + "(" + action['scene'] + ")"
     return action_type
 
+def run_schedule_action(action):
+    action_type = action['type']
+    if action_type == 'display_on':
+        set_display_enabled(True)
+        time_to_matrix()
+        return True
+    if action_type == 'display_off':
+        set_display_enabled(False)
+        clear_matrix()
+        return True
+    if action_type == 'set_brightness':
+        set_brightness(action['value'], persist=False)
+        if display_enabled:
+            time_to_matrix()
+        return True
+    if action_type == 'apply_scene':
+        return apply_scene(action['scene'])
+    return False
+
 def evaluate_schedules():
     global last_schedule_evaluation_key
     if not schedules_enabled or not valid_schedules:
@@ -392,11 +411,14 @@ def evaluate_schedules():
     minute = now[4]
     for schedule in valid_schedules:
         if weekday in schedule['days'] and (hour, minute) == schedule['time']:
+            action_description = describe_schedule_action(schedule['action'])
             log_schedule(
                 "Matched " + schedule['time_string'] +
                 " on " + WEEKDAY_NAMES[weekday] +
-                " -> would run " + describe_schedule_action(schedule['action'])
+                " -> running " + action_description
             )
+            if not run_schedule_action(schedule['action']):
+                log_schedule("Failed to run action: " + action_description)
 
 def save_config(data):
     try:

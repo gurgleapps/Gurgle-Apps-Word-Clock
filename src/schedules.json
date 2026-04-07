@@ -1,9 +1,17 @@
 [{
     "enabled": true,
     "days": ["mon", "tue", "wed", "thu", "fri"],
-    "time": "18:57",
+    "time": "19:01",
     "action": {
       "type": "display_off"
+    }
+  },
+  {
+    "enabled": true,
+    "days": ["mon", "tue", "wed", "thu", "fri"],
+    "time": "19:02",
+    "action": {
+      "type": "display_on"
     }
   },
   {

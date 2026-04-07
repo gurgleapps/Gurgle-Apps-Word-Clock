@@ -5,18 +5,21 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DEVICE="auto"
 WITH_CONFIG=0
+WITH_SCENES=0
+WITH_SCHEDULES=0
 NO_MONITOR=0
 MONITOR_PORT=""
 
 usage() {
-    echo "Usage: ./flash.sh [device] [--with-config] [--no-monitor]"
+    echo "Usage: ./flash.sh [device] [--with-config] [--with-scenes] [--with-schedules] [--no-monitor]"
     echo
     echo "Examples:"
     echo "  ./flash.sh"
     echo "  ./flash.sh --with-config"
+    echo "  ./flash.sh --with-scenes --with-schedules"
     echo "  ./flash.sh --no-monitor"
     echo "  ./flash.sh /dev/tty.usbmodem123401"
-    echo "  ./flash.sh /dev/tty.usbmodem123401 --with-config"
+    echo "  ./flash.sh /dev/tty.usbmodem123401 --with-config --with-scenes --with-schedules"
 }
 
 resolve_monitor_port() {
@@ -41,6 +44,12 @@ for arg in "$@"; do
     case "$arg" in
         --with-config)
             WITH_CONFIG=1
+            ;;
+        --with-scenes)
+            WITH_SCENES=1
+            ;;
+        --with-schedules)
+            WITH_SCHEDULES=1
             ;;
         --no-monitor)
             NO_MONITOR=1
@@ -75,6 +84,16 @@ if [ "$WITH_CONFIG" -eq 1 ]; then
 else
     echo "Preserving config.json already on the device."
 fi
+if [ "$WITH_SCENES" -eq 1 ]; then
+    echo "Including src/scenes.json in this flash."
+else
+    echo "Preserving scenes.json already on the device."
+fi
+if [ "$WITH_SCHEDULES" -eq 1 ]; then
+    echo "Including src/schedules.json in this flash."
+else
+    echo "Preserving schedules.json already on the device."
+fi
 if [ "$NO_MONITOR" -eq 1 ]; then
     echo "Skipping serial monitor."
 else
@@ -87,13 +106,19 @@ CMD=(
     connect "$DEVICE"
     fs cp "$ROOT_DIR"/src/*.py : +
     fs cp "$ROOT_DIR"/src/config_*.json : +
-    fs cp "$ROOT_DIR"/src/scenes.json : +
-    fs cp "$ROOT_DIR"/src/schedules.json : +
     fs cp -r "$ROOT_DIR"/src/www/* :www +
 )
 
 if [ "$WITH_CONFIG" -eq 1 ]; then
     CMD+=(fs cp "$ROOT_DIR"/src/config.json :config.json +)
+fi
+
+if [ "$WITH_SCENES" -eq 1 ]; then
+    CMD+=(fs cp "$ROOT_DIR"/src/scenes.json :scenes.json +)
+fi
+
+if [ "$WITH_SCHEDULES" -eq 1 ]; then
+    CMD+=(fs cp "$ROOT_DIR"/src/schedules.json :schedules.json +)
 fi
 
 CMD+=(reset)

@@ -189,9 +189,6 @@
 
 
         </div>
-        <div x-show="selectedOption=='Updates'" x-collapse class="p-3 my-4 rounded-lg ring-1 ring-gray-100">
-          Updates Coming Soon ... Regular bug fixes and feature updates Please keep an eye on the <a href="https://github.com/gurgleapps/Gurgle-Apps-Word-Clock">Github Repo</a> for updates.
-        </div>
         <!-- clock settings -->
 
         <div x-show="selectedOption=='Clock'" x-collapse class="p-3 my-4 rounded-lg ring-1 ring-gray-100">
@@ -315,10 +312,16 @@
               <div class="text-sm font-medium leading-6 text-gray-900">Schedules</div>
               <div class="text-sm text-gray-500">Edit the contents of <code>schedules.json</code>.</div>
             </div>
-            <button @click.prevent="addSchedule()"
-              class="w-full px-4 py-2 font-semibold text-white bg-blue-600 rounded focus:outline-none hover:bg-blue-700">
-              Add Schedule
-            </button>
+            <div class="flex w-full gap-2">
+              <button @click.prevent="addSchedule()"
+                class="flex-1 px-4 py-2 font-semibold text-white bg-blue-600 rounded focus:outline-none hover:bg-blue-700">
+                Add Schedule
+              </button>
+              <button @click.prevent="updateSchedules()"
+                class="flex-1 px-4 py-2 font-semibold text-white bg-green-600 rounded focus:outline-none hover:bg-green-700">
+                Save Schedules
+              </button>
+            </div>
           </div>
 
           <template x-if="!settings.schedules || settings.schedules.length === 0">
@@ -327,9 +330,33 @@
 
           <template x-for="(schedule, index) in settings.schedules" :key="index">
             <div class="p-3 mb-4 border border-gray-200 rounded-lg bg-gray-50">
-              <div class="flex items-center justify-between mb-3">
-                <div class="font-medium text-gray-900" x-text="'Schedule ' + (index + 1)"></div>
+              <div class="flex items-center justify-between gap-3">
+                <button type="button" @click="toggleScheduleExpanded(schedule)"
+                  class="flex items-center flex-1 min-w-0 gap-3 text-left">
+                  <div class="min-w-0">
+                    <div class="font-medium text-gray-900 truncate" x-text="schedule.name || ('Schedule ' + (index + 1))"></div>
+                    <div class="text-sm text-gray-500" x-text="scheduleSummary(schedule)"></div>
+                  </div>
+                  <div class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-md ring-1 ring-inset"
+                    :class="schedule.enabled ? 'bg-green-50 text-green-700 ring-green-600/20' : 'bg-gray-100 text-gray-600 ring-gray-400/20'">
+                    <span x-text="schedule.enabled ? 'On' : 'Off'"></span>
+                  </div>
+                  <svg class="w-5 h-5 text-gray-500 transition-transform shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                    :class="schedule.expanded ? 'rotate-180' : ''">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                  </svg>
+                </button>
+              </div>
+
+              <div x-show="schedule.expanded" x-collapse style="display:none;" class="mt-4">
+              <div class="flex justify-end mb-3">
                 <button @click.prevent="removeSchedule(index)" class="text-sm text-red-600 hover:text-red-700">Remove</button>
+              </div>
+
+              <div class="mb-3">
+                <label class="block mb-1 text-sm font-medium leading-6 text-gray-900">Name</label>
+                <input type="text" x-model="schedule.name" autocapitalize="none"
+                  class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-1.5">
               </div>
 
               <div class="flex items-center justify-between mb-3">
@@ -390,13 +417,121 @@
                   </template>
                 </select>
               </div>
+              </div>
+            </div>
+          </template>
+
+        </div>
+        <div x-show="selectedOption=='Scene'" x-collapse class="p-3 my-4 rounded-lg ring-1 ring-gray-100">
+          <div class="flex flex-wrap items-start justify-between gap-3 mb-4">
+            <div class="min-w-0" style="flex: 1 1 14rem;">
+              <div class="text-sm font-medium leading-6 text-gray-900">Scenes</div>
+              <div class="text-sm text-gray-500">Edit the contents of <code>scenes.json</code>.</div>
+            </div>
+            <div class="flex w-full gap-2">
+              <button @click.prevent="addScene()"
+                class="flex-1 px-4 py-2 font-semibold text-white bg-blue-600 rounded focus:outline-none hover:bg-blue-700">
+                Add Scene
+              </button>
+              <button @click.prevent="updateScenes()"
+                class="flex-1 px-4 py-2 font-semibold text-white bg-green-600 rounded focus:outline-none hover:bg-green-700">
+                Save Scenes
+              </button>
+            </div>
+          </div>
+
+          <template x-if="!scenes || scenes.length === 0">
+            <div class="mb-4 text-sm text-gray-500">No scenes yet.</div>
+          </template>
+
+          <template x-for="(scene, index) in scenes" :key="index">
+            <div class="p-3 mb-4 border border-gray-200 rounded-lg bg-gray-50">
+              <div class="flex items-center justify-between gap-3">
+                <button type="button" @click="toggleSceneExpanded(scene)"
+                  class="flex items-center flex-1 min-w-0 gap-3 text-left">
+                  <div class="min-w-0">
+                    <div class="font-medium text-gray-900 truncate" x-text="scene.name || ('Scene ' + (index + 1))"></div>
+                    <div class="text-sm text-gray-500" x-text="scene.display_enabled ? 'Display enabled' : 'Display disabled'"></div>
+                  </div>
+                  <div class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-md ring-1 ring-inset"
+                    :class="scene.display_enabled ? 'bg-green-50 text-green-700 ring-green-600/20' : 'bg-gray-100 text-gray-600 ring-gray-400/20'">
+                    <span x-text="scene.display_enabled ? 'On' : 'Off'"></span>
+                  </div>
+                  <svg class="w-5 h-5 text-gray-500 transition-transform shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                    :class="scene.expanded ? 'rotate-180' : ''">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                  </svg>
+                </button>
+              </div>
+
+              <div x-show="scene.expanded" x-collapse style="display:none;" class="mt-4">
+              <div class="flex justify-end mb-3">
+                <button @click.prevent="removeScene(index)" class="text-sm text-red-600 hover:text-red-700">Remove</button>
+              </div>
+
+              <div class="mb-3">
+                <label class="block mb-1 text-sm font-medium leading-6 text-gray-900">Name</label>
+                <input type="text" x-model="scene.name" @input="settings.scene_names = scenes.map(item => item.name)" autocapitalize="none"
+                  class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-1.5">
+              </div>
+
+              <div class="flex items-center justify-between mb-3">
+                <span class="text-sm font-medium leading-6 text-gray-900">Display Enabled</span>
+                <button type="button"
+                  @click="scene.display_enabled = !scene.display_enabled"
+                  :class="scene.display_enabled ? 'bg-blue-600' : 'bg-gray-200'"
+                  class="relative inline-flex flex-shrink-0 h-6 transition-colors duration-200 ease-in-out border-2 border-transparent rounded-full cursor-pointer w-11 ">
+                  <span aria-hidden="true" :class="scene.display_enabled ? 'translate-x-5' : 'translate-x-0'"
+                    class="inline-block w-5 h-5 transition duration-200 ease-in-out transform bg-white rounded-full shadow pointer-events-none ring-0"></span>
+                </button>
+              </div>
+
+              <div class="mb-3">
+                <label class="block mb-1 text-sm font-medium leading-6 text-gray-900">Display Mode</label>
+                <select x-model="scene.display_mode"
+                  class="mt-2 block w-full bg-white rounded-md border border-gray-300 py-1.5 pl-3 pr-10 text-gray-900 sm:text-sm sm:leading-6">
+                  <option value="single_color">Single Colour</option>
+                  <option value="rainbow">Rainbow</option>
+                  <option value="color_per_word">Word Colours</option>
+                  <option value="random">Random</option>
+                </select>
+              </div>
+
+              <div class="mb-3">
+                <label class="block mb-1 text-sm font-medium leading-6 text-gray-900">Brightness</label>
+                <input type="range" min="0" max="15" step="1" x-model.number="scene.brightness" class="w-full">
+                <div class="text-sm text-gray-500" x-text="scene.brightness"></div>
+              </div>
+
+              <div x-show="sceneSupportsField(scene, 'single_color')" class="mb-3">
+                <label class="block mb-1 text-sm font-medium leading-6 text-gray-900">Color</label>
+                <input type="color" x-model="scene.single_color_hex" list="colorList">
+              </div>
+
+              <div x-show="sceneSupportsField(scene, 'minute_color')" class="mb-3">
+                <div class="flex justify-between">
+                  <div>
+                    <label class="block mb-1 text-sm font-medium leading-6 text-gray-900">Minute</label>
+                    <input type="color" x-model="scene.minute_color_hex" list="colorList">
+                  </div>
+                  <div>
+                    <label class="block mb-1 text-sm font-medium leading-6 text-gray-900">Past/To</label>
+                    <input type="color" x-model="scene.past_to_color_hex" list="colorList">
+                  </div>
+                  <div>
+                    <label class="block mb-1 text-sm font-medium leading-6 text-gray-900">Hour</label>
+                    <input type="color" x-model="scene.hour_color_hex" list="colorList">
+                  </div>
+                </div>
+              </div>
+              </div>
             </div>
           </template>
 
           <div class="flex justify-center mt-1 mb-2">
-            <button @click.prevent="updateSchedules()"
+            <button @click.prevent="updateScenes()"
               class="w-full px-4 py-2 font-semibold text-white bg-green-600 rounded focus:outline-none hover:bg-green-700">
-              Save Schedules
+              Save Scenes
             </button>
           </div>
         </div>
@@ -527,10 +662,12 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
           'wifi_connected': false,
           'cpu_temp': 0,
           'disable_access_point': false,
+          'scenes': {},
           'schedules': [],
           'scene_names': [],
           'schedules_enabled': false,
         },
+        scenes: [],
         timeDisplay: [0, 0, 0, 0, 0, 0],
         //path: 'http://192.168.1.77', // use this for development
         path: '', //use this for production
@@ -541,6 +678,12 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
         hourColorHex: '#ffff00',
         timeChanged: false,
         newWifiPassword: '',
+        sceneModeFields: {
+          rainbow: [],
+          single_color: ['single_color'],
+          color_per_word: ['minute_color', 'hour_color', 'past_to_color'],
+          random: []
+        },
         tabItems: [
           {
             label: 'Clock',
@@ -561,11 +704,10 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
             </svg>`
           },
           {
-            label: 'Updates',
-            icon: `<svg class="size-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-  <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
-</svg>
-`
+            label: 'Scene',
+            icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2 1.586-1.586a2 2 0 012.828 0L20 14m-6-8h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>`
           }
         ],
         selectedOption: 'Clock',
@@ -737,15 +879,20 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
         async getClockSettings() {
           const response = await fetch(this.path + '/get-clock-settings')
           if (response.ok) {
-            this.settings = await response.json()
-            console.log(this.settings)
-            this.settings.schedules = (this.settings.schedules || []).map(schedule => this.normaliseSchedule(schedule))
-            this.timeDisplay = this.settings.time
-            this.singeColorHex = this.rgbArrayToHex(this.settings.single_color)
-            this.minuteColorHex = this.rgbArrayToHex(this.settings.minute_color)
-            this.pastToColorHex = this.rgbArrayToHex(this.settings.past_to_color)
-            this.hourColorHex = this.rgbArrayToHex(this.settings.hour_color)
+            this.applySettings(await response.json())
           }
+        },
+        applySettings(nextSettings) {
+          this.settings = nextSettings
+          this.scenes = this.normaliseScenesObject(this.settings.scenes || {})
+          this.settings.scene_names = this.scenes.map(scene => scene.name)
+          this.settings.schedules = (this.settings.schedules || []).map(schedule => this.normaliseSchedule(schedule))
+          this.timeDisplay = this.settings.time
+          this.singeColorHex = this.rgbArrayToHex(this.settings.single_color)
+          this.minuteColorHex = this.rgbArrayToHex(this.settings.minute_color)
+          this.pastToColorHex = this.rgbArrayToHex(this.settings.past_to_color)
+          this.hourColorHex = this.rgbArrayToHex(this.settings.hour_color)
+          console.log(this.settings)
         },
         async brigtnessUpdated() {
           //this.updateSettings()
@@ -769,7 +916,7 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
           if (response.ok) {
             console.log('wifi updated')
             json = await response.json()
-            this.settings = json.settings
+            this.applySettings(json.settings)
             console.log(json)
             // give wifi time to connect and get settings
             setTimeout(() => {
@@ -791,8 +938,7 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
           if (response.ok) {
             console.log('time updated')
             json = await response.json()
-            this.settings = json.settings
-            this.timeDisplay = json.settings.time
+            this.applySettings(json.settings)
             console.log(json)
           }
         },
@@ -818,17 +964,120 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
           if (response.ok) {
             console.log('settings updated')
             json = await response.json()
-            this.settings = json.settings
-            this.settings.schedules = (this.settings.schedules || []).map(schedule => this.normaliseSchedule(schedule))
+            this.applySettings(json.settings)
             //this.timeDisplay = json.settings.time
             this.timeChanged = false
             console.log(json)
           }
         },
+        normaliseScene(name, scene = {}, expanded = false) {
+          const nextScene = {
+            name: typeof name === 'string' ? name : 'scene',
+            expanded: !!expanded,
+            display_enabled: scene.display_enabled !== false,
+            display_mode: typeof scene.display_mode === 'string' ? scene.display_mode : 'single_color',
+            brightness: typeof scene.brightness === 'number' ? scene.brightness : 2,
+            single_color_hex: this.rgbArrayToHex(Array.isArray(scene.single_color) ? scene.single_color : [255, 255, 255]),
+            minute_color_hex: this.rgbArrayToHex(Array.isArray(scene.minute_color) ? scene.minute_color : [0, 255, 0]),
+            hour_color_hex: this.rgbArrayToHex(Array.isArray(scene.hour_color) ? scene.hour_color : [255, 0, 0]),
+            past_to_color_hex: this.rgbArrayToHex(Array.isArray(scene.past_to_color) ? scene.past_to_color : [0, 0, 255])
+          }
+          if (!this.sceneModeFields[nextScene.display_mode]) {
+            nextScene.display_mode = 'single_color'
+          }
+          if (nextScene.brightness < 0 || nextScene.brightness > 15) {
+            nextScene.brightness = 2
+          }
+          return nextScene
+        },
+        normaliseScenesObject(sceneObject = {}) {
+          return Object.keys(sceneObject).map(name => this.normaliseScene(name, sceneObject[name], false))
+        },
+        newScene() {
+          return this.normaliseScene('scene_' + (this.scenes.length + 1), {
+            display_enabled: true,
+            display_mode: 'single_color',
+            brightness: 2,
+            single_color: [255, 255, 255]
+          }, true)
+        },
+        addScene() {
+          this.scenes.unshift(this.newScene())
+          this.settings.scene_names = this.scenes.map(scene => scene.name)
+        },
+        removeScene(index) {
+          this.scenes.splice(index, 1)
+          this.settings.scene_names = this.scenes.map(scene => scene.name)
+        },
+        toggleSceneExpanded(scene) {
+          scene.expanded = !scene.expanded
+        },
+        sceneSupportsField(scene, fieldName) {
+          const supportedFields = this.sceneModeFields[scene.display_mode] || []
+          return supportedFields.includes(fieldName)
+        },
+        buildScenesPayload() {
+          const payload = {}
+          const seenNames = {}
+          for (const scene of this.scenes) {
+            const name = (scene.name || '').trim()
+            if (!name) {
+              alert('Scene names cannot be blank.')
+              return null
+            }
+            if (seenNames[name]) {
+              alert('Scene names must be unique.')
+              return null
+            }
+            seenNames[name] = true
+
+            const scenePayload = {
+              display_enabled: !!scene.display_enabled,
+              display_mode: scene.display_mode,
+              brightness: Number(scene.brightness)
+            }
+
+            if (this.sceneSupportsField(scene, 'single_color')) {
+              scenePayload.single_color = this.hexToRgbArray(scene.single_color_hex)
+            }
+            if (this.sceneSupportsField(scene, 'minute_color')) {
+              scenePayload.minute_color = this.hexToRgbArray(scene.minute_color_hex)
+            }
+            if (this.sceneSupportsField(scene, 'hour_color')) {
+              scenePayload.hour_color = this.hexToRgbArray(scene.hour_color_hex)
+            }
+            if (this.sceneSupportsField(scene, 'past_to_color')) {
+              scenePayload.past_to_color = this.hexToRgbArray(scene.past_to_color_hex)
+            }
+
+            payload[name] = scenePayload
+          }
+          return payload
+        },
+        async updateScenes() {
+          const scenesPayload = this.buildScenesPayload()
+          if (scenesPayload === null) {
+            return
+          }
+          const response = await fetch(this.path + '/set-scenes', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ scenes: scenesPayload })
+          })
+          if (response.ok) {
+            const json = await response.json()
+            this.applySettings(json.settings)
+            console.log(json)
+          }
+        },
         normaliseSchedule(schedule = {}) {
           const nextSchedule = {
+            expanded: !!schedule.expanded,
+            name: typeof schedule.name === 'string' ? schedule.name : '',
             enabled: schedule.enabled !== false,
-            days: Array.isArray(schedule.days) && schedule.days.length ? [...schedule.days] : ['mon'],
+            days: Array.isArray(schedule.days) && schedule.days.length ? [...schedule.days] : this.weekdays.map(day => day.value),
             time: typeof schedule.time === 'string' ? schedule.time : '00:00',
             action: typeof schedule.action === 'object' && schedule.action !== null ? { ...schedule.action } : { type: 'display_off' }
           }
@@ -840,17 +1089,36 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
         },
         newSchedule() {
           return this.normaliseSchedule({
+            expanded: true,
+            name: 'Schedule ' + (this.settings.schedules.length + 1),
             enabled: true,
-            days: ['mon'],
+            days: this.weekdays.map(day => day.value),
             time: '00:00',
             action: { type: 'display_off' }
           })
         },
         addSchedule() {
-          this.settings.schedules.push(this.newSchedule())
+          this.settings.schedules.unshift(this.newSchedule())
         },
         removeSchedule(index) {
           this.settings.schedules.splice(index, 1)
+        },
+        toggleScheduleExpanded(schedule) {
+          schedule.expanded = !schedule.expanded
+        },
+        scheduleSummary(schedule) {
+          const days = Array.isArray(schedule.days) ? schedule.days : []
+          const daySummary = days.length === this.weekdays.length ? 'Every day' : days.map(day => day.slice(0, 3)).join(', ')
+          if (schedule.action.type === 'set_brightness') {
+            return daySummary + ' at ' + schedule.time + ' · Brightness ' + schedule.action.value
+          }
+          if (schedule.action.type === 'apply_scene') {
+            return daySummary + ' at ' + schedule.time + ' · Scene ' + (schedule.action.scene || '')
+          }
+          if (schedule.action.type === 'display_on') {
+            return daySummary + ' at ' + schedule.time + ' · Display on'
+          }
+          return daySummary + ' at ' + schedule.time + ' · Display off'
         },
         toggleScheduleDay(schedule, day) {
           if (schedule.days.includes(day)) {
@@ -883,6 +1151,7 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
         async updateSchedules() {
           const payload = {
             schedules: this.settings.schedules.map(schedule => ({
+              name: schedule.name,
               enabled: schedule.enabled,
               days: schedule.days,
               time: schedule.time,
@@ -898,8 +1167,7 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
           })
           if (response.ok) {
             const json = await response.json()
-            this.settings = json.settings
-            this.settings.schedules = (this.settings.schedules || []).map(schedule => this.normaliseSchedule(schedule))
+            this.applySettings(json.settings)
             console.log(json)
           }
         },
@@ -922,7 +1190,7 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
              return response.json()
             }
           }).then(json => {
-            this.settings = json.settings
+            this.applySettings(json.settings)
             console.log(json)
           })
         },

@@ -341,6 +341,13 @@ def validate_schedule_entry(entry, schedule_index):
         log_schedule("Ignoring schedule " + str(schedule_index) + ": entry must be an object")
         return None
 
+    schedule_name = entry.get('name', '')
+    if schedule_name is None:
+        schedule_name = ''
+    if not isinstance(schedule_name, str):
+        log_schedule("Ignoring schedule " + str(schedule_index) + ": name must be a string")
+        return None
+
     enabled = entry.get('enabled', True)
     if not isinstance(enabled, bool):
         log_schedule("Ignoring schedule " + str(schedule_index) + ": enabled must be a boolean")
@@ -364,6 +371,7 @@ def validate_schedule_entry(entry, schedule_index):
 
     return {
         'index': schedule_index,
+        'name': schedule_name.strip(),
         'days': days,
         'time': parsed_time,
         'time_string': entry.get('time'),
@@ -422,8 +430,9 @@ def evaluate_schedules():
     for schedule in valid_schedules:
         if weekday in schedule['days'] and (hour, minute) == schedule['time']:
             action_description = describe_schedule_action(schedule['action'])
+            schedule_label = schedule['name'] if schedule['name'] else ('schedule ' + str(schedule['index'] + 1))
             log_schedule(
-                "Matched " + schedule['time_string'] +
+                "Matched " + schedule_label + " at " + schedule['time_string'] +
                 " on " + WEEKDAY_NAMES[weekday] +
                 " -> running " + action_description
             )
@@ -797,6 +806,39 @@ async def set_schedules_request(request, response):
     }
     await response.send_json(json.dumps(response_data), 200)
 
+async def set_scenes_request(request, response):
+    global scenes, valid_schedules
+    new_scenes = request.post_data.get('scenes', {})
+    if not isinstance(new_scenes, dict):
+        response_data = {
+            'status': 'ERROR',
+            'success': False,
+            'message': 'Scenes payload must be an object',
+            'settings': settings_object()
+        }
+        await response.send_json(json.dumps(response_data), 400)
+        return
+
+    if not save_json_file(scenes_file, new_scenes):
+        response_data = {
+            'status': 'ERROR',
+            'success': False,
+            'message': 'Failed to save scenes',
+            'settings': settings_object()
+        }
+        await response.send_json(json.dumps(response_data), 500)
+        return
+
+    scenes = new_scenes
+    valid_schedules = validate_schedules(schedules)
+    response_data = {
+        'status': 'OK',
+        'success': True,
+        'message': 'Scenes updated',
+        'settings': settings_object()
+    }
+    await response.send_json(json.dumps(response_data), 200)
+
 async def set_clock_settings_request(request, response):
     global current_display_mode
     global current_scene_name
@@ -846,6 +888,7 @@ def settings_object():
         'display_enabled': display_enabled,
         'display_mode': current_display_mode,
         'current_scene': current_scene_name,
+        'scenes': scenes,
         'scene_names': list(scenes.keys()),
         'schedules': schedules,
         'schedules_enabled': schedules_enabled,
@@ -879,6 +922,7 @@ def setup_routes(server):
     server.add_function_route('/set-brightness', set_brightness_request)
     server.add_function_route('/get-clock-settings', get_clock_settings_request)
     server.add_function_route('/set-clock-settings', set_clock_settings_request)
+    server.add_function_route('/set-scenes', set_scenes_request)
     server.add_function_route('/set-schedules', set_schedules_request)
     server.add_function_route('/set-wifi-settings', set_wifi_settings_request)
     server.add_function_route('/set-time', set_time_request)

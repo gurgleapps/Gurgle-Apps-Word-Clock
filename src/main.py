@@ -507,7 +507,10 @@ def get_corrected_time():
 def set_manual_time(year, month, day, hour, minute, second):
     global time_offset
     current_time = time.localtime()
-    current_seconds = time.mktime(current_time)
+    current_seconds = time.time()
+    if second == 0:
+        # Datetime-local updates are minute-granular, so align the offset to the minute boundary.
+        current_seconds -= current_time[5]
     manual_seconds = time.mktime((year, month, day, hour, minute, second, 0, 0))
     time_offset = manual_seconds - current_seconds
     config['TIME_OFFSET'] = time_offset

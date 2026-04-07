@@ -9,9 +9,9 @@
 </head>
 
 <body class="bg-gray-100" x-data="clock()">
-  <div class="flex flex-col items-center justify-start min-h-screen mx-2 mt-8">
+  <div class="flex flex-col items-center justify-start min-h-screen mt-8" style="padding-left: 0.375rem; padding-right: 0.375rem;">
 
-    <div class="w-full p-5 bg-white rounded-lg shadow-md" style="max-width: 32rem;">
+    <div class="w-full bg-white rounded-lg shadow-md" style="max-width: 36rem; padding: 1.25rem 1rem;">
 
 
       <div class="flex justify-center mb-8">
@@ -194,7 +194,7 @@
         </div>
         <!-- clock settings -->
 
-        <div x-show="selectedOption=='Clock Settings'" x-collapse class="p-3 my-4 rounded-lg ring-1 ring-gray-100">
+        <div x-show="selectedOption=='Clock'" x-collapse class="p-3 my-4 rounded-lg ring-1 ring-gray-100">
           <!-- time -->
           <div class="mb-4">
             <label for="timeControl" class="block text-sm font-medium leading-6 text-gray-900">Time:</label>
@@ -309,7 +309,7 @@
               Settings</button>
           </div>
         </div>
-        <div x-show="selectedOption=='Schedules'" x-collapse class="p-3 my-4 rounded-lg ring-1 ring-gray-100">
+        <div x-show="selectedOption=='Schedule'" x-collapse class="p-3 my-4 rounded-lg ring-1 ring-gray-100">
           <div class="flex flex-wrap items-start justify-between gap-3 mb-4">
             <div class="min-w-0" style="flex: 1 1 14rem;">
               <div class="text-sm font-medium leading-6 text-gray-900">Schedules</div>
@@ -543,7 +543,7 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
         newWifiPassword: '',
         tabItems: [
           {
-            label: 'Clock Settings',
+            label: 'Clock',
             icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6l4 2M22 12a10 10 0 11-20 0 10 10 0 0120 0z"/>
             </svg>`
@@ -555,7 +555,7 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
             </svg>`
           },
           {
-            label: 'Schedules',
+            label: 'Schedule',
             icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10m-11 9h12a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2v11a2 2 0 002 2z"/>
             </svg>`
@@ -568,7 +568,7 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
 `
           }
         ],
-        selectedOption: 'Clock Settings',
+        selectedOption: 'Clock',
         visibleTabs: [],
         overflowTabs: [],
         overflowOpen: false,
@@ -594,7 +594,7 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
           // do it on the next alpine tick
           /*   this.$nextTick(() => {
               //this.selectedOption = 'Wi-Fi'
-              //this.selectedOption = 'Clock Settings'
+              //this.selectedOption = 'Clock'
             }) */
         },
         destroy() {

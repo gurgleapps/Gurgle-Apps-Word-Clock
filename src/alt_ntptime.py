@@ -37,14 +37,15 @@ def get_ntp_time(server=NTP_SERVER, timeout=1):
         poller = select.poll()
         poller.register(s, select.POLLIN)
         s.sendto(NTP_QUERY, addr)
-        if poller.poll(timeout * 1000):  # timeout in milliseconds
+        timeout_ms = int(timeout * 1000)  # poll expects an integer timeout in milliseconds
+        if poller.poll(timeout_ms):
             msg = s.recv(48)
             if len(msg) < 48:
                 raise ValueError("Received incomplete NTP response.")
             timestamp = struct.unpack("!I", msg[40:44])[0]
             return timestamp - NTP_DELTA
         else:
-            raise TimeoutError("NTP request timed out.")
+            raise OSError("NTP request timed out.")
     finally:
         s.close()
 

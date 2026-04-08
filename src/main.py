@@ -519,7 +519,7 @@ async def sync_ntp_time(use_alternative=False, timeout=2.0):
             last_wifi_connected_time = time.ticks_ms()
             print(f"Time synced with {ntp_host} successfully using alternative method: {use_alternative}")
             return
-        except OSError as e:
+        except Exception as e:
             await asyncio.sleep(3)
             print(f"Error syncing time with {ntp_host}: {e} using alternative method.{use_alternative}")
     if not use_alternative:
@@ -539,8 +539,7 @@ async def sync_ntp_time(use_alternative=False, timeout=2.0):
         except Exception as e:
             print(f"Failed to get time via HTTP: {e}")
         if server.is_wifi_connected() and test_dns():
-            print('wifi up, dns ok, but still failed to sync time rebooting')
-            machine.reset()
+            print('wifi up, dns ok, but still failed to sync time')
     last_ntp_sync_attempt = time.time()
 
 

@@ -22,6 +22,7 @@ class Response:
         await self.send_headers(status_code, content_type)
         self.writer.write(body)
         await self.writer.drain()
+        self.writer.close()
         await self.writer.wait_closed()
 
     async def send_html(self, body, status_code=200):
@@ -45,6 +46,7 @@ class Response:
                         break
                     self.writer.write(chunk)
                     await self.writer.drain()
+            self.writer.close()
             await self.writer.wait_closed()
         except Exception as e:
             print("Error sending file:", e)
@@ -55,5 +57,5 @@ class Response:
         for chunk in iterator:
             self.writer.write(chunk)
             await self.writer.drain()
+        self.writer.close()
         await self.writer.wait_closed()
-

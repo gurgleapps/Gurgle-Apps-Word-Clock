@@ -37,6 +37,8 @@ class GurgleAppsWebserver:
         self.doc_root = doc_root
         self.function_routes = []
         self.log_level = log_level
+        self.wifi_connecting = False
+        self.wifi_was_connected = False
         self.wlan_sta = network.WLAN(network.STA_IF)
         self.wlan_ap = network.WLAN(network.AP_IF)
         self.wlan_ap.active(False)
@@ -53,6 +55,10 @@ class GurgleAppsWebserver:
         
 
     async def connect_wifi(self, ssid, password):
+        if self.wifi_connecting:
+            return False
+
+        self.wifi_connecting = True
         try:
             self.wifi_ssid = ssid
             self.wifi_password = password
@@ -80,6 +86,7 @@ class GurgleAppsWebserver:
                 await asyncio.sleep(1)
                 if self.wlan_sta.isconnected():
                     self.ip_address = self.wlan_sta.ifconfig()[0]
+                    self.wifi_was_connected = True
                     print(f"Connected to Wi-Fi. IP: {self.ip_address}")
                     for listener in self.listeners:
                         listener({"event": self.EVENT_WIFI_CONNECTED})
@@ -89,6 +96,8 @@ class GurgleAppsWebserver:
         except OSError as e:
             print(f"Error connecting to Wi-Fi: {e}")
             return False
+        finally:
+            self.wifi_connecting = False
         
     def add_event_listener(self, listener):
         self.listeners.append(listener)
@@ -146,10 +155,12 @@ class GurgleAppsWebserver:
     
     async def maintain_connection(self):
         while True:
-            if self.wlan_sta.isconnected() == False and self.wifi_ssid != None:
-                for listener in self.listeners:
-                    listener({"event": self.EVENT_WIFI_DISCONNECTED})
-                print("Lost connection to Wi-Fi. Attempting to reconnect...")
+            if self.wlan_sta.isconnected() == False and self.wifi_ssid != None and not self.wifi_connecting:
+                if self.wifi_was_connected:
+                    self.wifi_was_connected = False
+                    for listener in self.listeners:
+                        listener({"event": self.EVENT_WIFI_DISCONNECTED})
+                    print("Lost connection to Wi-Fi. Attempting to reconnect...")
                 await self.connect_wifi(self.wifi_ssid, self.wifi_password)
             await asyncio.sleep(20)
 
@@ -539,4 +550,3 @@ class GurgleAppsWebserver:
         </p></div></div></div></div></div></body></html>
         """
        
-

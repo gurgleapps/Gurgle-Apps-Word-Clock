@@ -155,12 +155,12 @@
           <div class="mb-4">
             <label for="ssid" class="block text-sm font-medium leading-6 text-gray-900">SSID:</label>
             <input type="text" id="ssid" x-model="settings.wifi_ssid" autocapitalize="none"
-              class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-1.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+              class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-1.5">
           </div>
           <div class="mb-4">
             <label for="password" class="block text-sm font-medium leading-6 text-gray-900">Password:</label>
             <input type="password" id="password" x-model="newWifiPassword"
-              class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-1.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+              class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-1.5">
             <div class="mt-1 text-sm text-gray-500">Leave blank to keep the saved password.</div>
           </div>
           <div class="flex justify-center mt-1 mb-2">
@@ -184,7 +184,7 @@
           <!-- AP disable -->
           <div class="flex items-center mb-4">
             <span class="mr-3 text-sm" id="annual-billing-label">
-              <span class="font-medium text-gray-900 dark:text-slate-50">Access Point Disabled</span>
+              <span class="font-medium text-gray-900">Access Point Disabled</span>
             </span>
             <button @click="toggleAccessPointDisabled" type="button"
               :class="settings.disable_access_point ? 'bg-blue-600' : 'bg-gray-200'"
@@ -203,7 +203,7 @@
           <div class="mb-4">
             <label for="timeControl" class="block text-sm font-medium leading-6 text-gray-900">Time:</label>
             <input @change="datetimeUpdated()" step="60" type="datetime-local" id="timeControl" x-model="newTimeString"
-              class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-1.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+              class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-1.5">
           </div>
           <div class="flex justify-center mt-1 mb-2">
             <button @click.prevent="updateTime()"
@@ -231,7 +231,6 @@
           [&::-webkit-slider-thumb]:transition-all
           [&::-webkit-slider-thumb]:duration-150
           [&::-webkit-slider-thumb]:ease-in-out
-          [&::-webkit-slider-thumb]:dark:bg-slate-700
           [&::-moz-range-thumb]:w-3.5
           [&::-moz-range-thumb]:h-3.5
           [&::-moz-range-thumb]:appearance-none
@@ -246,7 +245,6 @@
           [&::-webkit-slider-runnable-track]:h-2
           [&::-webkit-slider-runnable-track]:bg-gray-100
           [&::-webkit-slider-runnable-track]:rounded-full
-          [&::-webkit-slider-runnable-track]:dark:bg-gray-700
           [&::-moz-range-track]:w-full
           [&::-moz-range-track]:h-2
           [&::-moz-range-track]:bg-gray-100

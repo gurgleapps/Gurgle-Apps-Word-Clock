@@ -11,8 +11,8 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "dependencies": {
-    "tailwindcss": "^3.4.0",
-    "@tailwindcss/forms": "^0.5.7"
+  "devDependencies": {
+    "tailwindcss": "^4.1.12",
+    "@tailwindcss/cli": "^4.1.13"
   }
 }

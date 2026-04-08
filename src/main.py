@@ -714,9 +714,10 @@ async def set_wifi_settings_request(request, response):
     global config
     print(request.post_data)
     wifi_ssid = request.post_data['wifi_ssid']
-    wifi_password = request.post_data['wifi_password']
+    wifi_password = request.post_data.get('wifi_password', None)
     config['WIFI_SSID'] = wifi_ssid
-    config['WIFI_PASSWORD'] = wifi_password
+    if wifi_password is not None and wifi_password != '':
+        config['WIFI_PASSWORD'] = wifi_password
     save_config(config)
     response_data = {
         'status': 'OK',

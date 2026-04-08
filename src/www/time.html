@@ -161,6 +161,7 @@
             <label for="password" class="block text-sm font-medium leading-6 text-gray-900">Password:</label>
             <input type="password" id="password" x-model="newWifiPassword"
               class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-1.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+            <div class="mt-1 text-sm text-gray-500">Leave blank to keep the saved password.</div>
           </div>
           <div class="flex justify-center mt-1 mb-2">
             <button @click.prevent="updateWifi()"
@@ -922,25 +923,31 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
           console.log(this.timeDisplay)
         },
         async updateWifi() {
-          this.settings.wifi_ssid = this.settings.wifi_ssid
-          this.settings.wifi_password = this.newWifiPassword
-          const response = fetch(this.path + '/set-wifi-settings', {
+          const payload = {
+            wifi_ssid: this.settings.wifi_ssid,
+            wifi_password: this.newWifiPassword
+          }
+          const response = await fetch(this.path + '/set-wifi-settings', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json'
             },
-            body: JSON.stringify(this.settings)
+            body: JSON.stringify(payload)
           })
           if (response.ok) {
             console.log('wifi updated')
-            json = await response.json()
+            const json = await response.json()
             this.applySettings(json.settings)
+            this.newWifiPassword = ''
+            this.showNotice('Wi-Fi settings updated')
             console.log(json)
             // give wifi time to connect and get settings
             setTimeout(() => {
               this.getClockSettings()
             }, 10000)
+            return
           }
+          this.showNotice('Failed to update Wi-Fi settings', 'error')
         },
         async updateTime() {
           console.log('update time', this.newTimeString)
@@ -955,10 +962,13 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
           })
           if (response.ok) {
             console.log('time updated')
-            json = await response.json()
+            const json = await response.json()
             this.applySettings(json.settings)
+            this.showNotice('Time updated')
             console.log(json)
+            return
           }
+          this.showNotice('Failed to update time', 'error')
         },
         async updateSettings() {
           if (this.timeChanged) {
@@ -981,12 +991,15 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
           })
           if (response.ok) {
             console.log('settings updated')
-            json = await response.json()
+            const json = await response.json()
             this.applySettings(json.settings)
             //this.timeDisplay = json.settings.time
             this.timeChanged = false
+            this.showNotice('Settings updated')
             console.log(json)
+            return
           }
+          this.showNotice('Failed to update settings', 'error')
         },
         normaliseScene(name, scene = {}, expanded = false) {
           const nextScene = {
@@ -1262,7 +1275,12 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
              return response.json()
             }
           }).then(json => {
+            if (!json) {
+              this.showNotice('Failed to update access point', 'error')
+              return
+            }
             this.applySettings(json.settings)
+            this.showNotice(this.settings.disable_access_point ? 'Access point disabled' : 'Access point enabled')
             console.log(json)
           })
         },

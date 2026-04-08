@@ -26,6 +26,12 @@ DISPLAY_MODE_RANDOM = 'random'
 MAX_BRIGHTNESS = 15
 SCHEDULE_ACTION_TYPES = ('display_on', 'display_off', 'set_brightness', 'apply_scene')
 WEEKDAY_NAMES = ('mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun')
+MAIN_LOOP_SLEEP_SECONDS = 1
+ACCESS_POINT_STOP_DELAY_MS = 10_000
+ACCESS_POINT_START_DELAY_MS = 60_000
+DISPLAY_MODE_REFRESH_MS = {
+    DISPLAY_MODE_RANDOM: 10_000
+}
 
 SCENE_MODE_FIELDS = {
     DISPLAY_MODE_RAINBOW: (),
@@ -57,6 +63,8 @@ ntp_synced_at = 0
 last_ntp_sync_attempt = None
 last_dns_check_status = None
 last_schedule_evaluation_key = None
+last_display_minute_key = None
+last_dynamic_display_update_ms = None
 valid_schedules = []
 
 clockFont = {
@@ -183,6 +191,24 @@ def clear_matrix():
         i2c_matrix.show_char(i2c_matrix.reverse_char(blank))
     if config['ENABLE_WS2812B']:
         ws2812b_matrix.clear()
+
+def current_display_minute_key():
+    now = get_corrected_time()
+    return (now[0], now[1], now[2], now[3], now[4])
+
+def should_refresh_display():
+    global last_display_minute_key, last_dynamic_display_update_ms
+    if not display_enabled:
+        return False
+
+    refresh_ms = DISPLAY_MODE_REFRESH_MS.get(current_display_mode)
+    if refresh_ms is not None:
+        now_ms = time.ticks_ms()
+        if last_dynamic_display_update_ms is None:
+            return True
+        return time.ticks_diff(now_ms, last_dynamic_display_update_ms) >= refresh_ms
+
+    return current_display_minute_key() != last_display_minute_key
 
 def set_display_enabled(enabled):
     global display_enabled
@@ -535,8 +561,10 @@ def set_manual_time(year, month, day, hour, minute, second):
 
 
 def time_to_matrix():
-    global colour_per_word_array
+    global colour_per_word_array, last_display_minute_key, last_dynamic_display_update_ms
     if not display_enabled:
+        last_display_minute_key = current_display_minute_key()
+        last_dynamic_display_update_ms = time.ticks_ms()
         clear_matrix()
         return
     word = [0, 0, 0, 0, 0, 0, 0, 0]
@@ -575,6 +603,8 @@ def time_to_matrix():
         display_fuction = display_modes.get(current_display_mode)
         if display_fuction:
             display_fuction(word)
+    last_display_minute_key = (now[0], now[1], now[2], now[3], now[4])
+    last_dynamic_display_update_ms = time.ticks_ms()
 
 def merge_chars(char1, char2):
     for i in range(8):
@@ -1008,22 +1038,21 @@ async def main():
         if server.is_access_point_active():
             if server.is_wifi_connected():
                 delta = time.ticks_diff(time.ticks_ms(), last_wifi_connected_time)
-                print("Connected to Wi-Fi for " + str(delta // 1000) + " seconds")
-                if delta > 10:
+                if delta > ACCESS_POINT_STOP_DELAY_MS:
                     server.stop_access_point() # Stop access point after 10 seconds of Wi-Fi connection
                     print("Access Point stopped")
         if not server.is_wifi_connected() and not disable_access_point:
             if not server.is_access_point_active():
                 delta = time.ticks_diff(time.ticks_ms(), last_wifi_disconnected_time)
-                print("Disconnected from Wi-Fi for " + str(delta // 1000) + " seconds")
-                if delta > 60: # Start access point after 60 seconds of Wi-Fi disconnection
+                if delta > ACCESS_POINT_START_DELAY_MS: # Start access point after 60 seconds of Wi-Fi disconnection
                     ap_connnected = server.start_access_point('gurgleapps', 'gurgleapps')
                     print("Access Point started: " + str(ap_connnected))
         evaluate_schedules()
-        time_to_matrix()
+        if should_refresh_display():
+            time_to_matrix()
         if ntp_synced_at < (time.time() - 3600) and server.is_wifi_connected(): # Sync time every hour
             await sync_ntp_time()
-        await asyncio.sleep(10)
+        await asyncio.sleep(MAIN_LOOP_SLEEP_SECONDS)
 
 display_modes = {
     DISPLAY_MODE_RAINBOW: display_rainbow_mode,

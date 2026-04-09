@@ -27,6 +27,8 @@ MAX_BRIGHTNESS = 15
 SCHEDULE_ACTION_TYPES = ('display_on', 'display_off', 'set_brightness', 'apply_scene')
 WEEKDAY_NAMES = ('mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun')
 MAIN_LOOP_SLEEP_SECONDS = 1
+NTP_SYNC_INTERVAL_SECONDS = 3600
+NTP_RETRY_INTERVAL_SECONDS = 300
 ACCESS_POINT_STOP_DELAY_MS = 10_000
 ACCESS_POINT_START_DELAY_MS = 60_000
 DISPLAY_MODE_REFRESH_MS = {
@@ -502,9 +504,7 @@ def test_dns():
 
 async def sync_ntp_time(use_alternative=False, timeout=2.0):
     global ntp_synced_at, last_ntp_sync_attempt, config, last_wifi_connected_time
-    ntp_retry_interval = 300
-    if last_ntp_sync_attempt and (time.time() - last_ntp_sync_attempt) < ntp_retry_interval:
-        print(f"Last NTP sync attempt was less than {ntp_retry_interval} seconds ago.")
+    if last_ntp_sync_attempt and (time.time() - last_ntp_sync_attempt) < NTP_RETRY_INTERVAL_SECONDS:
         return
     mtp_hosts = ['pool.ntp.org', 'time.nist.gov', 'time.google.com', 'time.windows.com']
     ntptime.timeout = timeout
@@ -541,6 +541,17 @@ async def sync_ntp_time(use_alternative=False, timeout=2.0):
         if server.is_wifi_connected() and test_dns():
             print('wifi up, dns ok, but still failed to sync time')
     last_ntp_sync_attempt = time.time()
+
+
+def should_attempt_ntp_sync():
+    if not server.is_wifi_connected():
+        return False
+    now = time.time()
+    if ntp_synced_at >= (now - NTP_SYNC_INTERVAL_SECONDS):
+        return False
+    if last_ntp_sync_attempt and (now - last_ntp_sync_attempt) < NTP_RETRY_INTERVAL_SECONDS:
+        return False
+    return True
 
 
 def get_corrected_time():
@@ -1049,7 +1060,7 @@ async def main():
         evaluate_schedules()
         if should_refresh_display():
             time_to_matrix()
-        if ntp_synced_at < (time.time() - 3600) and server.is_wifi_connected(): # Sync time every hour
+        if should_attempt_ntp_sync():
             await sync_ntp_time()
         await asyncio.sleep(MAIN_LOOP_SLEEP_SECONDS)
 

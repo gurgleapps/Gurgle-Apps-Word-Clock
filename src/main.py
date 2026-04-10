@@ -29,6 +29,7 @@ WEEKDAY_NAMES = ('mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun')
 MAIN_LOOP_SLEEP_SECONDS = 1
 NTP_SYNC_INTERVAL_SECONDS = 3600
 NTP_RETRY_INTERVAL_SECONDS = 300
+NTP_INITIAL_DELAY_AFTER_WIFI_CONNECT_MS = 5_000
 ACCESS_POINT_STOP_DELAY_MS = 10_000
 ACCESS_POINT_START_DELAY_MS = 60_000
 DISPLAY_MODE_REFRESH_MS = {
@@ -526,6 +527,14 @@ async def sync_ntp_time(use_alternative=False, timeout=2.0):
         print("Standard methods failed, trying alternative methods.")
         await sync_ntp_time(use_alternative=True)
     else:
+        try:
+            alt_ntptime.settime_via_http()
+            ntp_synced_at = time.time()
+            last_wifi_connected_time = time.ticks_ms()
+            print("Time synced successfully using HTTP fallback")
+            return
+        except Exception as e:
+            print(f"Error syncing time via HTTP fallback: {e}")
         # both methods failed
         print(f"Failed to sync time with all NTP servers. DNS check status: {test_dns()}")
         try:
@@ -545,6 +554,10 @@ async def sync_ntp_time(use_alternative=False, timeout=2.0):
 
 def should_attempt_ntp_sync():
     if not server.is_wifi_connected():
+        return False
+    if server.is_access_point_active():
+        return False
+    if time.ticks_diff(time.ticks_ms(), last_wifi_connected_time) < NTP_INITIAL_DELAY_AFTER_WIFI_CONNECT_MS:
         return False
     now = time.time()
     if ntp_synced_at >= (now - NTP_SYNC_INTERVAL_SECONDS):
@@ -751,7 +764,7 @@ async def set_brightness_request(request, response):
     await response.send_json(settings, 200)
 
 async def set_wifi_settings_request(request, response):
-    global config
+    global config, last_wifi_disconnected_time
     print(request.post_data)
     wifi_ssid = request.post_data['wifi_ssid']
     wifi_password = request.post_data.get('wifi_password', None)
@@ -759,6 +772,7 @@ async def set_wifi_settings_request(request, response):
     if wifi_password is not None and wifi_password != '':
         config['WIFI_PASSWORD'] = wifi_password
     save_config(config)
+    last_wifi_disconnected_time = time.ticks_ms()
     response_data = {
         'status': 'OK',
         'success': True,

@@ -22,7 +22,7 @@ except ImportError:
 
 NTP_SERVER = 'pool.ntp.org'
 NTP_DELTA = 3155673600 if gmtime(0)[0] == 2000 else 2208988800
-HTTP_SERVER = 'https://worldtimeapi.org/api/timezone/Etc/UTC'
+HTTP_SERVER = 'https://gurgleapps.com/api/time'
 
 def get_ntp_time(server=NTP_SERVER, timeout=1):
     NTP_PORT = 123
@@ -62,6 +62,7 @@ def settime(server=NTP_SERVER, timeout=1):
         raise
 
 def get_time_via_http(server=HTTP_SERVER):
+    response = None
     try:
         response = requests.get(server)
         response.raise_for_status()
@@ -69,6 +70,28 @@ def get_time_via_http(server=HTTP_SERVER):
     except Exception as e:
         print(f"Failed to get time from {server}: {e}")
         return None
+    finally:
+        if response is not None:
+            try:
+                response.close()
+            except Exception:
+                pass
+
+def settime_via_http(server=HTTP_SERVER):
+    http_time = get_time_via_http(server)
+    if not http_time:
+        raise ValueError("No HTTP time data received.")
+
+    unixtime = http_time.get('unixtime')
+    if unixtime is None:
+        raise ValueError("HTTP time data missing 'unixtime'.")
+
+    unixtime = int(unixtime)
+    tm = time.gmtime(unixtime)
+    rtc = machine.RTC()
+    rtc.datetime((tm[0], tm[1], tm[2], tm[6] + 1, tm[3], tm[4], tm[5], 0))
+    print("Time successfully synchronized via HTTP.")
+    return unixtime
 
 def test_ntp_server(server=NTP_SERVER, port=123):
     try:

@@ -52,7 +52,18 @@ class GurgleAppsWebserver:
         </html>
         """
         self.server_running = False
-        
+
+    def wifi_status_name(self):
+        status = self.wlan_sta.status()
+        status_names = {
+            getattr(network, 'STAT_IDLE', 0): 'STAT_IDLE',
+            getattr(network, 'STAT_CONNECTING', 1): 'STAT_CONNECTING',
+            getattr(network, 'STAT_WRONG_PASSWORD', -3): 'STAT_WRONG_PASSWORD',
+            getattr(network, 'STAT_NO_AP_FOUND', -2): 'STAT_NO_AP_FOUND',
+            getattr(network, 'STAT_CONNECT_FAIL', -1): 'STAT_CONNECT_FAIL',
+            getattr(network, 'STAT_GOT_IP', 3): 'STAT_GOT_IP',
+        }
+        return status_names.get(status, str(status))
 
     async def connect_wifi(self, ssid, password):
         if self.wifi_connecting:
@@ -68,7 +79,6 @@ class GurgleAppsWebserver:
                 print("Already connected to Wi-Fi. IP: "+self.wlan_sta.ifconfig()[0])
                 self.wlan_sta.disconnect()
                 self.wlan_sta.active(False)
-                #time.sleep(1)
                 await asyncio.sleep(1)
                 print("Disconnected from Wi-Fi.")
             else:
@@ -76,13 +86,11 @@ class GurgleAppsWebserver:
 
             # Activate Wi-Fi mode and connect
             self.wlan_sta.active(True)
-            #time.sleep(1)
             await asyncio.sleep(1)
             self.wlan_sta.connect(ssid, password)
             # Wait for connection
-            print("Connecting to Wi-Fi...")
+            print(f"Connecting to Wi-Fi SSID: {ssid}")
             for _ in range(self.timeout):
-                #time.sleep(1)
                 await asyncio.sleep(1)
                 if self.wlan_sta.isconnected():
                     self.ip_address = self.wlan_sta.ifconfig()[0]
@@ -91,7 +99,7 @@ class GurgleAppsWebserver:
                     for listener in self.listeners:
                         listener({"event": self.EVENT_WIFI_CONNECTED})
                     return True
-            print("Failed to connect to Wi-Fi.")
+            print("Failed to connect to Wi-Fi. Final status: " + self.wifi_status_name())
             return False
         except OSError as e:
             print(f"Error connecting to Wi-Fi: {e}")

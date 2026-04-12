@@ -261,19 +261,6 @@
               <option value="random">Random</option>
             </select>
           </div>
-          <div class="flex items-center justify-between mb-4">
-            <span class="flex flex-col flex-grow">
-              <span class="text-sm font-medium leading-6 text-gray-900">Schedules Enabled</span>
-              <span class="text-sm text-gray-500">Allow `schedules.json` automation to run.</span>
-            </span>
-            <button type="button"
-              @click="settings.schedules_enabled = !settings.schedules_enabled"
-              :class="settings.schedules_enabled ? 'bg-blue-600' : 'bg-gray-200'"
-              class="relative inline-flex flex-shrink-0 h-6 transition-colors duration-200 ease-in-out border-2 border-transparent rounded-full cursor-pointer w-11 ">
-              <span aria-hidden="true" :class="settings.schedules_enabled ? 'translate-x-5' : 'translate-x-0'"
-                class="inline-block w-5 h-5 transition duration-200 ease-in-out transform bg-white rounded-full shadow pointer-events-none ring-0"></span>
-            </button>
-          </div>
           <!-- single color -->
           <div x-show="settings.display_mode=='single_color'" x-transition style="display:none;" class="mb-4">
             <label for="" class="block text-sm font-medium leading-6 text-gray-900">Color:</label>
@@ -309,6 +296,29 @@
             <button @click.prevent="update()"
               class="px-4 py-2 font-semibold text-white bg-green-600 rounded focus:outline-none hover:bg-green-700">Update
               Settings</button>
+          </div>
+          <div class="pt-4 mt-4 border-t border-gray-200">
+            <div class="p-3 rounded-lg bg-gray-50 ring-1 ring-gray-200">
+              <div class="inline-flex items-center w-full pb-2 mb-3 border-b border-gray-200 gap-x-3">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
+                  <path fill-rule="evenodd" d="M12 2.25a.75.75 0 0 1 .75.75v1.386a8.25 8.25 0 0 1 5.864 5.864H20a.75.75 0 0 1 0 1.5h-1.386a8.25 8.25 0 0 1-5.864 5.864V19a.75.75 0 0 1-1.5 0v-1.386a8.25 8.25 0 0 1-5.864-5.864H4a.75.75 0 0 1 0-1.5h1.386A8.25 8.25 0 0 1 11.25 4.386V3a.75.75 0 0 1 .75-.75Zm0 3.75a6.75 6.75 0 1 0 0 13.5A6.75 6.75 0 0 0 12 6Z" clip-rule="evenodd" />
+                </svg>
+                <span class="text-sm font-medium text-gray-900">Automation</span>
+              </div>
+              <div class="flex items-center justify-between gap-3">
+                <span class="flex flex-col flex-grow">
+                  <span class="text-sm font-medium leading-6 text-gray-900">Enable Schedules</span>
+                  <span class="text-sm text-gray-500">Turn scheduled automation on or off.</span>
+                </span>
+                <button type="button"
+                  @click="toggleSchedulesEnabled"
+                  :class="settings.schedules_enabled ? 'bg-blue-600' : 'bg-gray-200'"
+                  class="relative inline-flex flex-shrink-0 h-6 transition-colors duration-200 ease-in-out border-2 border-transparent rounded-full cursor-pointer w-11 ">
+                  <span aria-hidden="true" :class="settings.schedules_enabled ? 'translate-x-5' : 'translate-x-0'"
+                    class="inline-block w-5 h-5 transition duration-200 ease-in-out transform bg-white rounded-full shadow pointer-events-none ring-0"></span>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
         <div x-show="selectedOption=='Schedule'" x-collapse class="p-3 my-4 rounded-lg ring-1 ring-gray-100">
@@ -1256,6 +1266,27 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
         },
         update() {
           this.updateSettings()
+        },
+        async toggleSchedulesEnabled() {
+          const nextValue = !this.settings.schedules_enabled
+          this.settings.schedules_enabled = nextValue
+          const response = await fetch(this.path + '/set-schedules-enabled', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              schedules_enabled: nextValue
+            })
+          })
+          if (response.ok) {
+            const json = await response.json()
+            this.applySettings(json.settings)
+            this.showNotice(nextValue ? 'Schedules enabled' : 'Schedules disabled')
+            return
+          }
+          this.settings.schedules_enabled = !nextValue
+          this.showNotice('Failed to update schedules setting', 'error')
         },
         async toggleAccessPointDisabled() {
           if (!this.settings.disable_access_point && this.showWarningModal === false) {

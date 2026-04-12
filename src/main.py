@@ -808,6 +808,19 @@ async def enable_access_point_request(request, response):
     }
     await response.send_json(json.dumps(response_data), 200)
 
+async def set_schedules_enabled_request(request, response):
+    global schedules_enabled
+    schedules_enabled = bool(request.post_data.get('schedules_enabled', False))
+    config['SCHEDULES_ENABLED'] = schedules_enabled
+    save_config(config)
+    response_data = {
+        'status': 'OK',
+        'success': True,
+        'message': 'Schedules ' + ('enabled' if schedules_enabled else 'disabled'),
+        'settings': settings_object()
+    }
+    await response.send_json(json.dumps(response_data), 200)
+
 async def set_time_request(request, response):
     print(request.post_data)
     time_data = request.post_data['time']
@@ -1014,6 +1027,7 @@ def setup_routes(server):
     server.add_function_route('/set-brightness', set_brightness_request)
     server.add_function_route('/get-clock-settings', get_clock_settings_request)
     server.add_function_route('/set-clock-settings', set_clock_settings_request)
+    server.add_function_route('/set-schedules-enabled', set_schedules_enabled_request)
     server.add_function_route('/set-scenes', set_scenes_request)
     server.add_function_route('/test-scene', test_scene_request)
     server.add_function_route('/set-schedules', set_schedules_request)

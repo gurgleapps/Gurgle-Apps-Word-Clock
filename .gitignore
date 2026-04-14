@@ -1,5 +1,9 @@
 src/config.local.py
 build/node_modules
+build/.tmp-no-forms.css
 .venv/
+.worktrees/
 .DS_Store
 ._*
+__pycache__/
+*.pyc

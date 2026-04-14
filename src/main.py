@@ -23,10 +23,13 @@ DISPLAY_MODE_RAINBOW = 'rainbow'
 DISPLAY_MODE_SINGLE_COLOR = 'single_color'
 DISPLAY_MODE_COLOR_PER_WORD = 'color_per_word'
 DISPLAY_MODE_RANDOM = 'random'
+DISPLAY_MODE_MATRIX_RAIN = 'matrix_rain'
 MAX_BRIGHTNESS = 15
 SCHEDULE_ACTION_TYPES = ('display_on', 'display_off', 'set_brightness', 'apply_scene')
 WEEKDAY_NAMES = ('mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun')
 MAIN_LOOP_SLEEP_SECONDS = 1
+ANIMATION_LOOP_SLEEP_MS = 100
+ANIMATION_IDLE_SLEEP_MS = 250
 NTP_SYNC_INTERVAL_SECONDS = 3600
 NTP_RETRY_INTERVAL_SECONDS = 300
 NTP_INITIAL_DELAY_AFTER_WIFI_CONNECT_MS = 5_000
@@ -40,7 +43,8 @@ SCENE_MODE_FIELDS = {
     DISPLAY_MODE_RAINBOW: (),
     DISPLAY_MODE_SINGLE_COLOR: ('single_color',),
     DISPLAY_MODE_COLOR_PER_WORD: ('minute_color', 'hour_color', 'past_to_color'),
-    DISPLAY_MODE_RANDOM: ()
+    DISPLAY_MODE_RANDOM: (),
+    DISPLAY_MODE_MATRIX_RAIN: ()
 }
 
 current_display_mode = DISPLAY_MODE_RAINBOW
@@ -195,6 +199,14 @@ def clear_matrix():
     if config['ENABLE_WS2812B']:
         ws2812b_matrix.clear()
 
+def is_animated_display_mode(mode):
+    return mode == DISPLAY_MODE_MATRIX_RAIN
+
+def reset_display_refresh_state():
+    global last_display_minute_key, last_dynamic_display_update_ms
+    last_display_minute_key = None
+    last_dynamic_display_update_ms = None
+
 def current_display_minute_key():
     now = get_corrected_time()
     return (now[0], now[1], now[2], now[3], now[4])
@@ -202,6 +214,9 @@ def current_display_minute_key():
 def should_refresh_display():
     global last_display_minute_key, last_dynamic_display_update_ms
     if not display_enabled:
+        return False
+
+    if is_animated_display_mode(current_display_mode):
         return False
 
     refresh_ms = DISPLAY_MODE_REFRESH_MS.get(current_display_mode)
@@ -216,6 +231,7 @@ def should_refresh_display():
 def set_display_enabled(enabled):
     global display_enabled
     display_enabled = bool(enabled)
+    reset_display_refresh_state()
     if not display_enabled:
         clear_matrix()
 
@@ -224,6 +240,7 @@ def set_display_mode(mode, persist=False):
     if mode not in display_modes:
         raise ValueError("Unsupported display mode: " + str(mode))
     current_display_mode = mode
+    reset_display_refresh_state()
     if persist:
         config['DISPLAY_MODE'] = current_display_mode
 
@@ -746,6 +763,10 @@ def display_single_color_mode(word):
 def display_color_per_word_mode(word):
     ws2812b_matrix.show_char_with_color_array(word, colour_per_word_array)
 
+def display_matrix_rain_mode(word):
+    # Placeholder until the real rain effect lands. The animation loop owns the cadence.
+    ws2812b_matrix.show_char(word, single_color)
+
 def webserver_event_handler(event):
     global last_wifi_connected_time, last_wifi_disconnected_time
     if event['event'] == GurgleAppsWebserver.EVENT_WIFI_CONNECTED:
@@ -1062,6 +1083,14 @@ async def connect_to_wifi():
         print("No Wi-Fi SSID set")
         return False
 
+async def animation_loop():
+    while True:
+        if display_enabled and is_animated_display_mode(current_display_mode):
+            time_to_matrix()
+            await asyncio.sleep_ms(ANIMATION_LOOP_SLEEP_MS)
+            continue
+        await asyncio.sleep_ms(ANIMATION_IDLE_SLEEP_MS)
+
         
 async def main():
     global ntp_synced_at, last_wifi_connected_time, last_wifi_disconnected_time, disable_access_point
@@ -1072,6 +1101,7 @@ async def main():
         ap_connnected = server.start_access_point('gurgleapps', 'gurgleapps')
         await scroll_message(matrix_fonts.textFont1, "No Wi-Fi", 0.05)
     print("Access Point active: " + str(ap_connnected)) 
+    asyncio.create_task(animation_loop())
     while True:
         if server.is_access_point_active():
             if server.is_wifi_connected():
@@ -1096,7 +1126,8 @@ display_modes = {
     DISPLAY_MODE_RAINBOW: display_rainbow_mode,
     DISPLAY_MODE_SINGLE_COLOR: display_single_color_mode,
     DISPLAY_MODE_COLOR_PER_WORD: display_color_per_word_mode,
-    DISPLAY_MODE_RANDOM: display_random_mode
+    DISPLAY_MODE_RANDOM: display_random_mode,
+    DISPLAY_MODE_MATRIX_RAIN: display_matrix_rain_mode
 }
 
 log_boot("Loading " + config_file)

@@ -33,6 +33,7 @@ from matrix_rain import (
 
 config_file = 'config.json'
 scenes_file = 'scenes.json'
+default_scenes_file = 'default_scenes.json'
 schedules_file = 'schedules.json'
 
 # Display modes
@@ -70,6 +71,12 @@ SCENE_MODE_FIELDS = {
 
 class AppState:
     def __init__(self):
+        self.brightness = 2
+        self.display_enabled = True
+        self.current_display_mode = DISPLAY_MODE_RAINBOW
+        self.current_scene_name = None
+        self.last_display_minute_key = None
+        self.last_dynamic_display_update_ms = None
         self.matrix_rain_minute_color = MATRIX_RAIN_DEFAULT_MINUTE_COLOR
         self.matrix_rain_hour_color = MATRIX_RAIN_DEFAULT_HOUR_COLOR
         self.matrix_rain_past_to_color = MATRIX_RAIN_DEFAULT_PAST_TO_COLOR
@@ -82,12 +89,7 @@ class AppState:
         self.matrix_rain_time_brightness_cap = MATRIX_RAIN_DEFAULT_TIME_BRIGHTNESS_CAP
         self.matrix_rain_state = MatrixRainState()
 
-current_display_mode = DISPLAY_MODE_RAINBOW
-current_scene_name = None
-
 disable_access_point = False
-brightness = 2
-display_enabled = True
 # Color data for different modes
 single_color = (0, 0, 255)
 # Color data for different words
@@ -106,8 +108,6 @@ ntp_synced_at = 0
 last_ntp_sync_attempt = None
 last_dns_check_status = None
 last_schedule_evaluation_key = None
-last_display_minute_key = None
-last_dynamic_display_update_ms = None
 valid_schedules = []
 spi_matrix = None
 i2c_matrix = None
@@ -182,7 +182,7 @@ def log_boot_summary():
     log_boot("Board: " + uname.machine)
     log_boot("Runtime: " + uname.sysname)
     log_boot("Displays: " + enabled_display_backends())
-    log_boot("Display mode: " + str(current_display_mode) + ", brightness: " + str(brightness))
+    log_boot("Display mode: " + str(app_state.current_display_mode) + ", brightness: " + str(app_state.brightness))
     log_boot("Time offset: " + str(time_offset) + " seconds")
     log_boot("Scenes loaded: " + str(len(scenes)))
     log_boot("Valid schedules loaded: " + str(len(valid_schedules)))
@@ -261,9 +261,8 @@ def reset_matrix_rain_time_overlay():
     app_state.matrix_rain_state.reset_time_overlay()
 
 def reset_display_refresh_state():
-    global last_display_minute_key, last_dynamic_display_update_ms
-    last_display_minute_key = None
-    last_dynamic_display_update_ms = None
+    app_state.last_display_minute_key = None
+    app_state.last_dynamic_display_update_ms = None
     reset_matrix_rain_state()
     reset_matrix_rain_time_overlay()
 
@@ -282,7 +281,7 @@ def render_matrix_rain():
         affect_time=app_state.matrix_rain_affect_time,
         trail_length=app_state.matrix_rain_trail_length,
         time_brightness_cap=app_state.matrix_rain_time_brightness_cap,
-        brightness=brightness,
+        brightness=app_state.brightness,
         config=config,
         spi_matrix=spi_matrix,
         i2c_matrix=i2c_matrix,
@@ -347,44 +346,87 @@ def current_display_minute_key():
     return (now[0], now[1], now[2], now[3], now[4])
 
 def should_refresh_display():
-    global last_display_minute_key, last_dynamic_display_update_ms
-    if not display_enabled:
+    if not app_state.display_enabled:
         return False
 
-    if is_animated_display_mode(current_display_mode):
+    if is_animated_display_mode(app_state.current_display_mode):
         return False
 
-    refresh_ms = DISPLAY_MODE_REFRESH_MS.get(current_display_mode)
+    refresh_ms = DISPLAY_MODE_REFRESH_MS.get(app_state.current_display_mode)
     if refresh_ms is not None:
         now_ms = time.ticks_ms()
-        if last_dynamic_display_update_ms is None:
+        if app_state.last_dynamic_display_update_ms is None:
             return True
-        return time.ticks_diff(now_ms, last_dynamic_display_update_ms) >= refresh_ms
+        return time.ticks_diff(now_ms, app_state.last_dynamic_display_update_ms) >= refresh_ms
 
-    return current_display_minute_key() != last_display_minute_key
+    return current_display_minute_key() != app_state.last_display_minute_key
 
 def set_display_enabled(enabled):
-    global display_enabled
-    display_enabled = bool(enabled)
+    app_state.display_enabled = bool(enabled)
     reset_display_refresh_state()
-    if not display_enabled:
+    if not app_state.display_enabled:
         clear_matrix()
 
 def set_display_mode(mode, persist=False):
-    global current_display_mode
     if mode not in display_modes:
         raise ValueError("Unsupported display mode: " + str(mode))
-    current_display_mode = mode
+    app_state.current_display_mode = mode
     reset_display_refresh_state()
     if persist:
-        config['DISPLAY_MODE'] = current_display_mode
+        config['DISPLAY_MODE'] = app_state.current_display_mode
+
+def reset_clock_settings_to_defaults():
+    global single_color
+    global minute_color
+    global hour_color
+    global past_to_color
+    global schedules_enabled
+
+    app_state.brightness = 2
+    app_state.display_enabled = True
+    app_state.current_display_mode = DISPLAY_MODE_RAINBOW
+    app_state.current_scene_name = None
+    single_color = (0, 0, 255)
+    minute_color = (0, 255, 0)
+    hour_color = (255, 0, 0)
+    past_to_color = (0, 0, 255)
+    schedules_enabled = True
+    app_state.matrix_rain_minute_color = MATRIX_RAIN_DEFAULT_MINUTE_COLOR
+    app_state.matrix_rain_hour_color = MATRIX_RAIN_DEFAULT_HOUR_COLOR
+    app_state.matrix_rain_past_to_color = MATRIX_RAIN_DEFAULT_PAST_TO_COLOR
+    app_state.matrix_rain_background_color = MATRIX_RAIN_DEFAULT_BACKGROUND_COLOR
+    app_state.matrix_rain_white_head = MATRIX_RAIN_DEFAULT_WHITE_HEAD
+    app_state.matrix_rain_affect_time = MATRIX_RAIN_DEFAULT_AFFECT_TIME
+    app_state.matrix_rain_speed_ms = MATRIX_RAIN_DEFAULT_SPEED_MS
+    app_state.matrix_rain_spawn_rate = MATRIX_RAIN_DEFAULT_SPAWN_RATE
+    app_state.matrix_rain_trail_length = MATRIX_RAIN_DEFAULT_TRAIL_LENGTH
+    app_state.matrix_rain_time_brightness_cap = MATRIX_RAIN_DEFAULT_TIME_BRIGHTNESS_CAP
+    reset_display_refresh_state()
+
+    config['BRIGHTNESS'] = app_state.brightness
+    config['DISPLAY_MODE'] = app_state.current_display_mode
+    config['SCHEDULES_ENABLED'] = schedules_enabled
+    config['SINGLE_COLOR'] = single_color
+    config['MINUTE_COLOR'] = minute_color
+    config['HOUR_COLOR'] = hour_color
+    config['PAST_TO_COLOR'] = past_to_color
+    config['MATRIX_RAIN_MINUTE_COLOR'] = app_state.matrix_rain_minute_color
+    config['MATRIX_RAIN_HOUR_COLOR'] = app_state.matrix_rain_hour_color
+    config['MATRIX_RAIN_PAST_TO_COLOR'] = app_state.matrix_rain_past_to_color
+    config['MATRIX_RAIN_BACKGROUND_COLOR'] = app_state.matrix_rain_background_color
+    config['MATRIX_RAIN_WHITE_HEAD'] = app_state.matrix_rain_white_head
+    config['MATRIX_RAIN_AFFECT_TIME'] = app_state.matrix_rain_affect_time
+    config['MATRIX_RAIN_SPEED_MS'] = app_state.matrix_rain_speed_ms
+    config['MATRIX_RAIN_SPAWN_RATE'] = app_state.matrix_rain_spawn_rate
+    config['MATRIX_RAIN_TRAIL_LENGTH'] = app_state.matrix_rain_trail_length
+    config['MATRIX_RAIN_TIME_BRIGHTNESS_CAP'] = app_state.matrix_rain_time_brightness_cap
+    save_config(config)
 
 def apply_scene(scene_name_or_object, fallback_name=None):
-    global current_scene_name
     success, next_scene_name = scene_manager.apply_scene(
         scene_name_or_object,
         scenes=scenes,
-        current_display_mode=current_display_mode,
+        current_display_mode=app_state.current_display_mode,
         display_modes=display_modes,
         set_display_enabled=set_display_enabled,
         set_brightness=set_brightness,
@@ -394,13 +436,13 @@ def apply_scene(scene_name_or_object, fallback_name=None):
         log_scene=log_scene,
         max_brightness=MAX_BRIGHTNESS,
         reset_matrix_rain_state=reset_matrix_rain_state,
-        is_display_enabled=lambda: display_enabled,
+        is_display_enabled=lambda: app_state.display_enabled,
         time_to_matrix=time_to_matrix,
         clear_matrix=clear_matrix,
         fallback_name=fallback_name
     )
     if success:
-        current_scene_name = next_scene_name
+        app_state.current_scene_name = next_scene_name
     return success
 
 def read_config():
@@ -453,7 +495,7 @@ def run_schedule_action(action):
         return True
     if action_type == 'set_brightness':
         set_brightness(action['value'], persist=False)
-        if display_enabled:
+        if app_state.display_enabled:
             time_to_matrix()
         return True
     if action_type == 'apply_scene':
@@ -549,14 +591,14 @@ def set_manual_time(year, month, day, hour, minute, second):
 
 
 def time_to_matrix(force=False):
-    global colour_per_word_array, last_display_minute_key, last_dynamic_display_update_ms
-    if not display_enabled:
-        last_display_minute_key = current_display_minute_key()
-        last_dynamic_display_update_ms = time.ticks_ms()
+    global colour_per_word_array
+    if not app_state.display_enabled:
+        app_state.last_display_minute_key = current_display_minute_key()
+        app_state.last_dynamic_display_update_ms = time.ticks_ms()
         clear_matrix()
         return
-    if is_animated_display_mode(current_display_mode) and not force:
-        last_dynamic_display_update_ms = time.ticks_ms()
+    if is_animated_display_mode(app_state.current_display_mode) and not force:
+        app_state.last_dynamic_display_update_ms = time.ticks_ms()
         return
     word, colour_per_word_array, now = build_time_word_data()
     if config['ENABLE_MAX7219']:
@@ -565,12 +607,12 @@ def time_to_matrix(force=False):
         if not i2c_matrix.show_char(i2c_matrix.reverse_char(word)):
             print("Error writing to matrix")
     if config['ENABLE_WS2812B']:
-        ws2812b_matrix.set_brightness(brightness)
-        display_fuction = display_modes.get(current_display_mode)
+        ws2812b_matrix.set_brightness(app_state.brightness)
+        display_fuction = display_modes.get(app_state.current_display_mode)
         if display_fuction:
             display_fuction(word)
-    last_display_minute_key = (now[0], now[1], now[2], now[3], now[4])
-    last_dynamic_display_update_ms = time.ticks_ms()
+    app_state.last_display_minute_key = (now[0], now[1], now[2], now[3], now[4])
+    app_state.last_dynamic_display_update_ms = time.ticks_ms()
 
 def merge_chars(char1, char2):
     for i in range(8):
@@ -661,17 +703,16 @@ def merge_color_array(color_array, char, color):
     return color_array
 
 def set_brightness(new_brightness, persist=True):
-    global brightness
-    brightness = new_brightness
+    app_state.brightness = new_brightness
     if persist:
-        config['BRIGHTNESS'] = brightness
+        config['BRIGHTNESS'] = app_state.brightness
         save_config(config)
     if config['ENABLE_MAX7219']:
-        spi_matrix.set_brightness(brightness)
+        spi_matrix.set_brightness(app_state.brightness)
     if config['ENABLE_HT16K33']:
-        i2c_matrix.set_brightness(brightness)
+        i2c_matrix.set_brightness(app_state.brightness)
     if config['ENABLE_WS2812B']:
-        ws2812b_matrix.set_brightness(brightness)
+        ws2812b_matrix.set_brightness(app_state.brightness)
 
 def display_rainbow_mode(word):
     ws2812b_matrix.show_char_with_color_array(word, ws2812b_matrix.get_rainbow_array())
@@ -857,6 +898,39 @@ async def set_scenes_request(request, response):
     }
     await response.send_json(json.dumps(response_data), 200)
 
+async def reset_default_scenes_request(request, response):
+    global scenes, valid_schedules
+    default_scenes = read_optional_json(default_scenes_file, None)
+    if not isinstance(default_scenes, dict):
+        response_data = {
+            'status': 'ERROR',
+            'success': False,
+            'message': 'Failed to load default scenes',
+            'settings': settings_object()
+        }
+        await response.send_json(json.dumps(response_data), 500)
+        return
+
+    if not save_json_file(scenes_file, default_scenes):
+        response_data = {
+            'status': 'ERROR',
+            'success': False,
+            'message': 'Failed to reset scenes',
+            'settings': settings_object()
+        }
+        await response.send_json(json.dumps(response_data), 500)
+        return
+
+    scenes = default_scenes
+    valid_schedules = validate_schedules(schedules)
+    response_data = {
+        'status': 'OK',
+        'success': True,
+        'message': 'Scenes reset to defaults',
+        'settings': settings_object()
+    }
+    await response.send_json(json.dumps(response_data), 200)
+
 async def test_scene_request(request, response):
     scene_payload = request.post_data.get('scene')
     scene_name = request.post_data.get('scene_name')
@@ -893,8 +967,6 @@ async def test_scene_request(request, response):
     await response.send_json(json.dumps(response_data), 200)
 
 async def set_clock_settings_request(request, response):
-    global current_display_mode
-    global current_scene_name
     global single_color
     global minute_color
     global hour_color
@@ -902,8 +974,8 @@ async def set_clock_settings_request(request, response):
     global schedules_enabled
     print(request.post_data)
     set_brightness(int(request.post_data['brightness']))
-    current_display_mode = request.post_data['display_mode']
-    current_scene_name = None
+    app_state.current_display_mode = request.post_data['display_mode']
+    app_state.current_scene_name = None
     schedules_enabled = bool(request.post_data.get('schedules_enabled', False))
     single_color = (int(request.post_data['single_color'][0]), int(request.post_data['single_color'][1]), int(request.post_data['single_color'][2]))
     minute_color = (int(request.post_data['minute_color'][0]), int(request.post_data['minute_color'][1]), int(request.post_data['minute_color'][2]))
@@ -956,8 +1028,8 @@ async def set_clock_settings_request(request, response):
         requested_time_brightness_cap = MAX_BRIGHTNESS
     app_state.matrix_rain_time_brightness_cap = requested_time_brightness_cap
     reset_matrix_rain_state()
-    config['BRIGHTNESS'] = brightness
-    config['DISPLAY_MODE'] = current_display_mode
+    config['BRIGHTNESS'] = app_state.brightness
+    config['DISPLAY_MODE'] = app_state.current_display_mode
     config['SCHEDULES_ENABLED'] = schedules_enabled
     config['SINGLE_COLOR'] = single_color
     config['MINUTE_COLOR'] = minute_color
@@ -989,16 +1061,26 @@ async def set_clock_settings_request(request, response):
 
 
 async def get_clock_settings_request(request, response):
-    global current_display_mode
     await response.send_json(settings_to_json())
+
+async def reset_clock_settings_request(request, response):
+    reset_clock_settings_to_defaults()
+    time_to_matrix(force=True)
+    response_data = {
+        'status': 'OK',
+        'success': True,
+        'message': 'Clock settings reset',
+        'settings': settings_object()
+    }
+    await response.send_json(json.dumps(response_data), 200)
 
 def settings_object():
     global ntp_synced_at, last_ntp_sync_attempt
     return {
-        'brightness': brightness,
-        'display_enabled': display_enabled,
-        'display_mode': current_display_mode,
-        'current_scene': current_scene_name,
+        'brightness': app_state.brightness,
+        'display_enabled': app_state.display_enabled,
+        'display_mode': app_state.current_display_mode,
+        'current_scene': app_state.current_scene_name,
         'scenes': scenes,
         'scene_names': list(scenes.keys()),
         'schedules': schedules,
@@ -1043,8 +1125,10 @@ def setup_routes(server):
     server.add_function_route('/set-brightness', set_brightness_request)
     server.add_function_route('/get-clock-settings', get_clock_settings_request)
     server.add_function_route('/set-clock-settings', set_clock_settings_request)
+    server.add_function_route('/reset-clock-settings', reset_clock_settings_request)
     server.add_function_route('/set-schedules-enabled', set_schedules_enabled_request)
     server.add_function_route('/set-scenes', set_scenes_request)
+    server.add_function_route('/reset-default-scenes', reset_default_scenes_request)
     server.add_function_route('/test-scene', test_scene_request)
     server.add_function_route('/set-schedules', set_schedules_request)
     server.add_function_route('/set-wifi-settings', set_wifi_settings_request)
@@ -1080,9 +1164,9 @@ async def connect_to_wifi():
 
 async def animation_loop():
     while True:
-        if display_enabled and is_animated_display_mode(current_display_mode):
-            run_animation_frame(current_display_mode)
-            await asyncio.sleep_ms(get_animation_frame_delay_ms(current_display_mode))
+        if app_state.display_enabled and is_animated_display_mode(app_state.current_display_mode):
+            run_animation_frame(app_state.current_display_mode)
+            await asyncio.sleep_ms(get_animation_frame_delay_ms(app_state.current_display_mode))
             continue
         await asyncio.sleep_ms(ANIMATION_IDLE_SLEEP_MS)
 
@@ -1131,7 +1215,7 @@ config = read_config()
 if config is None:
     raise SystemExit("Stopping execution due to missing configuration.")
 
-brightness = config.get('BRIGHTNESS', 2)
+app_state.brightness = config.get('BRIGHTNESS', 2)
 single_color = config.get('SINGLE_COLOR', (0, 0, 255))
 minute_color = config.get('MINUTE_COLOR', (0, 255, 0))
 hour_color = config.get('HOUR_COLOR', (255, 0, 0))
@@ -1146,10 +1230,10 @@ app_state.matrix_rain_speed_ms = config.get('MATRIX_RAIN_SPEED_MS', MATRIX_RAIN_
 app_state.matrix_rain_spawn_rate = config.get('MATRIX_RAIN_SPAWN_RATE', MATRIX_RAIN_DEFAULT_SPAWN_RATE)
 app_state.matrix_rain_trail_length = config.get('MATRIX_RAIN_TRAIL_LENGTH', MATRIX_RAIN_DEFAULT_TRAIL_LENGTH)
 app_state.matrix_rain_time_brightness_cap = config.get('MATRIX_RAIN_TIME_BRIGHTNESS_CAP', MATRIX_RAIN_DEFAULT_TIME_BRIGHTNESS_CAP)
-current_display_mode = config.get('DISPLAY_MODE', DISPLAY_MODE_RAINBOW)
+app_state.current_display_mode = config.get('DISPLAY_MODE', DISPLAY_MODE_RAINBOW)
 time_offset = config.get('TIME_OFFSET', 0)
 disable_access_point = config.get('DISABLE_ACCESS_POINT', False)
-schedules_enabled = config.get('SCHEDULES_ENABLED', False)
+schedules_enabled = config.get('SCHEDULES_ENABLED', True)
 
 normalised_matrix_rain_background_color = normalise_color(app_state.matrix_rain_background_color)
 if normalised_matrix_rain_background_color is None:
@@ -1237,7 +1321,7 @@ if config['ENABLE_MAX7219']:
 if config['ENABLE_WS2812B']:
     log_boot("Initialising WS2812B matrix")
     ws2812b_matrix = WS2812BMatrix(config['WS2812B_PIN'], 8, 8)
-    ws2812b_matrix.set_brightness(brightness)
+    ws2812b_matrix.set_brightness(app_state.brightness)
 
 log_boot("Running startup animation")
 startup_animation()

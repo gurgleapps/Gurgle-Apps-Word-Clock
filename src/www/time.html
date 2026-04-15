@@ -390,6 +390,26 @@
               </div>
             </div>
           </div>
+          <div class="pt-4 mt-4 border-t border-gray-200">
+            <div class="p-3 rounded-lg bg-gray-50 ring-1 ring-gray-200">
+              <div class="inline-flex items-center w-full pb-2 mb-3 border-b border-gray-200 gap-x-3">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
+                  <path fill-rule="evenodd" d="M12 2.25a9.75 9.75 0 1 0 0 19.5 9.75 9.75 0 0 0 0-19.5ZM8.47 8.47a.75.75 0 0 1 1.06 0L12 10.94l2.47-2.47a.75.75 0 1 1 1.06 1.06L13.06 12l2.47 2.47a.75.75 0 0 1-1.06 1.06L12 13.06l-2.47 2.47a.75.75 0 0 1-1.06-1.06L10.94 12 8.47 9.53a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" />
+                </svg>
+                <span class="text-sm font-medium text-gray-900">Recovery</span>
+              </div>
+              <div class="flex items-center justify-between gap-3">
+                <span class="flex flex-col flex-grow">
+                  <span class="text-sm font-medium leading-6 text-gray-900">Reset Clock Settings</span>
+                  <span class="text-sm text-gray-500">Restore clock defaults without changing Wi-Fi, scenes, or schedules.</span>
+                </span>
+                <button @click.prevent="resetClockSettings()"
+                  class="px-3 py-2 text-sm font-semibold text-red-700 bg-white border border-red-200 rounded focus:outline-none hover:bg-red-50">
+                  Reset
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
         <div x-show="selectedOption=='Schedule'" x-collapse class="p-3 my-4 rounded-lg ring-1 ring-gray-100">
           <div class="flex flex-wrap items-start justify-between gap-3 mb-4">
@@ -521,6 +541,12 @@
               <button @click.prevent="updateScenes()"
                 class="flex-1 px-4 py-2 font-semibold text-white bg-green-600 rounded focus:outline-none hover:bg-green-700">
                 Save Scenes
+              </button>
+            </div>
+            <div class="w-full">
+              <button @click.prevent="resetDefaultScenes()"
+                class="w-full px-4 py-2 text-sm font-semibold text-red-700 bg-white border border-red-200 rounded focus:outline-none hover:bg-red-50">
+                Reset Default Scenes
               </button>
             </div>
           </div>
@@ -1303,6 +1329,25 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
           }
           this.showNotice('Failed to update settings', 'error')
         },
+        async resetClockSettings() {
+          if (!confirm('Reset clock settings to defaults? This will not change Wi-Fi, scenes, or schedules.')) {
+            return
+          }
+          const response = await fetch(this.path + '/reset-clock-settings', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          })
+          if (response.ok) {
+            const json = await response.json()
+            this.applySettings(json.settings)
+            this.timeChanged = false
+            this.showNotice('Clock settings reset')
+            return
+          }
+          this.showNotice('Failed to reset clock settings', 'error')
+        },
         normaliseScene(name, scene = {}, expanded = false) {
           const nextScene = {
             name: typeof name === 'string' ? name : 'scene',
@@ -1503,6 +1548,24 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
             return
           }
           this.showNotice('Failed to save scenes', 'error')
+        },
+        async resetDefaultScenes() {
+          if (!confirm('Reset scenes to the shipped defaults? This will replace your current scenes.')) {
+            return
+          }
+          const response = await fetch(this.path + '/reset-default-scenes', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          })
+          if (response.ok) {
+            const json = await response.json()
+            this.applySettings(json.settings)
+            this.showNotice('Scenes reset to defaults')
+            return
+          }
+          this.showNotice('Failed to reset scenes', 'error')
         },
         normaliseSchedule(schedule = {}) {
           const nextSchedule = {

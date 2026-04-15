@@ -13,6 +13,8 @@ import urandom as random
 import os
 from board import Board
 import socket
+import schedule_manager
+import time_sync
 from matrix_rain import (
     MATRIX_RAIN_DEFAULT_AFFECT_TIME,
     MATRIX_RAIN_DEFAULT_BACKGROUND_COLOR,
@@ -486,121 +488,15 @@ def save_json_file(filename, data):
         print("Error saving " + filename + ": " + str(e))
         return False
 
-def parse_schedule_time(time_string):
-    if not isinstance(time_string, str) or len(time_string) != 5 or time_string[2] != ':':
-        return None
-    try:
-        hour = int(time_string[:2])
-        minute = int(time_string[3:])
-    except ValueError:
-        return None
-    if hour < 0 or hour > 23 or minute < 0 or minute > 59:
-        return None
-    return (hour, minute)
-
-def normalise_schedule_days(days):
-    if not isinstance(days, list) or not days:
-        return None
-    normalised_days = []
-    for day in days:
-        if not isinstance(day, str):
-            return None
-        day_name = day.lower()
-        if day_name == 'all':
-            return tuple(range(7))
-        if day_name not in WEEKDAY_NAMES:
-            return None
-        day_index = WEEKDAY_NAMES.index(day_name)
-        if day_index not in normalised_days:
-            normalised_days.append(day_index)
-    return tuple(normalised_days)
-
-def validate_schedule_action(action, schedule_index):
-    if not isinstance(action, dict):
-        log_schedule("Ignoring schedule " + str(schedule_index) + ": action must be an object")
-        return None
-
-    action_type = action.get('type')
-    if action_type not in SCHEDULE_ACTION_TYPES:
-        log_schedule("Ignoring schedule " + str(schedule_index) + ": unsupported action type " + str(action_type))
-        return None
-
-    validated_action = {'type': action_type}
-    if action_type == 'set_brightness':
-        value = action.get('value')
-        if not isinstance(value, int) or value < 0 or value > MAX_BRIGHTNESS:
-            log_schedule("Ignoring schedule " + str(schedule_index) + ": invalid brightness value")
-            return None
-        validated_action['value'] = value
-    elif action_type == 'apply_scene':
-        scene_name = action.get('scene')
-        if not isinstance(scene_name, str) or not scene_name:
-            log_schedule("Ignoring schedule " + str(schedule_index) + ": invalid scene name")
-            return None
-        if scene_name not in scenes:
-            log_schedule("Ignoring schedule " + str(schedule_index) + ": unknown scene " + scene_name)
-            return None
-        validated_action['scene'] = scene_name
-
-    return validated_action
-
-def validate_schedule_entry(entry, schedule_index):
-    if not isinstance(entry, dict):
-        log_schedule("Ignoring schedule " + str(schedule_index) + ": entry must be an object")
-        return None
-
-    schedule_name = entry.get('name', '')
-    if schedule_name is None:
-        schedule_name = ''
-    if not isinstance(schedule_name, str):
-        log_schedule("Ignoring schedule " + str(schedule_index) + ": name must be a string")
-        return None
-
-    enabled = entry.get('enabled', True)
-    if not isinstance(enabled, bool):
-        log_schedule("Ignoring schedule " + str(schedule_index) + ": enabled must be a boolean")
-        return None
-    if not enabled:
-        return None
-
-    days = normalise_schedule_days(entry.get('days'))
-    if days is None:
-        log_schedule("Ignoring schedule " + str(schedule_index) + ": invalid days")
-        return None
-
-    parsed_time = parse_schedule_time(entry.get('time'))
-    if parsed_time is None:
-        log_schedule("Ignoring schedule " + str(schedule_index) + ": invalid time")
-        return None
-
-    action = validate_schedule_action(entry.get('action'), schedule_index)
-    if action is None:
-        return None
-
-    return {
-        'index': schedule_index,
-        'name': schedule_name.strip(),
-        'days': days,
-        'time': parsed_time,
-        'time_string': entry.get('time'),
-        'action': action
-    }
-
 def validate_schedules(schedule_entries):
-    validated = []
-    for index, entry in enumerate(schedule_entries):
-        validated_entry = validate_schedule_entry(entry, index)
-        if validated_entry is not None:
-            validated.append(validated_entry)
-    return validated
-
-def describe_schedule_action(action):
-    action_type = action['type']
-    if action_type == 'set_brightness':
-        return action_type + "(" + str(action['value']) + ")"
-    if action_type == 'apply_scene':
-        return action_type + "(" + action['scene'] + ")"
-    return action_type
+    return schedule_manager.validate_schedules(
+        schedule_entries,
+        log_schedule=log_schedule,
+        weekday_names=WEEKDAY_NAMES,
+        action_types=SCHEDULE_ACTION_TYPES,
+        max_brightness=MAX_BRIGHTNESS,
+        scenes=scenes
+    )
 
 def run_schedule_action(action):
     action_type = action['type']
@@ -623,29 +519,15 @@ def run_schedule_action(action):
 
 def evaluate_schedules():
     global last_schedule_evaluation_key
-    if not schedules_enabled or not valid_schedules:
-        return
-
-    now = get_corrected_time()
-    evaluation_key = (now[0], now[1], now[2], now[3], now[4])
-    if evaluation_key == last_schedule_evaluation_key:
-        return
-    last_schedule_evaluation_key = evaluation_key
-
-    weekday = now[6]
-    hour = now[3]
-    minute = now[4]
-    for schedule in valid_schedules:
-        if weekday in schedule['days'] and (hour, minute) == schedule['time']:
-            action_description = describe_schedule_action(schedule['action'])
-            schedule_label = schedule['name'] if schedule['name'] else ('schedule ' + str(schedule['index'] + 1))
-            log_schedule(
-                "Matched " + schedule_label + " at " + schedule['time_string'] +
-                " on " + WEEKDAY_NAMES[weekday] +
-                " -> running " + action_description
-            )
-            if not run_schedule_action(schedule['action']):
-                log_schedule("Failed to run action: " + action_description)
+    last_schedule_evaluation_key = schedule_manager.evaluate_schedules(
+        schedules_enabled=schedules_enabled,
+        valid_schedules=valid_schedules,
+        last_schedule_evaluation_key=last_schedule_evaluation_key,
+        get_corrected_time=get_corrected_time,
+        run_schedule_action=run_schedule_action,
+        log_schedule=log_schedule,
+        weekday_names=WEEKDAY_NAMES
+    )
 
 def save_config(data):
     if save_json_file(config_file, data):
@@ -670,92 +552,55 @@ def read_temperature():
 
 def test_dns():
     global last_dns_check_status
-    try:
-        ip = socket.getaddrinfo('www.google.com', 80)
-        print("DNS resolution successful, IP:", ip)
-        last_dns_check_status = True
-    except OSError as e:
-        print("DNS resolution failed:", e)
-        last_dns_check_status = False
+    last_dns_check_status = time_sync.test_dns(socket)
     return last_dns_check_status
 
 
 async def sync_ntp_time(use_alternative=False, timeout=2.0):
-    global ntp_synced_at, last_ntp_sync_attempt, config, last_wifi_connected_time
-    if last_ntp_sync_attempt and (time.time() - last_ntp_sync_attempt) < NTP_RETRY_INTERVAL_SECONDS:
-        return
-    mtp_hosts = ['pool.ntp.org', 'time.nist.gov', 'time.google.com', 'time.windows.com']
-    ntptime.timeout = timeout
-    for ntp_host in mtp_hosts:
-        try:
-            if use_alternative:
-                alt_ntptime.settime(ntp_host, timeout=timeout)
-            else:
-                ntptime.host = ntp_host
-                ntptime.settime()
-            ntp_synced_at = time.time()
-            last_wifi_connected_time = time.ticks_ms()
-            print(f"Time synced with {ntp_host} successfully using alternative method: {use_alternative}")
-            return
-        except Exception as e:
-            await asyncio.sleep(3)
-            print(f"Error syncing time with {ntp_host}: {e} using alternative method.{use_alternative}")
-    if not use_alternative:
-        print("Standard methods failed, trying alternative methods.")
-        await sync_ntp_time(use_alternative=True)
-    else:
-        try:
-            alt_ntptime.settime_via_http()
-            ntp_synced_at = time.time()
-            last_wifi_connected_time = time.ticks_ms()
-            print("Time synced successfully using HTTP fallback")
-            return
-        except Exception as e:
-            print(f"Error syncing time via HTTP fallback: {e}")
-        # both methods failed
-        print(f"Failed to sync time with all NTP servers. DNS check status: {test_dns()}")
-        try:
-            ntp_test = alt_ntptime.test_ntp_server()
-            print(f"NTP test result: {ntp_test}")
-        except Exception as e:
-            print(f"Failed to test NTP server: {e}")
-        try:
-            http_time = alt_ntptime.get_time_via_http()
-            print(f"HTTP time: {http_time}")
-        except Exception as e:
-            print(f"Failed to get time via HTTP: {e}")
-        if server.is_wifi_connected() and test_dns():
-            print('wifi up, dns ok, but still failed to sync time')
-    last_ntp_sync_attempt = time.time()
+    global ntp_synced_at, last_ntp_sync_attempt, last_wifi_connected_time
+    result = await time_sync.sync_ntp_time(
+        use_alternative=use_alternative,
+        timeout=timeout,
+        time_module=time,
+        ticks_ms=time.ticks_ms,
+        asyncio_module=asyncio,
+        ntptime_module=ntptime,
+        alt_ntptime_module=alt_ntptime,
+        retry_interval_seconds=NTP_RETRY_INTERVAL_SECONDS,
+        last_ntp_sync_attempt=last_ntp_sync_attempt,
+        test_dns=test_dns,
+        is_wifi_connected=server.is_wifi_connected,
+        logger=print
+    )
+    if result['ntp_synced_at'] is not None:
+        ntp_synced_at = result['ntp_synced_at']
+        last_wifi_connected_time = result['last_wifi_connected_ticks']
+    last_ntp_sync_attempt = result['last_ntp_sync_attempt']
+    return result['success']
 
 
 def should_attempt_ntp_sync():
-    if not server.is_wifi_connected():
-        return False
-    if server.is_access_point_active():
-        return False
-    if time.ticks_diff(time.ticks_ms(), last_wifi_connected_time) < NTP_INITIAL_DELAY_AFTER_WIFI_CONNECT_MS:
-        return False
-    now = time.time()
-    if ntp_synced_at >= (now - NTP_SYNC_INTERVAL_SECONDS):
-        return False
-    if last_ntp_sync_attempt and (now - last_ntp_sync_attempt) < NTP_RETRY_INTERVAL_SECONDS:
-        return False
-    return True
+    return time_sync.should_attempt_ntp_sync(
+        is_wifi_connected=server.is_wifi_connected,
+        is_access_point_active=server.is_access_point_active,
+        ticks_diff=time.ticks_diff,
+        ticks_ms=time.ticks_ms,
+        last_wifi_connected_time=last_wifi_connected_time,
+        initial_delay_ms=NTP_INITIAL_DELAY_AFTER_WIFI_CONNECT_MS,
+        now=time.time(),
+        ntp_synced_at=ntp_synced_at,
+        sync_interval_seconds=NTP_SYNC_INTERVAL_SECONDS,
+        last_ntp_sync_attempt=last_ntp_sync_attempt,
+        retry_interval_seconds=NTP_RETRY_INTERVAL_SECONDS
+    )
 
 
 def get_corrected_time():
-    return time.localtime(time.time() + time_offset)
+    return time_sync.get_corrected_time(time, time_offset)
 
 def set_manual_time(year, month, day, hour, minute, second):
     global time_offset
-    current_time = time.localtime()
-    current_seconds = time.time()
-    if second == 0:
-        # Datetime-local updates are minute-granular, so align the offset to the minute boundary.
-        current_seconds -= current_time[5]
-    manual_seconds = time.mktime((year, month, day, hour, minute, second, 0, 0))
-    time_offset = manual_seconds - current_seconds
+    time_offset = time_sync.calculate_manual_time_offset(time, year, month, day, hour, minute, second)
     config['TIME_OFFSET'] = time_offset
     save_config(config)
 

@@ -13,6 +13,7 @@ import urandom as random
 import os
 from board import Board
 import socket
+import scene_manager
 import schedule_manager
 import time_sync
 from matrix_rain import (
@@ -188,43 +189,48 @@ def log_boot_summary():
     log_boot("Wi-Fi configured: " + ('yes' if wifi_ssid else 'no'))
     log_boot("Access point disabled: " + str(disable_access_point))
 
-def apply_color_field(scene, field_name):
+def apply_scene_color_value(name, color):
     global single_color
     global minute_color
     global hour_color
     global past_to_color
 
-    color = normalise_color(scene[field_name])
-    if color is None:
-        log_scene("Invalid " + field_name + " in scene")
-        return
-
-    if field_name == 'single_color':
+    if name == 'single_color':
         single_color = color
-    elif field_name == 'minute_color':
+    elif name == 'minute_color':
         minute_color = color
-    elif field_name == 'hour_color':
+    elif name == 'hour_color':
         hour_color = color
-    elif field_name == 'past_to_color':
+    elif name == 'past_to_color':
         past_to_color = color
-    elif field_name == 'matrix_rain_minute_color':
+    elif name == 'matrix_rain_minute_color':
         app_state.matrix_rain_minute_color = color
-    elif field_name == 'matrix_rain_hour_color':
+    elif name == 'matrix_rain_hour_color':
         app_state.matrix_rain_hour_color = color
-    elif field_name == 'matrix_rain_past_to_color':
+    elif name == 'matrix_rain_past_to_color':
         app_state.matrix_rain_past_to_color = color
-    elif field_name == 'matrix_rain_background_color':
+    elif name == 'matrix_rain_background_color':
         app_state.matrix_rain_background_color = color
 
-def apply_mode_specific_scene_fields(scene, mode):
-    allowed_fields = SCENE_MODE_FIELDS.get(mode)
-    if allowed_fields is None:
-        log_scene("No scene field metadata for mode: " + str(mode))
-        return
+def apply_color_field(scene, field_name):
 
-    for field_name in allowed_fields:
-        if field_name in scene:
-            apply_color_field(scene, field_name)
+    scene_manager.apply_color_field(
+        scene,
+        field_name,
+        normalise_color=normalise_color,
+        log_scene=log_scene,
+        apply_color_value=apply_scene_color_value
+    )
+
+def apply_mode_specific_scene_fields(scene, mode):
+    scene_manager.apply_mode_specific_scene_fields(
+        scene,
+        mode,
+        scene_mode_fields=SCENE_MODE_FIELDS,
+        normalise_color=normalise_color,
+        log_scene=log_scene,
+        apply_color_value=apply_scene_color_value
+    )
 
 def normalise_color(value):
     if not isinstance(value, (list, tuple)) or len(value) != 3:
@@ -375,90 +381,27 @@ def set_display_mode(mode, persist=False):
 
 def apply_scene(scene_name_or_object, fallback_name=None):
     global current_scene_name
-
-    scene_name = None
-    if isinstance(scene_name_or_object, str):
-        scene_name = scene_name_or_object
-        scene = scenes.get(scene_name)
-        if scene is None:
-            log_scene("Scene not found: " + scene_name)
-            return False
-    else:
-        scene = scene_name_or_object
-
-    if not isinstance(scene, dict):
-        log_scene("Invalid scene definition")
-        return False
-
-    next_mode = scene.get('display_mode', current_display_mode)
-    if next_mode not in display_modes:
-        log_scene("Invalid display mode in scene: " + str(next_mode))
-        return False
-
-    if 'display_enabled' in scene:
-        if isinstance(scene['display_enabled'], bool):
-            set_display_enabled(scene['display_enabled'])
-        else:
-            log_scene("Invalid display_enabled in scene")
-
-    if 'brightness' in scene:
-        if isinstance(scene['brightness'], int) and 0 <= scene['brightness'] <= MAX_BRIGHTNESS:
-            set_brightness(scene['brightness'], persist=False)
-        else:
-            log_scene("Invalid brightness in scene")
-
-    if 'display_mode' in scene:
-        set_display_mode(next_mode, persist=False)
-
-    apply_mode_specific_scene_fields(scene, next_mode)
-
-    if next_mode == DISPLAY_MODE_MATRIX_RAIN:
-        if 'matrix_rain_white_head' in scene:
-            if isinstance(scene['matrix_rain_white_head'], bool):
-                app_state.matrix_rain_white_head = scene['matrix_rain_white_head']
-            else:
-                log_scene("Invalid matrix_rain_white_head in scene")
-        if 'matrix_rain_affect_time' in scene:
-            if isinstance(scene['matrix_rain_affect_time'], bool):
-                app_state.matrix_rain_affect_time = scene['matrix_rain_affect_time']
-            else:
-                log_scene("Invalid matrix_rain_affect_time in scene")
-        if 'matrix_rain_speed_ms' in scene:
-            if isinstance(scene['matrix_rain_speed_ms'], int) and 40 <= scene['matrix_rain_speed_ms'] <= 400:
-                app_state.matrix_rain_speed_ms = scene['matrix_rain_speed_ms']
-            else:
-                log_scene("Invalid matrix_rain_speed_ms in scene")
-        if 'matrix_rain_spawn_rate' in scene:
-            if isinstance(scene['matrix_rain_spawn_rate'], int) and 0 <= scene['matrix_rain_spawn_rate'] <= 100:
-                app_state.matrix_rain_spawn_rate = scene['matrix_rain_spawn_rate']
-            else:
-                log_scene("Invalid matrix_rain_spawn_rate in scene")
-        if 'matrix_rain_trail_length' in scene:
-            if isinstance(scene['matrix_rain_trail_length'], int) and 1 <= scene['matrix_rain_trail_length'] <= 8:
-                app_state.matrix_rain_trail_length = scene['matrix_rain_trail_length']
-            else:
-                log_scene("Invalid matrix_rain_trail_length in scene")
-        if 'matrix_rain_time_brightness_cap' in scene:
-            if isinstance(scene['matrix_rain_time_brightness_cap'], int) and 0 <= scene['matrix_rain_time_brightness_cap'] <= MAX_BRIGHTNESS:
-                app_state.matrix_rain_time_brightness_cap = scene['matrix_rain_time_brightness_cap']
-            else:
-                log_scene("Invalid matrix_rain_time_brightness_cap in scene")
-        reset_matrix_rain_state()
-
-    current_scene_name = scene_name if scene_name is not None else fallback_name
-
-    if display_enabled:
-        time_to_matrix()
-    else:
-        clear_matrix()
-
-    if scene_name:
-        log_scene("Applied scene: " + scene_name)
-    elif fallback_name:
-        log_scene("Applied scene preview: " + fallback_name)
-    else:
-        log_scene("Applied inline scene")
-    return True
+    success, next_scene_name = scene_manager.apply_scene(
+        scene_name_or_object,
+        scenes=scenes,
+        current_display_mode=current_display_mode,
+        display_modes=display_modes,
+        set_display_enabled=set_display_enabled,
+        set_brightness=set_brightness,
+        set_display_mode=set_display_mode,
+        apply_mode_specific_scene_fields=apply_mode_specific_scene_fields,
+        app_state=app_state,
+        log_scene=log_scene,
+        max_brightness=MAX_BRIGHTNESS,
+        reset_matrix_rain_state=reset_matrix_rain_state,
+        is_display_enabled=lambda: display_enabled,
+        time_to_matrix=time_to_matrix,
+        clear_matrix=clear_matrix,
+        fallback_name=fallback_name
+    )
+    if success:
+        current_scene_name = next_scene_name
+    return success
 
 def read_config():
     try:

@@ -345,7 +345,10 @@ def render_matrix_rain():
     color_array = [(0, 0, 0)] * 64
 
     for row in range(8):
-        char[row] = rain_char[row] | time_char[row]
+        if matrix_rain_affect_time:
+            char[row] = rain_char[row] | time_char[row]
+        else:
+            char[row] = (rain_char[row] & (~time_char[row] & 0xFF)) | time_char[row]
 
     for pixel_index in range(64):
         row = pixel_index // 8
@@ -858,12 +861,15 @@ def set_manual_time(year, month, day, hour, minute, second):
     save_config(config)
 
 
-def time_to_matrix():
+def time_to_matrix(force=False):
     global colour_per_word_array, last_display_minute_key, last_dynamic_display_update_ms
     if not display_enabled:
         last_display_minute_key = current_display_minute_key()
         last_dynamic_display_update_ms = time.ticks_ms()
         clear_matrix()
+        return
+    if is_animated_display_mode(current_display_mode) and not force:
+        last_dynamic_display_update_ms = time.ticks_ms()
         return
     word, colour_per_word_array, now = build_time_word_data()
     if config['ENABLE_MAX7219']:

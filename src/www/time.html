@@ -259,7 +259,73 @@
               <option value="rainbow">Rainbow</option>
               <option value="color_per_word">Word Colours</option>
               <option value="random">Random</option>
+              <option value="matrix_rain">Matrix Rain</option>
             </select>
+          </div>
+          <div x-show="settings.display_mode=='matrix_rain'" x-transition style="display:none;" class="mb-4 space-y-3">
+            <div>
+              <label class="block text-sm font-medium leading-6 text-gray-900">Rain Colour</label>
+              <input type="color" x-model="matrixRainBackgroundHex" list="colorList">
+            </div>
+            <div>
+              <label class="block text-sm font-medium leading-6 text-gray-900">Rain Speed: <span x-text="settings.matrix_rain_speed_ms + ' ms'"></span></label>
+              <input type="range" min="40" max="400" step="10" x-model.number="settings.matrix_rain_speed_ms"
+                class="w-full bg-transparent cursor-pointer appearance-none disabled:opacity-50 disabled:pointer-events-none focus:outline-none
+                  [&::-webkit-slider-thumb]:w-3.5
+                  [&::-webkit-slider-thumb]:h-3.5
+                  [&::-webkit-slider-thumb]:-mt-0.5
+                  [&::-webkit-slider-thumb]:appearance-none
+                  [&::-webkit-slider-thumb]:bg-white
+                  [&::-webkit-slider-thumb]:shadow-[0_0_0_4px_rgba(37,99,235,1)]
+                  [&::-webkit-slider-thumb]:rounded-full
+                  [&::-webkit-slider-thumb]:transition-all
+                  [&::-webkit-slider-thumb]:duration-150
+                  [&::-webkit-slider-thumb]:ease-in-out
+                  [&::-moz-range-thumb]:w-3.5
+                  [&::-moz-range-thumb]:h-3.5
+                  [&::-moz-range-thumb]:appearance-none
+                  [&::-moz-range-thumb]:bg-white
+                  [&::-moz-range-thumb]:border-4
+                  [&::-moz-range-thumb]:border-blue-600
+                  [&::-moz-range-thumb]:rounded-full
+                  [&::-moz-range-thumb]:transition-all
+                  [&::-moz-range-thumb]:duration-150
+                  [&::-moz-range-thumb]:ease-in-out
+                  [&::-webkit-slider-runnable-track]:w-full
+                  [&::-webkit-slider-runnable-track]:h-2
+                  [&::-webkit-slider-runnable-track]:bg-gray-100
+                  [&::-webkit-slider-runnable-track]:rounded-full
+                  [&::-moz-range-track]:w-full
+                  [&::-moz-range-track]:h-2
+                  [&::-moz-range-track]:bg-gray-100
+                  [&::-moz-range-track]:rounded-full">
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="flex flex-col flex-grow">
+                <span class="text-sm font-medium leading-6 text-gray-900">White Leading Edge</span>
+                <span class="text-sm text-gray-500">Use a white highlight at the head of each rain drop.</span>
+              </span>
+              <button type="button"
+                @click="settings.matrix_rain_white_head = !settings.matrix_rain_white_head"
+                :class="settings.matrix_rain_white_head ? 'bg-blue-600' : 'bg-gray-200'"
+                class="relative inline-flex flex-shrink-0 h-6 transition-colors duration-200 ease-in-out border-2 border-transparent rounded-full cursor-pointer w-11 ">
+                <span aria-hidden="true" :class="settings.matrix_rain_white_head ? 'translate-x-5' : 'translate-x-0'"
+                  class="inline-block w-5 h-5 transition duration-200 ease-in-out transform bg-white rounded-full shadow pointer-events-none ring-0"></span>
+              </button>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="flex flex-col flex-grow">
+                <span class="text-sm font-medium leading-6 text-gray-900">Rain Affects Time</span>
+                <span class="text-sm text-gray-500">Let the rain tint the active time words.</span>
+              </span>
+              <button type="button"
+                @click="settings.matrix_rain_affect_time = !settings.matrix_rain_affect_time"
+                :class="settings.matrix_rain_affect_time ? 'bg-blue-600' : 'bg-gray-200'"
+                class="relative inline-flex flex-shrink-0 h-6 transition-colors duration-200 ease-in-out border-2 border-transparent rounded-full cursor-pointer w-11 ">
+                <span aria-hidden="true" :class="settings.matrix_rain_affect_time ? 'translate-x-5' : 'translate-x-0'"
+                  class="inline-block w-5 h-5 transition duration-200 ease-in-out transform bg-white rounded-full shadow pointer-events-none ring-0"></span>
+              </button>
+            </div>
           </div>
           <!-- single color -->
           <div x-show="settings.display_mode=='single_color'" x-transition style="display:none;" class="mb-4">
@@ -280,6 +346,22 @@
               <div>
                 <label for="" class="block mb-1 text-sm font-medium leading-6 text-gray-900">Hour Color:</label>
                 <input type="color" x-model="hourColorHex" list="colorList">
+              </div>
+            </div>
+          </div>
+          <div x-show="settings.display_mode=='matrix_rain'" x-transition style="display:none;" class="mb-4">
+            <div class="flex justify-between">
+              <div>
+                <label for="" class="block mb-1 text-sm font-medium leading-6 text-gray-900">Minute Word Color:</label>
+                <input type="color" x-model="matrixRainMinuteColorHex" list="colorList">
+              </div>
+              <div>
+                <label for="" class="block mb-1 text-sm font-medium leading-6 text-gray-900">Past/To Word Color:</label>
+                <input type="color" x-model="matrixRainPastToColorHex" list="colorList">
+              </div>
+              <div>
+                <label for="" class="block mb-1 text-sm font-medium leading-6 text-gray-900">Hour Word Color:</label>
+                <input type="color" x-model="matrixRainHourColorHex" list="colorList">
               </div>
             </div>
           </div>
@@ -510,7 +592,85 @@
                   <option value="rainbow">Rainbow</option>
                   <option value="color_per_word">Word Colours</option>
                   <option value="random">Random</option>
+                  <option value="matrix_rain">Matrix Rain</option>
                 </select>
+              </div>
+
+              <div x-show="scene.display_mode=='matrix_rain'" class="mb-3 space-y-3">
+                <div>
+                  <label class="block mb-1 text-sm font-medium leading-6 text-gray-900">Rain Colour</label>
+                  <input type="color" x-model="scene.matrix_rain_background_color_hex" list="colorList">
+                </div>
+                <div>
+                  <div class="flex justify-between">
+                    <div>
+                      <label class="block mb-1 text-sm font-medium leading-6 text-gray-900">Minute Word</label>
+                      <input type="color" x-model="scene.matrix_rain_minute_color_hex" list="colorList">
+                    </div>
+                    <div>
+                      <label class="block mb-1 text-sm font-medium leading-6 text-gray-900">Past/To Word</label>
+                      <input type="color" x-model="scene.matrix_rain_past_to_color_hex" list="colorList">
+                    </div>
+                    <div>
+                      <label class="block mb-1 text-sm font-medium leading-6 text-gray-900">Hour Word</label>
+                      <input type="color" x-model="scene.matrix_rain_hour_color_hex" list="colorList">
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <label class="block mb-1 text-sm font-medium leading-6 text-gray-900">Rain Speed</label>
+                  <input type="range" min="40" max="400" step="10" x-model.number="scene.matrix_rain_speed_ms"
+                    class="w-full bg-transparent cursor-pointer appearance-none disabled:opacity-50 disabled:pointer-events-none focus:outline-none
+                      [&::-webkit-slider-thumb]:w-3.5
+                      [&::-webkit-slider-thumb]:h-3.5
+                      [&::-webkit-slider-thumb]:-mt-0.5
+                      [&::-webkit-slider-thumb]:appearance-none
+                      [&::-webkit-slider-thumb]:bg-white
+                      [&::-webkit-slider-thumb]:shadow-[0_0_0_4px_rgba(37,99,235,1)]
+                      [&::-webkit-slider-thumb]:rounded-full
+                      [&::-webkit-slider-thumb]:transition-all
+                      [&::-webkit-slider-thumb]:duration-150
+                      [&::-webkit-slider-thumb]:ease-in-out
+                      [&::-moz-range-thumb]:w-3.5
+                      [&::-moz-range-thumb]:h-3.5
+                      [&::-moz-range-thumb]:appearance-none
+                      [&::-moz-range-thumb]:bg-white
+                      [&::-moz-range-thumb]:border-4
+                      [&::-moz-range-thumb]:border-blue-600
+                      [&::-moz-range-thumb]:rounded-full
+                      [&::-moz-range-thumb]:transition-all
+                      [&::-moz-range-thumb]:duration-150
+                      [&::-moz-range-thumb]:ease-in-out
+                      [&::-webkit-slider-runnable-track]:w-full
+                      [&::-webkit-slider-runnable-track]:h-2
+                      [&::-webkit-slider-runnable-track]:bg-gray-100
+                      [&::-webkit-slider-runnable-track]:rounded-full
+                      [&::-moz-range-track]:w-full
+                      [&::-moz-range-track]:h-2
+                      [&::-moz-range-track]:bg-gray-100
+                      [&::-moz-range-track]:rounded-full">
+                  <div class="text-sm text-gray-500" x-text="scene.matrix_rain_speed_ms + ' ms'"></div>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-sm font-medium leading-6 text-gray-900">White Leading Edge</span>
+                  <button type="button"
+                    @click="scene.matrix_rain_white_head = !scene.matrix_rain_white_head"
+                    :class="scene.matrix_rain_white_head ? 'bg-blue-600' : 'bg-gray-200'"
+                    class="relative inline-flex flex-shrink-0 h-6 transition-colors duration-200 ease-in-out border-2 border-transparent rounded-full cursor-pointer w-11 ">
+                    <span aria-hidden="true" :class="scene.matrix_rain_white_head ? 'translate-x-5' : 'translate-x-0'"
+                      class="inline-block w-5 h-5 transition duration-200 ease-in-out transform bg-white rounded-full shadow pointer-events-none ring-0"></span>
+                  </button>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-sm font-medium leading-6 text-gray-900">Rain Affects Time</span>
+                  <button type="button"
+                    @click="scene.matrix_rain_affect_time = !scene.matrix_rain_affect_time"
+                    :class="scene.matrix_rain_affect_time ? 'bg-blue-600' : 'bg-gray-200'"
+                    class="relative inline-flex flex-shrink-0 h-6 transition-colors duration-200 ease-in-out border-2 border-transparent rounded-full cursor-pointer w-11 ">
+                    <span aria-hidden="true" :class="scene.matrix_rain_affect_time ? 'translate-x-5' : 'translate-x-0'"
+                      class="inline-block w-5 h-5 transition duration-200 ease-in-out transform bg-white rounded-full shadow pointer-events-none ring-0"></span>
+                  </button>
+                </div>
               </div>
 
               <div class="mb-3">
@@ -676,6 +836,13 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
           'schedules': [],
           'scene_names': [],
           'schedules_enabled': false,
+          'matrix_rain_background_color': [0, 255, 0],
+          'matrix_rain_minute_color': [255, 0, 0],
+          'matrix_rain_hour_color': [255, 255, 0],
+          'matrix_rain_past_to_color': [255, 128, 0],
+          'matrix_rain_white_head': false,
+          'matrix_rain_affect_time': false,
+          'matrix_rain_speed_ms': 120,
         },
         scenes: [],
         timeDisplay: [0, 0, 0, 0, 0, 0],
@@ -686,6 +853,10 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
         minuteColorHex: '#00ff00',
         pastToColorHex: '#0000ff',
         hourColorHex: '#ffff00',
+        matrixRainBackgroundHex: '#00ff00',
+        matrixRainMinuteColorHex: '#ff0000',
+        matrixRainPastToColorHex: '#ff8000',
+        matrixRainHourColorHex: '#ffff00',
         timeChanged: false,
         newWifiPassword: '',
         saveNoticeText: '',
@@ -695,7 +866,8 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
           rainbow: [],
           single_color: ['single_color'],
           color_per_word: ['minute_color', 'hour_color', 'past_to_color'],
-          random: []
+          random: [],
+          matrix_rain: []
         },
         tabItems: [
           {
@@ -905,6 +1077,10 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
           this.minuteColorHex = this.rgbArrayToHex(this.settings.minute_color)
           this.pastToColorHex = this.rgbArrayToHex(this.settings.past_to_color)
           this.hourColorHex = this.rgbArrayToHex(this.settings.hour_color)
+          this.matrixRainBackgroundHex = this.rgbArrayToHex(this.settings.matrix_rain_background_color)
+          this.matrixRainMinuteColorHex = this.rgbArrayToHex(this.settings.matrix_rain_minute_color)
+          this.matrixRainPastToColorHex = this.rgbArrayToHex(this.settings.matrix_rain_past_to_color)
+          this.matrixRainHourColorHex = this.rgbArrayToHex(this.settings.matrix_rain_hour_color)
           console.log(this.settings)
         },
         applySettingsPreservingSceneDrafts(nextSettings) {
@@ -919,6 +1095,10 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
           this.minuteColorHex = this.rgbArrayToHex(this.settings.minute_color)
           this.pastToColorHex = this.rgbArrayToHex(this.settings.past_to_color)
           this.hourColorHex = this.rgbArrayToHex(this.settings.hour_color)
+          this.matrixRainBackgroundHex = this.rgbArrayToHex(this.settings.matrix_rain_background_color)
+          this.matrixRainMinuteColorHex = this.rgbArrayToHex(this.settings.matrix_rain_minute_color)
+          this.matrixRainPastToColorHex = this.rgbArrayToHex(this.settings.matrix_rain_past_to_color)
+          this.matrixRainHourColorHex = this.rgbArrayToHex(this.settings.matrix_rain_hour_color)
           console.log(this.settings)
         },
         async brigtnessUpdated() {
@@ -989,6 +1169,10 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
           this.settings.minute_color = this.hexToRgbArray(this.minuteColorHex)
           this.settings.past_to_color = this.hexToRgbArray(this.pastToColorHex)
           this.settings.hour_color = this.hexToRgbArray(this.hourColorHex)
+          this.settings.matrix_rain_background_color = this.hexToRgbArray(this.matrixRainBackgroundHex)
+          this.settings.matrix_rain_minute_color = this.hexToRgbArray(this.matrixRainMinuteColorHex)
+          this.settings.matrix_rain_past_to_color = this.hexToRgbArray(this.matrixRainPastToColorHex)
+          this.settings.matrix_rain_hour_color = this.hexToRgbArray(this.matrixRainHourColorHex)
 
           const response = await fetch(this.path + '/set-clock-settings', {
             method: 'POST',
@@ -1019,13 +1203,23 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
             single_color_hex: this.rgbArrayToHex(Array.isArray(scene.single_color) ? scene.single_color : [255, 255, 255]),
             minute_color_hex: this.rgbArrayToHex(Array.isArray(scene.minute_color) ? scene.minute_color : [0, 255, 0]),
             hour_color_hex: this.rgbArrayToHex(Array.isArray(scene.hour_color) ? scene.hour_color : [255, 0, 0]),
-            past_to_color_hex: this.rgbArrayToHex(Array.isArray(scene.past_to_color) ? scene.past_to_color : [0, 0, 255])
+            past_to_color_hex: this.rgbArrayToHex(Array.isArray(scene.past_to_color) ? scene.past_to_color : [0, 0, 255]),
+            matrix_rain_background_color_hex: this.rgbArrayToHex(Array.isArray(scene.matrix_rain_background_color) ? scene.matrix_rain_background_color : [0, 255, 0]),
+            matrix_rain_minute_color_hex: this.rgbArrayToHex(Array.isArray(scene.matrix_rain_minute_color) ? scene.matrix_rain_minute_color : [255, 0, 0]),
+            matrix_rain_hour_color_hex: this.rgbArrayToHex(Array.isArray(scene.matrix_rain_hour_color) ? scene.matrix_rain_hour_color : [255, 255, 0]),
+            matrix_rain_past_to_color_hex: this.rgbArrayToHex(Array.isArray(scene.matrix_rain_past_to_color) ? scene.matrix_rain_past_to_color : [255, 128, 0]),
+            matrix_rain_white_head: !!scene.matrix_rain_white_head,
+            matrix_rain_affect_time: !!scene.matrix_rain_affect_time,
+            matrix_rain_speed_ms: typeof scene.matrix_rain_speed_ms === 'number' ? scene.matrix_rain_speed_ms : 120
           }
           if (!this.sceneModeFields[nextScene.display_mode]) {
             nextScene.display_mode = 'single_color'
           }
           if (nextScene.brightness < 0 || nextScene.brightness > 15) {
             nextScene.brightness = 2
+          }
+          if (nextScene.matrix_rain_speed_ms < 40 || nextScene.matrix_rain_speed_ms > 400) {
+            nextScene.matrix_rain_speed_ms = 120
           }
           return nextScene
         },
@@ -1037,7 +1231,14 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
             display_enabled: true,
             display_mode: 'single_color',
             brightness: 2,
-            single_color: [255, 255, 255]
+            single_color: [255, 255, 255],
+            matrix_rain_background_color: [0, 255, 0],
+            matrix_rain_minute_color: [255, 0, 0],
+            matrix_rain_hour_color: [255, 255, 0],
+            matrix_rain_past_to_color: [255, 128, 0],
+            matrix_rain_white_head: false,
+            matrix_rain_affect_time: false,
+            matrix_rain_speed_ms: 120
           }, true)
         },
         addScene() {
@@ -1060,6 +1261,7 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
           if (mode === 'color_per_word') return 'Word colours'
           if (mode === 'rainbow') return 'Rainbow'
           if (mode === 'random') return 'Random'
+          if (mode === 'matrix_rain') return 'Matrix Rain'
           return mode || 'Unknown mode'
         },
         showNotice(message, tone = 'success') {
@@ -1094,6 +1296,15 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
           }
           if (this.sceneSupportsField(scene, 'past_to_color')) {
             scenePayload.past_to_color = this.hexToRgbArray(scene.past_to_color_hex)
+          }
+          if (scene.display_mode === 'matrix_rain') {
+            scenePayload.matrix_rain_background_color = this.hexToRgbArray(scene.matrix_rain_background_color_hex)
+            scenePayload.matrix_rain_minute_color = this.hexToRgbArray(scene.matrix_rain_minute_color_hex)
+            scenePayload.matrix_rain_hour_color = this.hexToRgbArray(scene.matrix_rain_hour_color_hex)
+            scenePayload.matrix_rain_past_to_color = this.hexToRgbArray(scene.matrix_rain_past_to_color_hex)
+            scenePayload.matrix_rain_white_head = !!scene.matrix_rain_white_head
+            scenePayload.matrix_rain_affect_time = !!scene.matrix_rain_affect_time
+            scenePayload.matrix_rain_speed_ms = Number(scene.matrix_rain_speed_ms)
           }
 
           return scenePayload

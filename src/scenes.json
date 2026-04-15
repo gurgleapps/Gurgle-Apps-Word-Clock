@@ -49,6 +49,68 @@
             170
         ]
     },
+    "matrix_time": {
+        "brightness": 2,
+        "display_enabled": true,
+        "display_mode": "matrix_rain",
+        "matrix_rain_affect_time": false,
+        "matrix_rain_background_color": [
+            0,
+            255,
+            0
+        ],
+        "matrix_rain_hour_color": [
+            255,
+            255,
+            0
+        ],
+        "matrix_rain_minute_color": [
+            255,
+            0,
+            0
+        ],
+        "matrix_rain_past_to_color": [
+            255,
+            128,
+            0
+        ],
+        "matrix_rain_time_brightness_cap": 3,
+        "matrix_rain_spawn_rate": 18,
+        "matrix_rain_speed_ms": 120,
+        "matrix_rain_trail_length": 4,
+        "matrix_rain_white_head": false
+    },
+    "matrix_glow": {
+        "brightness": 6,
+        "display_enabled": true,
+        "display_mode": "matrix_rain",
+        "matrix_rain_affect_time": false,
+        "matrix_rain_background_color": [
+            0,
+            255,
+            0
+        ],
+        "matrix_rain_hour_color": [
+            255,
+            255,
+            0
+        ],
+        "matrix_rain_minute_color": [
+            255,
+            0,
+            0
+        ],
+        "matrix_rain_past_to_color": [
+            255,
+            128,
+            0
+        ],
+        "matrix_rain_time_brightness_cap": 2,
+        "matrix_rain_spawn_rate": 18,
+        "matrix_rain_speed_ms": 120,
+        "matrix_rain_trail_length": 4,
+        "matrix_rain_white_head": false
+    },
     "night_off": {
         "display_enabled": false
     },

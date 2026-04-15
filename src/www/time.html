@@ -221,6 +221,7 @@
                 x-text="settings.brightness"></span></label>
             <input @change="brigtnessUpdated()" type="range" id="brightnessControl" min="0" max="15"
               x-model.number="settings.brightness" step="1" class="ga-slider">
+            <div class="mt-1 text-xs leading-4 text-gray-400">Lower brightness is usually best for everyday use. Higher brightness can wash out colours and may increase LED wear over time.</div>
           </div>
           <div class="mb-4">
             <label for="colorMode" class="block text-sm font-medium leading-6 text-gray-900">Color Display Mode:</label>
@@ -244,6 +245,27 @@
             <div>
               <label class="block text-sm font-medium leading-6 text-gray-900">Rain Speed: <span x-text="settings.matrix_rain_speed_ms + ' ms'"></span></label>
               <input type="range" min="40" max="400" step="10" x-model.number="settings.matrix_rain_speed_ms" class="ga-slider">
+            </div>
+            <div>
+              <label class="block text-sm font-medium leading-6 text-gray-900">
+                Spawn Rate: <span x-text="settings.matrix_rain_spawn_rate + '%'"></span>
+                <span class="block text-xs font-normal leading-4 text-gray-400">How often new rain drops appear.</span>
+              </label>
+              <input type="range" min="0" max="100" step="1" x-model.number="settings.matrix_rain_spawn_rate" class="ga-slider">
+            </div>
+            <div>
+              <label class="block text-sm font-medium leading-6 text-gray-900">
+                Trail Length: <span x-text="settings.matrix_rain_trail_length"></span>
+                <span class="block text-xs font-normal leading-4 text-gray-400">How many pixels each drop trails behind its head.</span>
+              </label>
+              <input type="range" min="1" max="8" step="1" x-model.number="settings.matrix_rain_trail_length" class="ga-slider">
+            </div>
+            <div>
+              <label class="block text-sm font-medium leading-6 text-gray-900">
+                Time Text Brightness Cap: <span x-text="settings.matrix_rain_time_brightness_cap"></span>
+                <span class="block text-xs font-normal leading-4 text-gray-400">Limits the time words when overall brightness is higher.</span>
+              </label>
+              <input type="range" min="0" max="15" step="1" x-model.number="settings.matrix_rain_time_brightness_cap" class="ga-slider">
             </div>
             <div class="flex items-center justify-between">
               <span class="flex flex-col flex-grow">
@@ -600,6 +622,30 @@
                   <input type="range" min="40" max="400" step="10" x-model.number="scene.matrix_rain_speed_ms" class="ga-slider">
                   <div class="text-sm text-gray-500" x-text="scene.matrix_rain_speed_ms + ' ms'"></div>
                 </div>
+                <div>
+                  <label class="block mb-1 text-sm font-medium leading-6 text-gray-900">
+                    Spawn Rate
+                    <span class="block text-xs font-normal leading-4 text-gray-400">How often new rain drops appear.</span>
+                  </label>
+                  <input type="range" min="0" max="100" step="1" x-model.number="scene.matrix_rain_spawn_rate" class="ga-slider">
+                  <div class="text-sm text-gray-500" x-text="scene.matrix_rain_spawn_rate + '%'"></div>
+                </div>
+                <div>
+                  <label class="block mb-1 text-sm font-medium leading-6 text-gray-900">
+                    Trail Length
+                    <span class="block text-xs font-normal leading-4 text-gray-400">How many pixels each drop trails behind its head.</span>
+                  </label>
+                  <input type="range" min="1" max="8" step="1" x-model.number="scene.matrix_rain_trail_length" class="ga-slider">
+                  <div class="text-sm text-gray-500" x-text="scene.matrix_rain_trail_length"></div>
+                </div>
+                <div>
+                  <label class="block mb-1 text-sm font-medium leading-6 text-gray-900">
+                    Time Text Brightness Cap
+                    <span class="block text-xs font-normal leading-4 text-gray-400">Limits the time words when scene brightness is higher.</span>
+                  </label>
+                  <input type="range" min="0" max="15" step="1" x-model.number="scene.matrix_rain_time_brightness_cap" class="ga-slider">
+                  <div class="text-sm text-gray-500" x-text="scene.matrix_rain_time_brightness_cap"></div>
+                </div>
                 <div class="flex items-center justify-between">
                   <span class="text-sm font-medium leading-6 text-gray-900">White Leading Edge</span>
                   <button type="button"
@@ -904,6 +950,9 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
           'matrix_rain_white_head': false,
           'matrix_rain_affect_time': false,
           'matrix_rain_speed_ms': 120,
+          'matrix_rain_spawn_rate': 18,
+          'matrix_rain_trail_length': 4,
+          'matrix_rain_time_brightness_cap': 3,
         },
         scenes: [],
         timeDisplay: [0, 0, 0, 0, 0, 0],
@@ -1271,7 +1320,10 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
             matrix_rain_past_to_color_hex: this.rgbArrayToHex(Array.isArray(scene.matrix_rain_past_to_color) ? scene.matrix_rain_past_to_color : [255, 128, 0]),
             matrix_rain_white_head: !!scene.matrix_rain_white_head,
             matrix_rain_affect_time: !!scene.matrix_rain_affect_time,
-            matrix_rain_speed_ms: typeof scene.matrix_rain_speed_ms === 'number' ? scene.matrix_rain_speed_ms : 120
+            matrix_rain_speed_ms: typeof scene.matrix_rain_speed_ms === 'number' ? scene.matrix_rain_speed_ms : 120,
+            matrix_rain_spawn_rate: typeof scene.matrix_rain_spawn_rate === 'number' ? scene.matrix_rain_spawn_rate : 18,
+            matrix_rain_trail_length: typeof scene.matrix_rain_trail_length === 'number' ? scene.matrix_rain_trail_length : 4,
+            matrix_rain_time_brightness_cap: typeof scene.matrix_rain_time_brightness_cap === 'number' ? scene.matrix_rain_time_brightness_cap : 3
           }
           if (!this.sceneModeFields[nextScene.display_mode]) {
             nextScene.display_mode = 'single_color'
@@ -1281,6 +1333,15 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
           }
           if (nextScene.matrix_rain_speed_ms < 40 || nextScene.matrix_rain_speed_ms > 400) {
             nextScene.matrix_rain_speed_ms = 120
+          }
+          if (nextScene.matrix_rain_spawn_rate < 0 || nextScene.matrix_rain_spawn_rate > 100) {
+            nextScene.matrix_rain_spawn_rate = 18
+          }
+          if (nextScene.matrix_rain_trail_length < 1 || nextScene.matrix_rain_trail_length > 8) {
+            nextScene.matrix_rain_trail_length = 4
+          }
+          if (nextScene.matrix_rain_time_brightness_cap < 0 || nextScene.matrix_rain_time_brightness_cap > 15) {
+            nextScene.matrix_rain_time_brightness_cap = 3
           }
           return nextScene
         },
@@ -1299,7 +1360,10 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
             matrix_rain_past_to_color: [255, 128, 0],
             matrix_rain_white_head: false,
             matrix_rain_affect_time: false,
-            matrix_rain_speed_ms: 120
+            matrix_rain_speed_ms: 120,
+            matrix_rain_spawn_rate: 18,
+            matrix_rain_trail_length: 4,
+            matrix_rain_time_brightness_cap: 3
           }, true)
         },
         addScene() {
@@ -1337,6 +1401,9 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
         },
         sceneSummary(scene) {
           const state = scene.display_enabled ? 'On' : 'Off'
+          if (scene.display_mode === 'matrix_rain') {
+            return state + ' · ' + this.modeLabel(scene.display_mode) + ' · ' + scene.matrix_rain_speed_ms + ' ms · ' + scene.matrix_rain_spawn_rate + '% · trail ' + scene.matrix_rain_trail_length + ' · text ' + scene.matrix_rain_time_brightness_cap
+          }
           return state + ' · ' + this.modeLabel(scene.display_mode) + ' · Brightness ' + scene.brightness
         },
         buildSingleScenePayload(scene) {
@@ -1366,6 +1433,9 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
             scenePayload.matrix_rain_white_head = !!scene.matrix_rain_white_head
             scenePayload.matrix_rain_affect_time = !!scene.matrix_rain_affect_time
             scenePayload.matrix_rain_speed_ms = Number(scene.matrix_rain_speed_ms)
+            scenePayload.matrix_rain_spawn_rate = Number(scene.matrix_rain_spawn_rate)
+            scenePayload.matrix_rain_trail_length = Number(scene.matrix_rain_trail_length)
+            scenePayload.matrix_rain_time_brightness_cap = Number(scene.matrix_rain_time_brightness_cap)
           }
 
           return scenePayload

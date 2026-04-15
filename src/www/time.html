@@ -236,7 +236,10 @@
           <div x-show="settings.display_mode=='matrix_rain'" x-transition style="display:none;" class="mb-4 space-y-3">
             <div>
               <label class="block text-sm font-medium leading-6 text-gray-900">Rain Colour</label>
-              <input type="color" x-model="matrixRainBackgroundHex" list="colorList">
+              <label class="ga-color-control ga-color-wide">
+                <input type="color" x-model="matrixRainBackgroundHex" list="colorList" class="ga-color-input">
+                <span class="ga-color-swatch" :style="'--swatch-color: ' + matrixRainBackgroundHex"></span>
+              </label>
             </div>
             <div>
               <label class="block text-sm font-medium leading-6 text-gray-900">Rain Speed: <span x-text="settings.matrix_rain_speed_ms + ' ms'"></span></label>
@@ -272,22 +275,34 @@
           <!-- single color -->
           <div x-show="settings.display_mode=='single_color'" x-transition style="display:none;" class="mb-4">
             <label for="" class="block text-sm font-medium leading-6 text-gray-900">Color:</label>
-            <input type="color" x-model="singeColorHex" list="colorList">
+            <label class="ga-color-control ga-color-wide">
+              <input type="color" x-model="singeColorHex" list="colorList" class="ga-color-input">
+              <span class="ga-color-swatch" :style="'--swatch-color: ' + singeColorHex"></span>
+            </label>
           </div>
           <!-- color  per word -->
           <div x-show="settings.display_mode=='color_per_word'" x-transition style="display:none;" class="mb-4">
             <div class="flex justify-between">
               <div>
                 <label for="" class="block mb-1 text-sm font-medium leading-6 text-gray-900">Minute Color:</label>
-                <input type="color" x-model="minuteColorHex" list="colorList">
+                <label class="ga-color-control ga-color-compact">
+                  <input type="color" x-model="minuteColorHex" list="colorList" class="ga-color-input">
+                  <span class="ga-color-swatch" :style="'--swatch-color: ' + minuteColorHex"></span>
+                </label>
               </div>
               <div>
                 <label for="" class="block mb-1 text-sm font-medium leading-6 text-gray-900">Past/To Color:</label>
-                <input type="color" x-model="pastToColorHex" list="colorList">
+                <label class="ga-color-control ga-color-compact">
+                  <input type="color" x-model="pastToColorHex" list="colorList" class="ga-color-input">
+                  <span class="ga-color-swatch" :style="'--swatch-color: ' + pastToColorHex"></span>
+                </label>
               </div>
               <div>
                 <label for="" class="block mb-1 text-sm font-medium leading-6 text-gray-900">Hour Color:</label>
-                <input type="color" x-model="hourColorHex" list="colorList">
+                <label class="ga-color-control ga-color-compact">
+                  <input type="color" x-model="hourColorHex" list="colorList" class="ga-color-input">
+                  <span class="ga-color-swatch" :style="'--swatch-color: ' + hourColorHex"></span>
+                </label>
               </div>
             </div>
           </div>
@@ -295,15 +310,24 @@
             <div class="flex justify-between">
               <div>
                 <label for="" class="block mb-1 text-sm font-medium leading-6 text-gray-900">Minute Word Color:</label>
-                <input type="color" x-model="matrixRainMinuteColorHex" list="colorList">
+                <label class="ga-color-control ga-color-compact">
+                  <input type="color" x-model="matrixRainMinuteColorHex" list="colorList" class="ga-color-input">
+                  <span class="ga-color-swatch" :style="'--swatch-color: ' + matrixRainMinuteColorHex"></span>
+                </label>
               </div>
               <div>
                 <label for="" class="block mb-1 text-sm font-medium leading-6 text-gray-900">Past/To Word Color:</label>
-                <input type="color" x-model="matrixRainPastToColorHex" list="colorList">
+                <label class="ga-color-control ga-color-compact">
+                  <input type="color" x-model="matrixRainPastToColorHex" list="colorList" class="ga-color-input">
+                  <span class="ga-color-swatch" :style="'--swatch-color: ' + matrixRainPastToColorHex"></span>
+                </label>
               </div>
               <div>
                 <label for="" class="block mb-1 text-sm font-medium leading-6 text-gray-900">Hour Word Color:</label>
-                <input type="color" x-model="matrixRainHourColorHex" list="colorList">
+                <label class="ga-color-control ga-color-compact">
+                  <input type="color" x-model="matrixRainHourColorHex" list="colorList" class="ga-color-input">
+                  <span class="ga-color-swatch" :style="'--swatch-color: ' + matrixRainHourColorHex"></span>
+                </label>
               </div>
             </div>
           </div>
@@ -541,21 +565,33 @@
               <div x-show="scene.display_mode=='matrix_rain'" class="mb-3 space-y-3">
                 <div>
                   <label class="block mb-1 text-sm font-medium leading-6 text-gray-900">Rain Colour</label>
-                  <input type="color" x-model="scene.matrix_rain_background_color_hex" list="colorList">
+                  <label class="ga-color-control ga-color-wide">
+                    <input type="color" x-model="scene.matrix_rain_background_color_hex" list="colorList" class="ga-color-input">
+                    <span class="ga-color-swatch" :style="'--swatch-color: ' + scene.matrix_rain_background_color_hex"></span>
+                  </label>
                 </div>
                 <div>
                   <div class="flex justify-between">
                     <div>
                       <label class="block mb-1 text-sm font-medium leading-6 text-gray-900">Minute Word</label>
-                      <input type="color" x-model="scene.matrix_rain_minute_color_hex" list="colorList">
+                      <label class="ga-color-control ga-color-compact">
+                        <input type="color" x-model="scene.matrix_rain_minute_color_hex" list="colorList" class="ga-color-input">
+                        <span class="ga-color-swatch" :style="'--swatch-color: ' + scene.matrix_rain_minute_color_hex"></span>
+                      </label>
                     </div>
                     <div>
                       <label class="block mb-1 text-sm font-medium leading-6 text-gray-900">Past/To Word</label>
-                      <input type="color" x-model="scene.matrix_rain_past_to_color_hex" list="colorList">
+                      <label class="ga-color-control ga-color-compact">
+                        <input type="color" x-model="scene.matrix_rain_past_to_color_hex" list="colorList" class="ga-color-input">
+                        <span class="ga-color-swatch" :style="'--swatch-color: ' + scene.matrix_rain_past_to_color_hex"></span>
+                      </label>
                     </div>
                     <div>
                       <label class="block mb-1 text-sm font-medium leading-6 text-gray-900">Hour Word</label>
-                      <input type="color" x-model="scene.matrix_rain_hour_color_hex" list="colorList">
+                      <label class="ga-color-control ga-color-compact">
+                        <input type="color" x-model="scene.matrix_rain_hour_color_hex" list="colorList" class="ga-color-input">
+                        <span class="ga-color-swatch" :style="'--swatch-color: ' + scene.matrix_rain_hour_color_hex"></span>
+                      </label>
                     </div>
                   </div>
                 </div>
@@ -594,22 +630,34 @@
 
               <div x-show="sceneSupportsField(scene, 'single_color')" class="mb-3">
                 <label class="block mb-1 text-sm font-medium leading-6 text-gray-900">Color</label>
-                <input type="color" x-model="scene.single_color_hex" list="colorList">
+                <label class="ga-color-control ga-color-wide">
+                  <input type="color" x-model="scene.single_color_hex" list="colorList" class="ga-color-input">
+                  <span class="ga-color-swatch" :style="'--swatch-color: ' + scene.single_color_hex"></span>
+                </label>
               </div>
 
               <div x-show="sceneSupportsField(scene, 'minute_color')" class="mb-3">
                 <div class="flex justify-between">
                   <div>
                     <label class="block mb-1 text-sm font-medium leading-6 text-gray-900">Minute</label>
-                    <input type="color" x-model="scene.minute_color_hex" list="colorList">
+                    <label class="ga-color-control ga-color-compact">
+                      <input type="color" x-model="scene.minute_color_hex" list="colorList" class="ga-color-input">
+                      <span class="ga-color-swatch" :style="'--swatch-color: ' + scene.minute_color_hex"></span>
+                    </label>
                   </div>
                   <div>
                     <label class="block mb-1 text-sm font-medium leading-6 text-gray-900">Past/To</label>
-                    <input type="color" x-model="scene.past_to_color_hex" list="colorList">
+                    <label class="ga-color-control ga-color-compact">
+                      <input type="color" x-model="scene.past_to_color_hex" list="colorList" class="ga-color-input">
+                      <span class="ga-color-swatch" :style="'--swatch-color: ' + scene.past_to_color_hex"></span>
+                    </label>
                   </div>
                   <div>
                     <label class="block mb-1 text-sm font-medium leading-6 text-gray-900">Hour</label>
-                    <input type="color" x-model="scene.hour_color_hex" list="colorList">
+                    <label class="ga-color-control ga-color-compact">
+                      <input type="color" x-model="scene.hour_color_hex" list="colorList" class="ga-color-input">
+                      <span class="ga-color-swatch" :style="'--swatch-color: ' + scene.hour_color_hex"></span>
+                    </label>
                   </div>
                 </div>
               </div>
@@ -730,6 +778,53 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
 
 
 <style>
+  .ga-color-control {
+    position: relative;
+    display: inline-block;
+    vertical-align: middle;
+  }
+
+  .ga-color-wide {
+    width: 1.9rem;
+    height: 1.9rem;
+  }
+
+  .ga-color-compact {
+    width: 1.7rem;
+    height: 1.7rem;
+  }
+
+  .ga-color-input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+    z-index: 2;
+  }
+
+  .ga-color-swatch {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: 9999px;
+    background: var(--swatch-color, #ffffff);
+    overflow: hidden;
+    box-shadow:
+      inset 0 1.5px 1px rgba(0, 0, 0, 0.2),
+      0 0 0 1px rgba(15, 23, 42, 0.14);
+  }
+
+  .ga-color-control:focus-within .ga-color-swatch {
+    box-shadow:
+      inset 0 1px 1px rgba(0, 0, 0, 0.18),
+      0 0 0 1px rgba(15, 23, 42, 0.14),
+      0 0 0 3px rgba(37, 99, 235, 0.18);
+  }
+
   .ga-slider {
     width: 100%;
     background: transparent;

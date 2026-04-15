@@ -1,7 +1,7 @@
 import machine
-from ht16k33_matrix import ht16k33_matrix
-from max7219_matrix import max7219_matrix
-from ws2812b_matrix import ws2812b_matrix
+from ht16k33_matrix import ht16k33_matrix as HT16K33Matrix
+from max7219_matrix import max7219_matrix as MAX7219Matrix
+from ws2812b_matrix import ws2812b_matrix as WS2812BMatrix
 import ntptime
 import alt_ntptime
 import utime as time
@@ -13,6 +13,20 @@ import urandom as random
 import os
 from board import Board
 import socket
+from matrix_rain import (
+    MATRIX_RAIN_DEFAULT_AFFECT_TIME,
+    MATRIX_RAIN_DEFAULT_BACKGROUND_COLOR,
+    MATRIX_RAIN_DEFAULT_HOUR_COLOR,
+    MATRIX_RAIN_DEFAULT_MINUTE_COLOR,
+    MATRIX_RAIN_DEFAULT_PAST_TO_COLOR,
+    MATRIX_RAIN_DEFAULT_SPAWN_RATE,
+    MATRIX_RAIN_DEFAULT_SPEED_MS,
+    MATRIX_RAIN_DEFAULT_TIME_BRIGHTNESS_CAP,
+    MATRIX_RAIN_DEFAULT_TRAIL_LENGTH,
+    MATRIX_RAIN_DEFAULT_WHITE_HEAD,
+    MatrixRainState,
+    render as render_matrix_rain_frame,
+)
 
 config_file = 'config.json'
 scenes_file = 'scenes.json'
@@ -37,17 +51,6 @@ ACCESS_POINT_START_DELAY_MS = 60_000
 DISPLAY_MODE_REFRESH_MS = {
     DISPLAY_MODE_RANDOM: 10_000
 }
-MATRIX_RAIN_DEFAULT_BACKGROUND_COLOR = (0, 255, 0)
-MATRIX_RAIN_DEFAULT_MINUTE_COLOR = (255, 0, 0)
-MATRIX_RAIN_DEFAULT_HOUR_COLOR = (255, 255, 0)
-MATRIX_RAIN_DEFAULT_PAST_TO_COLOR = (255, 128, 0)
-MATRIX_RAIN_DEFAULT_SPEED_MS = 120
-MATRIX_RAIN_DEFAULT_WHITE_HEAD = False
-MATRIX_RAIN_DEFAULT_AFFECT_TIME = False
-MATRIX_RAIN_DEFAULT_SPAWN_RATE = 18
-MATRIX_RAIN_DEFAULT_TRAIL_LENGTH = 4
-MATRIX_RAIN_DEFAULT_TIME_BRIGHTNESS_CAP = 3
-MATRIX_RAIN_FADE_STEP = 36
 
 SCENE_MODE_FIELDS = {
     DISPLAY_MODE_RAINBOW: (),
@@ -62,6 +65,20 @@ SCENE_MODE_FIELDS = {
     )
 }
 
+class AppState:
+    def __init__(self):
+        self.matrix_rain_minute_color = MATRIX_RAIN_DEFAULT_MINUTE_COLOR
+        self.matrix_rain_hour_color = MATRIX_RAIN_DEFAULT_HOUR_COLOR
+        self.matrix_rain_past_to_color = MATRIX_RAIN_DEFAULT_PAST_TO_COLOR
+        self.matrix_rain_background_color = MATRIX_RAIN_DEFAULT_BACKGROUND_COLOR
+        self.matrix_rain_white_head = MATRIX_RAIN_DEFAULT_WHITE_HEAD
+        self.matrix_rain_affect_time = MATRIX_RAIN_DEFAULT_AFFECT_TIME
+        self.matrix_rain_speed_ms = MATRIX_RAIN_DEFAULT_SPEED_MS
+        self.matrix_rain_spawn_rate = MATRIX_RAIN_DEFAULT_SPAWN_RATE
+        self.matrix_rain_trail_length = MATRIX_RAIN_DEFAULT_TRAIL_LENGTH
+        self.matrix_rain_time_brightness_cap = MATRIX_RAIN_DEFAULT_TIME_BRIGHTNESS_CAP
+        self.matrix_rain_state = MatrixRainState()
+
 current_display_mode = DISPLAY_MODE_RAINBOW
 current_scene_name = None
 
@@ -74,18 +91,9 @@ single_color = (0, 0, 255)
 minute_color = (0, 255, 0)
 hour_color = (255, 0, 0)
 past_to_color = (0, 0, 255)
-matrix_rain_minute_color = MATRIX_RAIN_DEFAULT_MINUTE_COLOR
-matrix_rain_hour_color = MATRIX_RAIN_DEFAULT_HOUR_COLOR
-matrix_rain_past_to_color = MATRIX_RAIN_DEFAULT_PAST_TO_COLOR
 # Ready to hold color data for each word
 colour_per_word_array = []
-matrix_rain_background_color = MATRIX_RAIN_DEFAULT_BACKGROUND_COLOR
-matrix_rain_white_head = MATRIX_RAIN_DEFAULT_WHITE_HEAD
-matrix_rain_affect_time = MATRIX_RAIN_DEFAULT_AFFECT_TIME
-matrix_rain_speed_ms = MATRIX_RAIN_DEFAULT_SPEED_MS
-matrix_rain_spawn_rate = MATRIX_RAIN_DEFAULT_SPAWN_RATE
-matrix_rain_trail_length = MATRIX_RAIN_DEFAULT_TRAIL_LENGTH
-matrix_rain_time_brightness_cap = MATRIX_RAIN_DEFAULT_TIME_BRIGHTNESS_CAP
+app_state = AppState()
 
 last_wifi_connected_time = 0
 last_wifi_disconnected_time = 0
@@ -98,11 +106,9 @@ last_schedule_evaluation_key = None
 last_display_minute_key = None
 last_dynamic_display_update_ms = None
 valid_schedules = []
-matrix_rain_intensity = []
-matrix_rain_columns = []
-matrix_rain_time_char = None
-matrix_rain_time_color_array = None
-matrix_rain_time_minute_key = None
+spi_matrix = None
+i2c_matrix = None
+ws2812b_matrix = None
 
 clockFont = {
     'past': [0x00, 0x00, 0x1e, 0x00, 0x00, 0x00, 0x00, 0x00],
@@ -185,10 +191,6 @@ def apply_color_field(scene, field_name):
     global minute_color
     global hour_color
     global past_to_color
-    global matrix_rain_minute_color
-    global matrix_rain_hour_color
-    global matrix_rain_past_to_color
-    global matrix_rain_background_color
 
     color = normalise_color(scene[field_name])
     if color is None:
@@ -204,13 +206,13 @@ def apply_color_field(scene, field_name):
     elif field_name == 'past_to_color':
         past_to_color = color
     elif field_name == 'matrix_rain_minute_color':
-        matrix_rain_minute_color = color
+        app_state.matrix_rain_minute_color = color
     elif field_name == 'matrix_rain_hour_color':
-        matrix_rain_hour_color = color
+        app_state.matrix_rain_hour_color = color
     elif field_name == 'matrix_rain_past_to_color':
-        matrix_rain_past_to_color = color
+        app_state.matrix_rain_past_to_color = color
     elif field_name == 'matrix_rain_background_color':
-        matrix_rain_background_color = color
+        app_state.matrix_rain_background_color = color
 
 def apply_mode_specific_scene_fields(scene, mode):
     allowed_fields = SCENE_MODE_FIELDS.get(mode)
@@ -245,21 +247,10 @@ def is_animated_display_mode(mode):
     return mode == DISPLAY_MODE_MATRIX_RAIN
 
 def reset_matrix_rain_state():
-    global matrix_rain_intensity, matrix_rain_columns
-    matrix_rain_intensity = [[0 for _ in range(8)] for _ in range(8)]
-    matrix_rain_columns = []
-    for _ in range(8):
-        matrix_rain_columns.append({
-            'active': False,
-            'head': 0,
-            'trail_length': matrix_rain_trail_length
-        })
+    app_state.matrix_rain_state.reset(app_state.matrix_rain_trail_length)
 
 def reset_matrix_rain_time_overlay():
-    global matrix_rain_time_char, matrix_rain_time_color_array, matrix_rain_time_minute_key
-    matrix_rain_time_char = None
-    matrix_rain_time_color_array = None
-    matrix_rain_time_minute_key = None
+    app_state.matrix_rain_state.reset_time_overlay()
 
 def reset_display_refresh_state():
     global last_display_minute_key, last_dynamic_display_update_ms
@@ -268,116 +259,30 @@ def reset_display_refresh_state():
     reset_matrix_rain_state()
     reset_matrix_rain_time_overlay()
 
-def matrix_rain_color_for_intensity(intensity):
-    if intensity <= 0:
-        return (0, 0, 0)
-    if matrix_rain_white_head and intensity >= 235:
-        return (255, 255, 255)
-    return tuple((channel * intensity) // 255 for channel in matrix_rain_background_color)
-
-def apply_brightness_cap_to_color(color, cap_brightness):
-    if brightness <= cap_brightness:
-        return color
-
-    current_scale = brightness + 1
-    capped_scale = cap_brightness + 1
-    return tuple((channel * capped_scale) // current_scale for channel in color)
-
-def get_matrix_rain_frame_data():
-    if not matrix_rain_intensity:
-        reset_matrix_rain_state()
-    char = [0] * 8
-    color_array = [(0, 0, 0)] * 64
-    for row in range(8):
-        row_bits = 0
-        for column in range(8):
-            intensity = matrix_rain_intensity[row][column]
-            if intensity > 0:
-                row_bits |= (1 << (7 - column))
-                color_array[row * 8 + column] = matrix_rain_color_for_intensity(intensity)
-        char[row] = row_bits
-    return char, color_array
-
-def get_matrix_rain_time_overlay():
-    global matrix_rain_time_char, matrix_rain_time_color_array, matrix_rain_time_minute_key
-    minute_key = current_display_minute_key()
-    if matrix_rain_time_char is None or matrix_rain_time_color_array is None or matrix_rain_time_minute_key != minute_key:
-        matrix_rain_time_char, matrix_rain_time_color_array, _ = build_time_word_data(DISPLAY_MODE_MATRIX_RAIN)
-        matrix_rain_time_minute_key = minute_key
-    return matrix_rain_time_char, matrix_rain_time_color_array
-
 def advance_matrix_rain_state():
-    if not matrix_rain_intensity:
-        reset_matrix_rain_state()
-
-    for row in range(8):
-        for column in range(8):
-            next_value = matrix_rain_intensity[row][column] - MATRIX_RAIN_FADE_STEP
-            matrix_rain_intensity[row][column] = next_value if next_value > 0 else 0
-
-    for column_index in range(8):
-        column_state = matrix_rain_columns[column_index]
-        if not column_state['active']:
-            if random.randint(0, 99) < matrix_rain_spawn_rate:
-                column_state['active'] = True
-                column_state['head'] = 0
-                column_state['trail_length'] = matrix_rain_trail_length
-            continue
-
-        head_row = column_state['head']
-        trail_length = column_state['trail_length']
-        for offset in range(trail_length):
-            row = head_row - offset
-            if 0 <= row < 8:
-                intensity = 255 - (offset * 45)
-                current_intensity = matrix_rain_intensity[row][column_index]
-                if intensity > current_intensity:
-                    matrix_rain_intensity[row][column_index] = intensity
-
-        column_state['head'] += 1
-        if column_state['head'] - trail_length > 7:
-            column_state['active'] = False
+    app_state.matrix_rain_state.advance(
+        random,
+        app_state.matrix_rain_spawn_rate,
+        app_state.matrix_rain_trail_length
+    )
 
 def render_matrix_rain():
-    rain_char, rain_color_array = get_matrix_rain_frame_data()
-    time_char, time_color_array = get_matrix_rain_time_overlay()
-    char = [0] * 8
-    color_array = [(0, 0, 0)] * 64
-
-    for row in range(8):
-        if matrix_rain_affect_time:
-            char[row] = rain_char[row] | time_char[row]
-        else:
-            char[row] = (rain_char[row] & (~time_char[row] & 0xFF)) | time_char[row]
-
-    for pixel_index in range(64):
-        row = pixel_index // 8
-        column = pixel_index % 8
-        time_bit = time_char[row] & (1 << (7 - column))
-        rain_color = rain_color_array[pixel_index]
-        if time_bit:
-            if matrix_rain_affect_time and rain_color != (0, 0, 0):
-                rr, rg, rb = rain_color
-                tr, tg, tb = time_color_array[pixel_index]
-                blended_color = (
-                    max(tr, rr),
-                    max(tg, rg),
-                    max(tb, rb)
-                )
-                color_array[pixel_index] = apply_brightness_cap_to_color(blended_color, matrix_rain_time_brightness_cap)
-            else:
-                color_array[pixel_index] = apply_brightness_cap_to_color(time_color_array[pixel_index], matrix_rain_time_brightness_cap)
-        else:
-            color_array[pixel_index] = rain_color
-
-    if config['ENABLE_MAX7219']:
-        spi_matrix.show_char(char)
-    if config['ENABLE_HT16K33']:
-        if not i2c_matrix.show_char(i2c_matrix.reverse_char(char)):
-            print("Error writing to matrix")
-    if config['ENABLE_WS2812B']:
-        ws2812b_matrix.set_brightness(brightness)
-        ws2812b_matrix.show_char_with_color_array(char, color_array)
+    render_matrix_rain_frame(
+        app_state.matrix_rain_state,
+        background_color=app_state.matrix_rain_background_color,
+        white_head=app_state.matrix_rain_white_head,
+        affect_time=app_state.matrix_rain_affect_time,
+        trail_length=app_state.matrix_rain_trail_length,
+        time_brightness_cap=app_state.matrix_rain_time_brightness_cap,
+        brightness=brightness,
+        config=config,
+        spi_matrix=spi_matrix,
+        i2c_matrix=i2c_matrix,
+        ws2812b_matrix=ws2812b_matrix,
+        current_display_minute_key=current_display_minute_key,
+        build_time_word_data=build_time_word_data,
+        matrix_mode=DISPLAY_MODE_MATRIX_RAIN
+    )
 
 def run_animation_frame(mode):
     if mode == DISPLAY_MODE_MATRIX_RAIN:
@@ -386,7 +291,7 @@ def run_animation_frame(mode):
 
 def get_animation_frame_delay_ms(mode):
     if mode == DISPLAY_MODE_MATRIX_RAIN:
-        return matrix_rain_speed_ms
+        return app_state.matrix_rain_speed_ms
     return ANIMATION_IDLE_SLEEP_MS
 
 def build_time_word_data(mode=None):
@@ -396,9 +301,9 @@ def build_time_word_data(mode=None):
     minute = now[4]
     time_colour_array = []
     use_matrix_rain_colours = mode == DISPLAY_MODE_MATRIX_RAIN
-    minute_word_color = matrix_rain_minute_color if use_matrix_rain_colours else minute_color
-    hour_word_color = matrix_rain_hour_color if use_matrix_rain_colours else hour_color
-    past_to_word_color = matrix_rain_past_to_color if use_matrix_rain_colours else past_to_color
+    minute_word_color = app_state.matrix_rain_minute_color if use_matrix_rain_colours else minute_color
+    hour_word_color = app_state.matrix_rain_hour_color if use_matrix_rain_colours else hour_color
+    past_to_word_color = app_state.matrix_rain_past_to_color if use_matrix_rain_colours else past_to_color
 
     minute = int(round(minute / 5) * 5)
     if minute > 0 and minute <= 30:
@@ -468,12 +373,6 @@ def set_display_mode(mode, persist=False):
 
 def apply_scene(scene_name_or_object, fallback_name=None):
     global current_scene_name
-    global matrix_rain_white_head
-    global matrix_rain_affect_time
-    global matrix_rain_speed_ms
-    global matrix_rain_spawn_rate
-    global matrix_rain_trail_length
-    global matrix_rain_time_brightness_cap
 
     scene_name = None
     if isinstance(scene_name_or_object, str):
@@ -514,32 +413,32 @@ def apply_scene(scene_name_or_object, fallback_name=None):
     if next_mode == DISPLAY_MODE_MATRIX_RAIN:
         if 'matrix_rain_white_head' in scene:
             if isinstance(scene['matrix_rain_white_head'], bool):
-                matrix_rain_white_head = scene['matrix_rain_white_head']
+                app_state.matrix_rain_white_head = scene['matrix_rain_white_head']
             else:
                 log_scene("Invalid matrix_rain_white_head in scene")
         if 'matrix_rain_affect_time' in scene:
             if isinstance(scene['matrix_rain_affect_time'], bool):
-                matrix_rain_affect_time = scene['matrix_rain_affect_time']
+                app_state.matrix_rain_affect_time = scene['matrix_rain_affect_time']
             else:
                 log_scene("Invalid matrix_rain_affect_time in scene")
         if 'matrix_rain_speed_ms' in scene:
             if isinstance(scene['matrix_rain_speed_ms'], int) and 40 <= scene['matrix_rain_speed_ms'] <= 400:
-                matrix_rain_speed_ms = scene['matrix_rain_speed_ms']
+                app_state.matrix_rain_speed_ms = scene['matrix_rain_speed_ms']
             else:
                 log_scene("Invalid matrix_rain_speed_ms in scene")
         if 'matrix_rain_spawn_rate' in scene:
             if isinstance(scene['matrix_rain_spawn_rate'], int) and 0 <= scene['matrix_rain_spawn_rate'] <= 100:
-                matrix_rain_spawn_rate = scene['matrix_rain_spawn_rate']
+                app_state.matrix_rain_spawn_rate = scene['matrix_rain_spawn_rate']
             else:
                 log_scene("Invalid matrix_rain_spawn_rate in scene")
         if 'matrix_rain_trail_length' in scene:
             if isinstance(scene['matrix_rain_trail_length'], int) and 1 <= scene['matrix_rain_trail_length'] <= 8:
-                matrix_rain_trail_length = scene['matrix_rain_trail_length']
+                app_state.matrix_rain_trail_length = scene['matrix_rain_trail_length']
             else:
                 log_scene("Invalid matrix_rain_trail_length in scene")
         if 'matrix_rain_time_brightness_cap' in scene:
             if isinstance(scene['matrix_rain_time_brightness_cap'], int) and 0 <= scene['matrix_rain_time_brightness_cap'] <= MAX_BRIGHTNESS:
-                matrix_rain_time_brightness_cap = scene['matrix_rain_time_brightness_cap']
+                app_state.matrix_rain_time_brightness_cap = scene['matrix_rain_time_brightness_cap']
             else:
                 log_scene("Invalid matrix_rain_time_brightness_cap in scene")
         reset_matrix_rain_state()
@@ -1003,7 +902,7 @@ def display_color_per_word_mode(word):
     ws2812b_matrix.show_char_with_color_array(word, colour_per_word_array)
 
 def display_matrix_rain_mode(word):
-    if not matrix_rain_intensity:
+    if not app_state.matrix_rain_state.has_state():
         advance_matrix_rain_state()
     render_matrix_rain()
 
@@ -1212,17 +1111,7 @@ async def set_clock_settings_request(request, response):
     global minute_color
     global hour_color
     global past_to_color
-    global matrix_rain_minute_color
-    global matrix_rain_hour_color
-    global matrix_rain_past_to_color
     global schedules_enabled
-    global matrix_rain_background_color
-    global matrix_rain_white_head
-    global matrix_rain_affect_time
-    global matrix_rain_speed_ms
-    global matrix_rain_spawn_rate
-    global matrix_rain_trail_length
-    global matrix_rain_time_brightness_cap
     print(request.post_data)
     set_brightness(int(request.post_data['brightness']))
     current_display_mode = request.post_data['display_mode']
@@ -1232,52 +1121,52 @@ async def set_clock_settings_request(request, response):
     minute_color = (int(request.post_data['minute_color'][0]), int(request.post_data['minute_color'][1]), int(request.post_data['minute_color'][2]))
     hour_color = (int(request.post_data['hour_color'][0]), int(request.post_data['hour_color'][1]), int(request.post_data['hour_color'][2]))
     past_to_color = (int(request.post_data['past_to_color'][0]), int(request.post_data['past_to_color'][1]), int(request.post_data['past_to_color'][2]))
-    matrix_rain_minute_color = (
+    app_state.matrix_rain_minute_color = (
         int(request.post_data['matrix_rain_minute_color'][0]),
         int(request.post_data['matrix_rain_minute_color'][1]),
         int(request.post_data['matrix_rain_minute_color'][2])
     )
-    matrix_rain_hour_color = (
+    app_state.matrix_rain_hour_color = (
         int(request.post_data['matrix_rain_hour_color'][0]),
         int(request.post_data['matrix_rain_hour_color'][1]),
         int(request.post_data['matrix_rain_hour_color'][2])
     )
-    matrix_rain_past_to_color = (
+    app_state.matrix_rain_past_to_color = (
         int(request.post_data['matrix_rain_past_to_color'][0]),
         int(request.post_data['matrix_rain_past_to_color'][1]),
         int(request.post_data['matrix_rain_past_to_color'][2])
     )
-    matrix_rain_background_color = (
+    app_state.matrix_rain_background_color = (
         int(request.post_data['matrix_rain_background_color'][0]),
         int(request.post_data['matrix_rain_background_color'][1]),
         int(request.post_data['matrix_rain_background_color'][2])
     )
-    matrix_rain_white_head = bool(request.post_data.get('matrix_rain_white_head', MATRIX_RAIN_DEFAULT_WHITE_HEAD))
-    matrix_rain_affect_time = bool(request.post_data.get('matrix_rain_affect_time', MATRIX_RAIN_DEFAULT_AFFECT_TIME))
+    app_state.matrix_rain_white_head = bool(request.post_data.get('matrix_rain_white_head', MATRIX_RAIN_DEFAULT_WHITE_HEAD))
+    app_state.matrix_rain_affect_time = bool(request.post_data.get('matrix_rain_affect_time', MATRIX_RAIN_DEFAULT_AFFECT_TIME))
     requested_speed = int(request.post_data.get('matrix_rain_speed_ms', MATRIX_RAIN_DEFAULT_SPEED_MS))
     if requested_speed < 40:
         requested_speed = 40
     if requested_speed > 400:
         requested_speed = 400
-    matrix_rain_speed_ms = requested_speed
+    app_state.matrix_rain_speed_ms = requested_speed
     requested_spawn_rate = int(request.post_data.get('matrix_rain_spawn_rate', MATRIX_RAIN_DEFAULT_SPAWN_RATE))
     if requested_spawn_rate < 0:
         requested_spawn_rate = 0
     if requested_spawn_rate > 100:
         requested_spawn_rate = 100
-    matrix_rain_spawn_rate = requested_spawn_rate
+    app_state.matrix_rain_spawn_rate = requested_spawn_rate
     requested_trail_length = int(request.post_data.get('matrix_rain_trail_length', MATRIX_RAIN_DEFAULT_TRAIL_LENGTH))
     if requested_trail_length < 1:
         requested_trail_length = 1
     if requested_trail_length > 8:
         requested_trail_length = 8
-    matrix_rain_trail_length = requested_trail_length
+    app_state.matrix_rain_trail_length = requested_trail_length
     requested_time_brightness_cap = int(request.post_data.get('matrix_rain_time_brightness_cap', MATRIX_RAIN_DEFAULT_TIME_BRIGHTNESS_CAP))
     if requested_time_brightness_cap < 0:
         requested_time_brightness_cap = 0
     if requested_time_brightness_cap > MAX_BRIGHTNESS:
         requested_time_brightness_cap = MAX_BRIGHTNESS
-    matrix_rain_time_brightness_cap = requested_time_brightness_cap
+    app_state.matrix_rain_time_brightness_cap = requested_time_brightness_cap
     reset_matrix_rain_state()
     config['BRIGHTNESS'] = brightness
     config['DISPLAY_MODE'] = current_display_mode
@@ -1286,16 +1175,16 @@ async def set_clock_settings_request(request, response):
     config['MINUTE_COLOR'] = minute_color
     config['HOUR_COLOR'] = hour_color
     config['PAST_TO_COLOR'] = past_to_color
-    config['MATRIX_RAIN_MINUTE_COLOR'] = matrix_rain_minute_color
-    config['MATRIX_RAIN_HOUR_COLOR'] = matrix_rain_hour_color
-    config['MATRIX_RAIN_PAST_TO_COLOR'] = matrix_rain_past_to_color
-    config['MATRIX_RAIN_BACKGROUND_COLOR'] = matrix_rain_background_color
-    config['MATRIX_RAIN_WHITE_HEAD'] = matrix_rain_white_head
-    config['MATRIX_RAIN_AFFECT_TIME'] = matrix_rain_affect_time
-    config['MATRIX_RAIN_SPEED_MS'] = matrix_rain_speed_ms
-    config['MATRIX_RAIN_SPAWN_RATE'] = matrix_rain_spawn_rate
-    config['MATRIX_RAIN_TRAIL_LENGTH'] = matrix_rain_trail_length
-    config['MATRIX_RAIN_TIME_BRIGHTNESS_CAP'] = matrix_rain_time_brightness_cap
+    config['MATRIX_RAIN_MINUTE_COLOR'] = app_state.matrix_rain_minute_color
+    config['MATRIX_RAIN_HOUR_COLOR'] = app_state.matrix_rain_hour_color
+    config['MATRIX_RAIN_PAST_TO_COLOR'] = app_state.matrix_rain_past_to_color
+    config['MATRIX_RAIN_BACKGROUND_COLOR'] = app_state.matrix_rain_background_color
+    config['MATRIX_RAIN_WHITE_HEAD'] = app_state.matrix_rain_white_head
+    config['MATRIX_RAIN_AFFECT_TIME'] = app_state.matrix_rain_affect_time
+    config['MATRIX_RAIN_SPEED_MS'] = app_state.matrix_rain_speed_ms
+    config['MATRIX_RAIN_SPAWN_RATE'] = app_state.matrix_rain_spawn_rate
+    config['MATRIX_RAIN_TRAIL_LENGTH'] = app_state.matrix_rain_trail_length
+    config['MATRIX_RAIN_TIME_BRIGHTNESS_CAP'] = app_state.matrix_rain_time_brightness_cap
     save_config(config)
     if request.post_data['timeChanged']:
         time_data = request.post_data['newTime']
@@ -1331,16 +1220,16 @@ def settings_object():
         'minute_color': minute_color,
         'hour_color': hour_color,
         'past_to_color': past_to_color,
-        'matrix_rain_minute_color': matrix_rain_minute_color,
-        'matrix_rain_hour_color': matrix_rain_hour_color,
-        'matrix_rain_past_to_color': matrix_rain_past_to_color,
-        'matrix_rain_background_color': matrix_rain_background_color,
-        'matrix_rain_white_head': matrix_rain_white_head,
-        'matrix_rain_affect_time': matrix_rain_affect_time,
-        'matrix_rain_speed_ms': matrix_rain_speed_ms,
-        'matrix_rain_spawn_rate': matrix_rain_spawn_rate,
-        'matrix_rain_trail_length': matrix_rain_trail_length,
-        'matrix_rain_time_brightness_cap': matrix_rain_time_brightness_cap,
+        'matrix_rain_minute_color': app_state.matrix_rain_minute_color,
+        'matrix_rain_hour_color': app_state.matrix_rain_hour_color,
+        'matrix_rain_past_to_color': app_state.matrix_rain_past_to_color,
+        'matrix_rain_background_color': app_state.matrix_rain_background_color,
+        'matrix_rain_white_head': app_state.matrix_rain_white_head,
+        'matrix_rain_affect_time': app_state.matrix_rain_affect_time,
+        'matrix_rain_speed_ms': app_state.matrix_rain_speed_ms,
+        'matrix_rain_spawn_rate': app_state.matrix_rain_spawn_rate,
+        'matrix_rain_trail_length': app_state.matrix_rain_trail_length,
+        'matrix_rain_time_brightness_cap': app_state.matrix_rain_time_brightness_cap,
         'time': get_corrected_time(),
         'local_time': time.localtime(),
         'unix_time': time.time(),
@@ -1459,78 +1348,78 @@ single_color = config.get('SINGLE_COLOR', (0, 0, 255))
 minute_color = config.get('MINUTE_COLOR', (0, 255, 0))
 hour_color = config.get('HOUR_COLOR', (255, 0, 0))
 past_to_color = config.get('PAST_TO_COLOR', (0, 0, 255))
-matrix_rain_minute_color = config.get('MATRIX_RAIN_MINUTE_COLOR', MATRIX_RAIN_DEFAULT_MINUTE_COLOR)
-matrix_rain_hour_color = config.get('MATRIX_RAIN_HOUR_COLOR', MATRIX_RAIN_DEFAULT_HOUR_COLOR)
-matrix_rain_past_to_color = config.get('MATRIX_RAIN_PAST_TO_COLOR', MATRIX_RAIN_DEFAULT_PAST_TO_COLOR)
-matrix_rain_background_color = config.get('MATRIX_RAIN_BACKGROUND_COLOR', MATRIX_RAIN_DEFAULT_BACKGROUND_COLOR)
-matrix_rain_white_head = config.get('MATRIX_RAIN_WHITE_HEAD', MATRIX_RAIN_DEFAULT_WHITE_HEAD)
-matrix_rain_affect_time = config.get('MATRIX_RAIN_AFFECT_TIME', MATRIX_RAIN_DEFAULT_AFFECT_TIME)
-matrix_rain_speed_ms = config.get('MATRIX_RAIN_SPEED_MS', MATRIX_RAIN_DEFAULT_SPEED_MS)
-matrix_rain_spawn_rate = config.get('MATRIX_RAIN_SPAWN_RATE', MATRIX_RAIN_DEFAULT_SPAWN_RATE)
-matrix_rain_trail_length = config.get('MATRIX_RAIN_TRAIL_LENGTH', MATRIX_RAIN_DEFAULT_TRAIL_LENGTH)
-matrix_rain_time_brightness_cap = config.get('MATRIX_RAIN_TIME_BRIGHTNESS_CAP', MATRIX_RAIN_DEFAULT_TIME_BRIGHTNESS_CAP)
+app_state.matrix_rain_minute_color = config.get('MATRIX_RAIN_MINUTE_COLOR', MATRIX_RAIN_DEFAULT_MINUTE_COLOR)
+app_state.matrix_rain_hour_color = config.get('MATRIX_RAIN_HOUR_COLOR', MATRIX_RAIN_DEFAULT_HOUR_COLOR)
+app_state.matrix_rain_past_to_color = config.get('MATRIX_RAIN_PAST_TO_COLOR', MATRIX_RAIN_DEFAULT_PAST_TO_COLOR)
+app_state.matrix_rain_background_color = config.get('MATRIX_RAIN_BACKGROUND_COLOR', MATRIX_RAIN_DEFAULT_BACKGROUND_COLOR)
+app_state.matrix_rain_white_head = config.get('MATRIX_RAIN_WHITE_HEAD', MATRIX_RAIN_DEFAULT_WHITE_HEAD)
+app_state.matrix_rain_affect_time = config.get('MATRIX_RAIN_AFFECT_TIME', MATRIX_RAIN_DEFAULT_AFFECT_TIME)
+app_state.matrix_rain_speed_ms = config.get('MATRIX_RAIN_SPEED_MS', MATRIX_RAIN_DEFAULT_SPEED_MS)
+app_state.matrix_rain_spawn_rate = config.get('MATRIX_RAIN_SPAWN_RATE', MATRIX_RAIN_DEFAULT_SPAWN_RATE)
+app_state.matrix_rain_trail_length = config.get('MATRIX_RAIN_TRAIL_LENGTH', MATRIX_RAIN_DEFAULT_TRAIL_LENGTH)
+app_state.matrix_rain_time_brightness_cap = config.get('MATRIX_RAIN_TIME_BRIGHTNESS_CAP', MATRIX_RAIN_DEFAULT_TIME_BRIGHTNESS_CAP)
 current_display_mode = config.get('DISPLAY_MODE', DISPLAY_MODE_RAINBOW)
 time_offset = config.get('TIME_OFFSET', 0)
 disable_access_point = config.get('DISABLE_ACCESS_POINT', False)
 schedules_enabled = config.get('SCHEDULES_ENABLED', False)
 
-normalised_matrix_rain_background_color = normalise_color(matrix_rain_background_color)
+normalised_matrix_rain_background_color = normalise_color(app_state.matrix_rain_background_color)
 if normalised_matrix_rain_background_color is None:
-    matrix_rain_background_color = MATRIX_RAIN_DEFAULT_BACKGROUND_COLOR
+    app_state.matrix_rain_background_color = MATRIX_RAIN_DEFAULT_BACKGROUND_COLOR
 else:
-    matrix_rain_background_color = normalised_matrix_rain_background_color
+    app_state.matrix_rain_background_color = normalised_matrix_rain_background_color
 
-normalised_matrix_rain_minute_color = normalise_color(matrix_rain_minute_color)
+normalised_matrix_rain_minute_color = normalise_color(app_state.matrix_rain_minute_color)
 if normalised_matrix_rain_minute_color is None:
-    matrix_rain_minute_color = MATRIX_RAIN_DEFAULT_MINUTE_COLOR
+    app_state.matrix_rain_minute_color = MATRIX_RAIN_DEFAULT_MINUTE_COLOR
 else:
-    matrix_rain_minute_color = normalised_matrix_rain_minute_color
+    app_state.matrix_rain_minute_color = normalised_matrix_rain_minute_color
 
-normalised_matrix_rain_hour_color = normalise_color(matrix_rain_hour_color)
+normalised_matrix_rain_hour_color = normalise_color(app_state.matrix_rain_hour_color)
 if normalised_matrix_rain_hour_color is None:
-    matrix_rain_hour_color = MATRIX_RAIN_DEFAULT_HOUR_COLOR
+    app_state.matrix_rain_hour_color = MATRIX_RAIN_DEFAULT_HOUR_COLOR
 else:
-    matrix_rain_hour_color = normalised_matrix_rain_hour_color
+    app_state.matrix_rain_hour_color = normalised_matrix_rain_hour_color
 
-normalised_matrix_rain_past_to_color = normalise_color(matrix_rain_past_to_color)
+normalised_matrix_rain_past_to_color = normalise_color(app_state.matrix_rain_past_to_color)
 if normalised_matrix_rain_past_to_color is None:
-    matrix_rain_past_to_color = MATRIX_RAIN_DEFAULT_PAST_TO_COLOR
+    app_state.matrix_rain_past_to_color = MATRIX_RAIN_DEFAULT_PAST_TO_COLOR
 else:
-    matrix_rain_past_to_color = normalised_matrix_rain_past_to_color
+    app_state.matrix_rain_past_to_color = normalised_matrix_rain_past_to_color
 
-if not isinstance(matrix_rain_white_head, bool):
-    matrix_rain_white_head = MATRIX_RAIN_DEFAULT_WHITE_HEAD
+if not isinstance(app_state.matrix_rain_white_head, bool):
+    app_state.matrix_rain_white_head = MATRIX_RAIN_DEFAULT_WHITE_HEAD
 
-if not isinstance(matrix_rain_affect_time, bool):
-    matrix_rain_affect_time = MATRIX_RAIN_DEFAULT_AFFECT_TIME
+if not isinstance(app_state.matrix_rain_affect_time, bool):
+    app_state.matrix_rain_affect_time = MATRIX_RAIN_DEFAULT_AFFECT_TIME
 
-if not isinstance(matrix_rain_speed_ms, int):
-    matrix_rain_speed_ms = MATRIX_RAIN_DEFAULT_SPEED_MS
-elif matrix_rain_speed_ms < 40:
-    matrix_rain_speed_ms = 40
-elif matrix_rain_speed_ms > 400:
-    matrix_rain_speed_ms = 400
+if not isinstance(app_state.matrix_rain_speed_ms, int):
+    app_state.matrix_rain_speed_ms = MATRIX_RAIN_DEFAULT_SPEED_MS
+elif app_state.matrix_rain_speed_ms < 40:
+    app_state.matrix_rain_speed_ms = 40
+elif app_state.matrix_rain_speed_ms > 400:
+    app_state.matrix_rain_speed_ms = 400
 
-if not isinstance(matrix_rain_spawn_rate, int):
-    matrix_rain_spawn_rate = MATRIX_RAIN_DEFAULT_SPAWN_RATE
-elif matrix_rain_spawn_rate < 0:
-    matrix_rain_spawn_rate = 0
-elif matrix_rain_spawn_rate > 100:
-    matrix_rain_spawn_rate = 100
+if not isinstance(app_state.matrix_rain_spawn_rate, int):
+    app_state.matrix_rain_spawn_rate = MATRIX_RAIN_DEFAULT_SPAWN_RATE
+elif app_state.matrix_rain_spawn_rate < 0:
+    app_state.matrix_rain_spawn_rate = 0
+elif app_state.matrix_rain_spawn_rate > 100:
+    app_state.matrix_rain_spawn_rate = 100
 
-if not isinstance(matrix_rain_trail_length, int):
-    matrix_rain_trail_length = MATRIX_RAIN_DEFAULT_TRAIL_LENGTH
-elif matrix_rain_trail_length < 1:
-    matrix_rain_trail_length = 1
-elif matrix_rain_trail_length > 8:
-    matrix_rain_trail_length = 8
+if not isinstance(app_state.matrix_rain_trail_length, int):
+    app_state.matrix_rain_trail_length = MATRIX_RAIN_DEFAULT_TRAIL_LENGTH
+elif app_state.matrix_rain_trail_length < 1:
+    app_state.matrix_rain_trail_length = 1
+elif app_state.matrix_rain_trail_length > 8:
+    app_state.matrix_rain_trail_length = 8
 
-if not isinstance(matrix_rain_time_brightness_cap, int):
-    matrix_rain_time_brightness_cap = MATRIX_RAIN_DEFAULT_TIME_BRIGHTNESS_CAP
-elif matrix_rain_time_brightness_cap < 0:
-    matrix_rain_time_brightness_cap = 0
-elif matrix_rain_time_brightness_cap > MAX_BRIGHTNESS:
-    matrix_rain_time_brightness_cap = MAX_BRIGHTNESS
+if not isinstance(app_state.matrix_rain_time_brightness_cap, int):
+    app_state.matrix_rain_time_brightness_cap = MATRIX_RAIN_DEFAULT_TIME_BRIGHTNESS_CAP
+elif app_state.matrix_rain_time_brightness_cap < 0:
+    app_state.matrix_rain_time_brightness_cap = 0
+elif app_state.matrix_rain_time_brightness_cap > MAX_BRIGHTNESS:
+    app_state.matrix_rain_time_brightness_cap = MAX_BRIGHTNESS
 
 scenes = read_optional_json(scenes_file, config.get('SCENES', {}))
 if not isinstance(scenes, dict):
@@ -1549,17 +1438,17 @@ log_boot_summary()
 if config['ENABLE_HT16K33']:
     log_boot("Initialising HT16K33 matrix")
     scan_for_devices()
-    i2c_matrix = ht16k33_matrix(config['I2C_SDA'], config['I2C_SCL'], config['I2C_BUS'],  int(config['I2C_ADDRESS'], 16))
+    i2c_matrix = HT16K33Matrix(config['I2C_SDA'], config['I2C_SCL'], config['I2C_BUS'],  int(config['I2C_ADDRESS'], 16))
 
 if config['ENABLE_MAX7219']:
     log_boot("Initialising MAX7219 matrix")
     spi = machine.SPI(config['SPI_PORT'], sck=machine.Pin(config['SPI_SCK']), mosi=machine.Pin(config['SPI_MOSI']))
-    spi_matrix = max7219_matrix(spi, machine.Pin(config['SPI_CS'], machine.Pin.OUT, True))
+    spi_matrix = MAX7219Matrix(spi, machine.Pin(config['SPI_CS'], machine.Pin.OUT, True))
     spi_matrix.set_brightness(17)
 
 if config['ENABLE_WS2812B']:
     log_boot("Initialising WS2812B matrix")
-    ws2812b_matrix = ws2812b_matrix(config['WS2812B_PIN'], 8, 8)
+    ws2812b_matrix = WS2812BMatrix(config['WS2812B_PIN'], 8, 8)
     ws2812b_matrix.set_brightness(brightness)
 
 log_boot("Running startup animation")

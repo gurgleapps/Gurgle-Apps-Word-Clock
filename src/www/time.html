@@ -220,36 +220,7 @@
             <label for="brightnessControl" class="block text-sm font-medium leading-6 text-gray-900">Brightness: <span
                 x-text="settings.brightness"></span></label>
             <input @change="brigtnessUpdated()" type="range" id="brightnessControl" min="0" max="15"
-              x-model.number="settings.brightness" step="1" class="w-full bg-transparent cursor-pointer appearance-none disabled:opacity-50 disabled:pointer-events-none focus:outline-none
-                [&::-webkit-slider-thumb]:w-3.5
-          [&::-webkit-slider-thumb]:h-3.5
-          [&::-webkit-slider-thumb]:-mt-0.5
-          [&::-webkit-slider-thumb]:appearance-none
-          [&::-webkit-slider-thumb]:bg-white
-          [&::-webkit-slider-thumb]:shadow-[0_0_0_4px_rgba(37,99,235,1)]
-          [&::-webkit-slider-thumb]:rounded-full
-          [&::-webkit-slider-thumb]:transition-all
-          [&::-webkit-slider-thumb]:duration-150
-          [&::-webkit-slider-thumb]:ease-in-out
-          [&::-moz-range-thumb]:w-3.5
-          [&::-moz-range-thumb]:h-3.5
-          [&::-moz-range-thumb]:appearance-none
-          [&::-moz-range-thumb]:bg-white
-          [&::-moz-range-thumb]:border-4
-          [&::-moz-range-thumb]:border-blue-600
-          [&::-moz-range-thumb]:rounded-full
-          [&::-moz-range-thumb]:transition-all
-          [&::-moz-range-thumb]:duration-150
-          [&::-moz-range-thumb]:ease-in-out
-          [&::-webkit-slider-runnable-track]:w-full
-          [&::-webkit-slider-runnable-track]:h-2
-          [&::-webkit-slider-runnable-track]:bg-gray-100
-          [&::-webkit-slider-runnable-track]:rounded-full
-          [&::-moz-range-track]:w-full
-          [&::-moz-range-track]:h-2
-          [&::-moz-range-track]:bg-gray-100
-          [&::-moz-range-track]:rounded-full
-                ">
+              x-model.number="settings.brightness" step="1" class="ga-slider">
           </div>
           <div class="mb-4">
             <label for="colorMode" class="block text-sm font-medium leading-6 text-gray-900">Color Display Mode:</label>
@@ -269,36 +240,7 @@
             </div>
             <div>
               <label class="block text-sm font-medium leading-6 text-gray-900">Rain Speed: <span x-text="settings.matrix_rain_speed_ms + ' ms'"></span></label>
-              <input type="range" min="40" max="400" step="10" x-model.number="settings.matrix_rain_speed_ms"
-                class="w-full bg-transparent cursor-pointer appearance-none disabled:opacity-50 disabled:pointer-events-none focus:outline-none
-                  [&::-webkit-slider-thumb]:w-3.5
-                  [&::-webkit-slider-thumb]:h-3.5
-                  [&::-webkit-slider-thumb]:-mt-0.5
-                  [&::-webkit-slider-thumb]:appearance-none
-                  [&::-webkit-slider-thumb]:bg-white
-                  [&::-webkit-slider-thumb]:shadow-[0_0_0_4px_rgba(37,99,235,1)]
-                  [&::-webkit-slider-thumb]:rounded-full
-                  [&::-webkit-slider-thumb]:transition-all
-                  [&::-webkit-slider-thumb]:duration-150
-                  [&::-webkit-slider-thumb]:ease-in-out
-                  [&::-moz-range-thumb]:w-3.5
-                  [&::-moz-range-thumb]:h-3.5
-                  [&::-moz-range-thumb]:appearance-none
-                  [&::-moz-range-thumb]:bg-white
-                  [&::-moz-range-thumb]:border-4
-                  [&::-moz-range-thumb]:border-blue-600
-                  [&::-moz-range-thumb]:rounded-full
-                  [&::-moz-range-thumb]:transition-all
-                  [&::-moz-range-thumb]:duration-150
-                  [&::-moz-range-thumb]:ease-in-out
-                  [&::-webkit-slider-runnable-track]:w-full
-                  [&::-webkit-slider-runnable-track]:h-2
-                  [&::-webkit-slider-runnable-track]:bg-gray-100
-                  [&::-webkit-slider-runnable-track]:rounded-full
-                  [&::-moz-range-track]:w-full
-                  [&::-moz-range-track]:h-2
-                  [&::-moz-range-track]:bg-gray-100
-                  [&::-moz-range-track]:rounded-full">
+              <input type="range" min="40" max="400" step="10" x-model.number="settings.matrix_rain_speed_ms" class="ga-slider">
             </div>
             <div class="flex items-center justify-between">
               <span class="flex flex-col flex-grow">
@@ -501,7 +443,7 @@
 
               <div x-show="schedule.action.type === 'set_brightness'" class="mb-3">
                 <label class="block mb-1 text-sm font-medium leading-6 text-gray-900">Brightness</label>
-                <input type="range" min="0" max="15" step="1" x-model.number="schedule.action.value" class="w-full">
+                <input type="range" min="0" max="15" step="1" x-model.number="schedule.action.value" class="ga-slider">
                 <div class="text-sm text-gray-500" x-text="schedule.action.value"></div>
               </div>
 
@@ -619,36 +561,7 @@
                 </div>
                 <div>
                   <label class="block mb-1 text-sm font-medium leading-6 text-gray-900">Rain Speed</label>
-                  <input type="range" min="40" max="400" step="10" x-model.number="scene.matrix_rain_speed_ms"
-                    class="w-full bg-transparent cursor-pointer appearance-none disabled:opacity-50 disabled:pointer-events-none focus:outline-none
-                      [&::-webkit-slider-thumb]:w-3.5
-                      [&::-webkit-slider-thumb]:h-3.5
-                      [&::-webkit-slider-thumb]:-mt-0.5
-                      [&::-webkit-slider-thumb]:appearance-none
-                      [&::-webkit-slider-thumb]:bg-white
-                      [&::-webkit-slider-thumb]:shadow-[0_0_0_4px_rgba(37,99,235,1)]
-                      [&::-webkit-slider-thumb]:rounded-full
-                      [&::-webkit-slider-thumb]:transition-all
-                      [&::-webkit-slider-thumb]:duration-150
-                      [&::-webkit-slider-thumb]:ease-in-out
-                      [&::-moz-range-thumb]:w-3.5
-                      [&::-moz-range-thumb]:h-3.5
-                      [&::-moz-range-thumb]:appearance-none
-                      [&::-moz-range-thumb]:bg-white
-                      [&::-moz-range-thumb]:border-4
-                      [&::-moz-range-thumb]:border-blue-600
-                      [&::-moz-range-thumb]:rounded-full
-                      [&::-moz-range-thumb]:transition-all
-                      [&::-moz-range-thumb]:duration-150
-                      [&::-moz-range-thumb]:ease-in-out
-                      [&::-webkit-slider-runnable-track]:w-full
-                      [&::-webkit-slider-runnable-track]:h-2
-                      [&::-webkit-slider-runnable-track]:bg-gray-100
-                      [&::-webkit-slider-runnable-track]:rounded-full
-                      [&::-moz-range-track]:w-full
-                      [&::-moz-range-track]:h-2
-                      [&::-moz-range-track]:bg-gray-100
-                      [&::-moz-range-track]:rounded-full">
+                  <input type="range" min="40" max="400" step="10" x-model.number="scene.matrix_rain_speed_ms" class="ga-slider">
                   <div class="text-sm text-gray-500" x-text="scene.matrix_rain_speed_ms + ' ms'"></div>
                 </div>
                 <div class="flex items-center justify-between">
@@ -675,7 +588,7 @@
 
               <div class="mb-3">
                 <label class="block mb-1 text-sm font-medium leading-6 text-gray-900">Brightness</label>
-                <input type="range" min="0" max="15" step="1" x-model.number="scene.brightness" class="w-full">
+                <input type="range" min="0" max="15" step="1" x-model.number="scene.brightness" class="ga-slider">
                 <div class="text-sm text-gray-500" x-text="scene.brightness"></div>
               </div>
 
@@ -815,6 +728,59 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
 </div>
 
 
+
+<style>
+  .ga-slider {
+    width: 100%;
+    background: transparent;
+    cursor: pointer;
+    appearance: none;
+  }
+
+  .ga-slider:focus {
+    outline: none;
+  }
+
+  .ga-slider:disabled {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+
+  .ga-slider::-webkit-slider-thumb {
+    width: 0.875rem;
+    height: 0.875rem;
+    margin-top: -0.125rem;
+    appearance: none;
+    background: #fff;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 1);
+    border-radius: 9999px;
+    transition: all 150ms ease-in-out;
+  }
+
+  .ga-slider::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 0.5rem;
+    background: #f3f4f6;
+    border-radius: 9999px;
+  }
+
+  .ga-slider::-moz-range-thumb {
+    width: 0.875rem;
+    height: 0.875rem;
+    appearance: none;
+    background: #fff;
+    border: 4px solid #2563eb;
+    border-radius: 9999px;
+    transition: all 150ms ease-in-out;
+  }
+
+  .ga-slider::-moz-range-track {
+    width: 100%;
+    height: 0.5rem;
+    background: #f3f4f6;
+    border-radius: 9999px;
+  }
+</style>
 
 
   <script src="/js/collapse.min.js" defer></script>

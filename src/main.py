@@ -8,6 +8,7 @@ import utime as time
 from gurgleapps_webserver import GurgleAppsWebserver
 import uasyncio as asyncio
 import json
+import gc
 import matrix_fonts
 import urandom as random
 import os
@@ -1111,6 +1112,8 @@ def settings_object():
         'ap_ssid': server.get_ap_ssid(),
         'ap_active': server.is_access_point_active(),
         'cpu_temp': read_temperature(),
+        'mem_free': gc.mem_free(),
+        'mem_alloc': gc.mem_alloc(),
         'ntp_synced_at': ntp_synced_at,
         'last_ntp_sync_attempt': last_ntp_sync_attempt,
         'dns_check_status': last_dns_check_status,

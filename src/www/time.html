@@ -763,6 +763,14 @@
           <div x-text="settings.cpu_temp==0 ? 'n/a' : settings.cpu_temp.toFixed(2)+'°C'">n/a</div>
         </div>
         <div class="flex items-center justify-between mt-1 space-x-4">
+          <div>Free Memory:</div>
+          <div x-text="formatBytes(settings.mem_free)">n/a</div>
+        </div>
+        <div class="flex items-center justify-between mt-1 space-x-4">
+          <div>Allocated Memory:</div>
+          <div x-text="formatBytes(settings.mem_alloc)">n/a</div>
+        </div>
+        <div class="flex items-center justify-between mt-1 space-x-4">
           <div>Current Scene:</div>
           <div x-text="settings.current_scene || 'manual'">manual</div>
         </div>
@@ -969,6 +977,8 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
           'rainbow': [255, 0, 0],
           'wifi_connected': false,
           'cpu_temp': 0,
+          'mem_free': null,
+          'mem_alloc': null,
           'disable_access_point': false,
           'scenes': {},
           'schedules': [],
@@ -1097,6 +1107,18 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
           this.$nextTick(() => {
             setTimeout(() => this.checkTabOverflow(), 0)
           })
+        },
+        formatBytes(value) {
+          if (value === null || value === undefined || value < 0) {
+            return 'n/a'
+          }
+          if (value < 1024) {
+            return value + ' B'
+          }
+          if (value < 1024 * 1024) {
+            return (value / 1024).toFixed(1) + ' KB'
+          }
+          return (value / (1024 * 1024)).toFixed(2) + ' MB'
         },
         measureTabs() {
           const wrapper = this.$refs.tabNav

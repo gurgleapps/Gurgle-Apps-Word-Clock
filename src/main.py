@@ -184,7 +184,8 @@ def log_boot_summary():
     log_boot("Runtime: " + uname.sysname)
     log_boot("Displays: " + enabled_display_backends())
     log_boot("Display mode: " + str(app_state.current_display_mode) + ", brightness: " + str(app_state.brightness))
-    log_boot("Time offset: " + str(time_offset) + " seconds")
+    log_boot("Time offset: " + str(get_total_time_offset()) + " seconds")
+    log_boot("Clock change region: " + str(seasonal_time_region))
     log_boot("Scenes loaded: " + str(len(scenes)))
     log_boot("Valid schedules loaded: " + str(len(valid_schedules)))
     log_boot("Wi-Fi configured: " + ('yes' if wifi_ssid else 'no'))
@@ -382,6 +383,8 @@ def reset_clock_settings_to_defaults():
     global hour_color
     global past_to_color
     global schedules_enabled
+    global manual_time_offset
+    global seasonal_time_region
 
     app_state.brightness = 2
     app_state.display_enabled = True
@@ -402,6 +405,8 @@ def reset_clock_settings_to_defaults():
     app_state.matrix_rain_spawn_rate = MATRIX_RAIN_DEFAULT_SPAWN_RATE
     app_state.matrix_rain_trail_length = MATRIX_RAIN_DEFAULT_TRAIL_LENGTH
     app_state.matrix_rain_time_brightness_cap = MATRIX_RAIN_DEFAULT_TIME_BRIGHTNESS_CAP
+    manual_time_offset = 0
+    seasonal_time_region = time_sync.SEASONAL_TIME_REGION_OFF
     reset_display_refresh_state()
 
     config['BRIGHTNESS'] = app_state.brightness
@@ -421,6 +426,7 @@ def reset_clock_settings_to_defaults():
     config['MATRIX_RAIN_SPAWN_RATE'] = app_state.matrix_rain_spawn_rate
     config['MATRIX_RAIN_TRAIL_LENGTH'] = app_state.matrix_rain_trail_length
     config['MATRIX_RAIN_TIME_BRIGHTNESS_CAP'] = app_state.matrix_rain_time_brightness_cap
+    persist_time_settings(save=False)
     save_config(config)
 
 def apply_scene(scene_name_or_object, fallback_name=None):
@@ -582,13 +588,48 @@ def should_attempt_ntp_sync():
 
 
 def get_corrected_time():
-    return time_sync.get_corrected_time(time, time_offset)
+    return time_sync.get_corrected_time(time, get_total_time_offset())
+
+def get_effective_utc_seconds():
+    return time.time() + manual_time_offset
+
+def get_timezone_offset_seconds(unix_time=None):
+    if unix_time is None:
+        unix_time = get_effective_utc_seconds()
+    return time_sync.get_region_time_offset_seconds(time, unix_time, seasonal_time_region)
+
+def get_total_time_offset():
+    return manual_time_offset + get_timezone_offset_seconds()
+
+def persist_time_settings(save=True):
+    config['MANUAL_TIME_OFFSET'] = manual_time_offset
+    config['SEASONAL_TIME_REGION'] = seasonal_time_region
+    config['TIME_OFFSET'] = get_total_time_offset()
+    if save:
+        save_config(config)
 
 def set_manual_time(year, month, day, hour, minute, second):
-    global time_offset
-    time_offset = time_sync.calculate_manual_time_offset(time, year, month, day, hour, minute, second)
-    config['TIME_OFFSET'] = time_offset
-    save_config(config)
+    global manual_time_offset
+    manual_time_offset = time_sync.calculate_manual_time_offset(
+        time,
+        year,
+        month,
+        day,
+        hour,
+        minute,
+        second,
+        base_offset_seconds=time_sync.infer_region_offset_for_local_datetime(
+            time,
+            seasonal_time_region,
+            year,
+            month,
+            day,
+            hour,
+            minute,
+            second
+        )
+    )
+    persist_time_settings()
 
 
 def time_to_matrix(force=False):
@@ -973,11 +1014,13 @@ async def set_clock_settings_request(request, response):
     global hour_color
     global past_to_color
     global schedules_enabled
+    global seasonal_time_region
     print(request.post_data)
     set_brightness(int(request.post_data['brightness']))
     app_state.current_display_mode = request.post_data['display_mode']
     app_state.current_scene_name = None
     schedules_enabled = bool(request.post_data.get('schedules_enabled', False))
+    seasonal_time_region = time_sync.normalise_seasonal_time_region(request.post_data.get('seasonal_time_region', time_sync.SEASONAL_TIME_REGION_OFF))
     single_color = (int(request.post_data['single_color'][0]), int(request.post_data['single_color'][1]), int(request.post_data['single_color'][2]))
     minute_color = (int(request.post_data['minute_color'][0]), int(request.post_data['minute_color'][1]), int(request.post_data['minute_color'][2]))
     hour_color = (int(request.post_data['hour_color'][0]), int(request.post_data['hour_color'][1]), int(request.post_data['hour_color'][2]))
@@ -1046,6 +1089,7 @@ async def set_clock_settings_request(request, response):
     config['MATRIX_RAIN_SPAWN_RATE'] = app_state.matrix_rain_spawn_rate
     config['MATRIX_RAIN_TRAIL_LENGTH'] = app_state.matrix_rain_trail_length
     config['MATRIX_RAIN_TIME_BRIGHTNESS_CAP'] = app_state.matrix_rain_time_brightness_cap
+    persist_time_settings(save=False)
     save_config(config)
     if request.post_data['timeChanged']:
         time_data = request.post_data['newTime']
@@ -1104,7 +1148,9 @@ def settings_object():
         'time': get_corrected_time(),
         'local_time': time.localtime(),
         'unix_time': time.time(),
-        'time_offset': time_offset,
+        'time_offset': get_total_time_offset(),
+        'manual_time_offset': manual_time_offset,
+        'seasonal_time_region': seasonal_time_region,
         'wifi_connected': server.is_wifi_connected(),
         'wifi_ip_address': server.get_wifi_ip_address(),
         'wifi_ssid': server.get_wifi_ssid(),
@@ -1234,7 +1280,8 @@ app_state.matrix_rain_spawn_rate = config.get('MATRIX_RAIN_SPAWN_RATE', MATRIX_R
 app_state.matrix_rain_trail_length = config.get('MATRIX_RAIN_TRAIL_LENGTH', MATRIX_RAIN_DEFAULT_TRAIL_LENGTH)
 app_state.matrix_rain_time_brightness_cap = config.get('MATRIX_RAIN_TIME_BRIGHTNESS_CAP', MATRIX_RAIN_DEFAULT_TIME_BRIGHTNESS_CAP)
 app_state.current_display_mode = config.get('DISPLAY_MODE', DISPLAY_MODE_RAINBOW)
-time_offset = config.get('TIME_OFFSET', 0)
+manual_time_offset = config.get('MANUAL_TIME_OFFSET', config.get('TIME_OFFSET', 0))
+seasonal_time_region = config.get('SEASONAL_TIME_REGION', time_sync.SEASONAL_TIME_REGION_OFF)
 disable_access_point = config.get('DISABLE_ACCESS_POINT', False)
 schedules_enabled = config.get('SCHEDULES_ENABLED', True)
 
@@ -1295,6 +1342,11 @@ elif app_state.matrix_rain_time_brightness_cap < 0:
     app_state.matrix_rain_time_brightness_cap = 0
 elif app_state.matrix_rain_time_brightness_cap > MAX_BRIGHTNESS:
     app_state.matrix_rain_time_brightness_cap = MAX_BRIGHTNESS
+
+if not isinstance(manual_time_offset, int):
+    manual_time_offset = 0
+
+seasonal_time_region = time_sync.normalise_seasonal_time_region(seasonal_time_region)
 
 scenes = read_optional_json(scenes_file, config.get('SCENES', {}))
 if not isinstance(scenes, dict):

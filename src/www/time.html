@@ -433,12 +433,14 @@
             </div>
             <div class="flex w-full gap-2">
               <button @click.prevent="addSchedule()"
-                class="flex-1 px-4 py-2 font-semibold text-white bg-blue-600 rounded focus:outline-none hover:bg-blue-700">
-                Add Schedule
+                class="inline-flex items-center justify-center flex-1 gap-2 px-4 py-2 text-sm font-semibold text-blue-700 bg-white rounded-lg ring-1 ring-inset ring-blue-200 hover:bg-blue-50 focus:outline-none">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                Add
               </button>
               <button @click.prevent="updateSchedules()"
-                class="flex-1 px-4 py-2 font-semibold text-white bg-green-600 rounded focus:outline-none hover:bg-green-700">
-                Save Schedules
+                class="inline-flex items-center justify-center flex-1 gap-2 px-4 py-2 text-sm font-semibold text-white bg-green-600 rounded-lg hover:bg-green-700 focus:outline-none">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                Save
               </button>
             </div>
           </div>
@@ -448,20 +450,15 @@
           </template>
 
           <template x-for="(schedule, index) in settings.schedules" :key="index">
-            <div class="px-3 py-2 mb-2 bg-white rounded-lg ring-1 ring-gray-200">
+            <div class="px-3 py-2 mb-2 rounded-lg bg-gray-50 ring-1 ring-gray-200">
               <button type="button" @click="toggleScheduleExpanded(schedule)"
                 class="flex items-center w-full gap-3 text-left group">
                 <div class="flex-1 min-w-0">
-                  <div class="flex items-center gap-2">
-                    <span class="text-sm font-medium text-gray-900 truncate" x-text="schedule.name || ('Schedule ' + (index + 1))"></span>
-                    <span class="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium rounded ring-1 ring-inset shrink-0"
-                      :class="schedule.enabled ? 'bg-green-50 text-green-700 ring-green-600/20' : 'bg-gray-100 text-gray-500 ring-gray-300/50'"
-                      x-text="schedule.enabled ? 'On' : 'Off'"></span>
-                  </div>
+                  <div class="text-sm font-medium text-gray-900 truncate" x-text="schedule.name || ('Schedule ' + (index + 1))"></div>
                   <div class="flex flex-wrap gap-1.5 mt-1">
                     <template x-for="chip in scheduleOverviewChips(schedule)" :key="chip.label">
                       <span
-                        class="inline-flex items-center px-2 py-0.5 text-[11px] font-medium leading-none rounded ring-1 ring-inset"
+                        class="inline-flex items-center px-2 py-1 text-[10px] font-medium leading-none rounded ring-1 ring-inset"
                         :class="chip.tone === 'action'
                           ? 'bg-blue-50 text-blue-700 ring-blue-600/20'
                           : chip.tone === 'time'
@@ -471,6 +468,9 @@
                     </template>
                   </div>
                 </div>
+                <span class="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium rounded ring-1 ring-inset shrink-0"
+                  :class="schedule.enabled ? 'bg-green-50 text-green-700 ring-green-600/20' : 'bg-gray-100 text-gray-500 ring-gray-300/50'"
+                  x-text="schedule.enabled ? 'On' : 'Off'"></span>
                 <svg class="w-4 h-4 text-gray-400 transition-transform shrink-0 group-hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"
                   :class="schedule.expanded ? 'rotate-180' : ''">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
@@ -479,7 +479,10 @@
 
               <div x-show="schedule.expanded" x-collapse style="display:none;" class="mt-3">
               <div class="flex justify-end mb-3">
-                <button @click.prevent="removeSchedule(index)" class="text-sm text-red-600 hover:text-red-700">Remove</button>
+                <button @click.prevent="removeSchedule(index)" class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-red-700 rounded-md ring-1 ring-inset ring-red-200 hover:bg-red-50">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                  Remove
+                </button>
               </div>
 
               <div class="mb-3">
@@ -559,12 +562,14 @@
             </div>
             <div class="flex w-full gap-2">
               <button @click.prevent="addScene()"
-                class="flex-1 px-4 py-2 font-semibold text-white bg-blue-600 rounded focus:outline-none hover:bg-blue-700">
-                Add Scene
+                class="inline-flex items-center justify-center flex-1 gap-2 px-4 py-2 text-sm font-semibold text-blue-700 bg-white rounded-lg ring-1 ring-inset ring-blue-200 hover:bg-blue-50 focus:outline-none">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                Add
               </button>
               <button @click.prevent="updateScenes()"
-                class="flex-1 px-4 py-2 font-semibold text-white bg-green-600 rounded focus:outline-none hover:bg-green-700">
-                Save Scenes
+                class="inline-flex items-center justify-center flex-1 gap-2 px-4 py-2 text-sm font-semibold text-white bg-green-600 rounded-lg hover:bg-green-700 focus:outline-none">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                Save
               </button>
             </div>
           </div>
@@ -574,20 +579,15 @@
           </template>
 
           <template x-for="(scene, index) in scenes" :key="index">
-            <div class="px-3 py-2 mb-2 bg-white rounded-lg ring-1 ring-gray-200">
+            <div class="px-3 py-2 mb-2 rounded-lg bg-gray-50 ring-1 ring-gray-200">
               <button type="button" @click="toggleSceneExpanded(scene)"
                 class="flex items-center w-full gap-3 text-left group">
                 <div class="flex-1 min-w-0">
-                  <div class="flex items-center gap-2">
-                    <span class="text-sm font-medium text-gray-900 truncate" x-text="scene.name || ('Scene ' + (index + 1))"></span>
-                    <span class="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium rounded ring-1 ring-inset shrink-0"
-                      :class="scene.display_enabled ? 'bg-green-50 text-green-700 ring-green-600/20' : 'bg-gray-100 text-gray-500 ring-gray-300/50'"
-                      x-text="scene.display_enabled ? 'On' : 'Off'"></span>
-                  </div>
+                  <div class="text-sm font-medium text-gray-900 truncate" x-text="scene.name || ('Scene ' + (index + 1))"></div>
                   <div class="flex flex-wrap gap-1.5 mt-1">
                     <template x-for="chip in sceneOverviewChips(scene)" :key="chip.label">
                       <span
-                        class="inline-flex items-center px-2 py-0.5 text-[11px] font-medium leading-none rounded ring-1 ring-inset"
+                        class="inline-flex items-center px-2 py-1 text-[10px] font-medium leading-none rounded ring-1 ring-inset"
                         :class="chip.tone === 'mode'
                           ? 'bg-cyan-50 text-cyan-700 ring-cyan-600/20'
                           : chip.tone === 'brightness'
@@ -597,6 +597,9 @@
                     </template>
                   </div>
                 </div>
+                <span class="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium rounded ring-1 ring-inset shrink-0"
+                  :class="scene.display_enabled ? 'bg-green-50 text-green-700 ring-green-600/20' : 'bg-gray-100 text-gray-500 ring-gray-300/50'"
+                  x-text="scene.display_enabled ? 'On' : 'Off'"></span>
                 <svg class="w-4 h-4 text-gray-400 transition-transform shrink-0 group-hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"
                   :class="scene.expanded ? 'rotate-180' : ''">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
@@ -604,9 +607,15 @@
               </button>
 
               <div x-show="scene.expanded" x-collapse style="display:none;" class="mt-3">
-              <div class="flex justify-end gap-3 mb-3">
-                <button @click.prevent="testScene(scene)" class="text-sm text-blue-600 hover:text-blue-700">Test Scene</button>
-                <button @click.prevent="removeScene(index)" class="text-sm text-red-600 hover:text-red-700">Remove</button>
+              <div class="flex justify-end gap-2 mb-3">
+                <button @click.prevent="testScene(scene)" class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-blue-700 rounded-md ring-1 ring-inset ring-blue-200 hover:bg-blue-50">
+                  <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.84A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.27l9.344-5.891a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>
+                  Test
+                </button>
+                <button @click.prevent="removeScene(index)" class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-red-700 rounded-md ring-1 ring-inset ring-red-200 hover:bg-red-50">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                  Remove
+                </button>
               </div>
 
               <div class="mb-3">

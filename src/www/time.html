@@ -448,40 +448,36 @@
           </template>
 
           <template x-for="(schedule, index) in settings.schedules" :key="index">
-            <div class="p-3 mb-4 transition-shadow bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md">
-              <div class="flex items-center justify-between gap-3">
-                <button type="button" @click="toggleScheduleExpanded(schedule)"
-                  class="flex items-start justify-between flex-1 w-full min-w-0 gap-3 text-left group">
-                  <div class="flex-1 min-w-0 pr-2">
-                    <div class="font-medium text-gray-900 truncate" x-text="schedule.name || ('Schedule ' + (index + 1))"></div>
-                    <div class="text-sm text-gray-500 truncate" x-text="scheduleOverviewSubtitle(schedule)"></div>
-                    <div class="flex flex-wrap gap-2 mt-2">
-                      <template x-for="chip in scheduleOverviewChips(schedule)" :key="chip.label">
-                        <span
-                          class="inline-flex items-center px-3 py-1 text-[11px] font-medium leading-none rounded-md ring-1 ring-inset"
-                          :class="chip.tone === 'action'
-                            ? 'bg-blue-50 text-blue-700 ring-blue-600/20'
-                            : chip.tone === 'time'
-                              ? 'bg-indigo-50 text-indigo-700 ring-indigo-600/20'
-                              : 'bg-gray-50 text-gray-600 ring-gray-300/70'"
-                          x-text="chip.label"></span>
-                      </template>
-                    </div>
+            <div class="px-3 py-2 mb-2 bg-white rounded-lg ring-1 ring-gray-200">
+              <button type="button" @click="toggleScheduleExpanded(schedule)"
+                class="flex items-center w-full gap-3 text-left group">
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2">
+                    <span class="text-sm font-medium text-gray-900 truncate" x-text="schedule.name || ('Schedule ' + (index + 1))"></span>
+                    <span class="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium rounded ring-1 ring-inset shrink-0"
+                      :class="schedule.enabled ? 'bg-green-50 text-green-700 ring-green-600/20' : 'bg-gray-100 text-gray-500 ring-gray-300/50'"
+                      x-text="schedule.enabled ? 'On' : 'Off'"></span>
                   </div>
-                  <div class="flex items-center gap-2 ml-auto shrink-0">
-                    <div class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-md ring-1 ring-inset"
-                      :class="schedule.enabled ? 'bg-green-50 text-green-700 ring-green-600/20' : 'bg-gray-100 text-gray-600 ring-gray-400/20'">
-                      <span x-text="schedule.enabled ? 'On' : 'Off'"></span>
-                    </div>
-                    <svg class="w-5 h-5 text-gray-400 transition-transform shrink-0 group-hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                      :class="schedule.expanded ? 'rotate-180' : ''">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                    </svg>
+                  <div class="flex flex-wrap gap-1.5 mt-1">
+                    <template x-for="chip in scheduleOverviewChips(schedule)" :key="chip.label">
+                      <span
+                        class="inline-flex items-center px-2 py-0.5 text-[11px] font-medium leading-none rounded ring-1 ring-inset"
+                        :class="chip.tone === 'action'
+                          ? 'bg-blue-50 text-blue-700 ring-blue-600/20'
+                          : chip.tone === 'time'
+                            ? 'bg-indigo-50 text-indigo-700 ring-indigo-600/20'
+                            : 'bg-gray-50 text-gray-600 ring-gray-300/70'"
+                        x-text="chip.label"></span>
+                    </template>
                   </div>
-                </button>
-              </div>
+                </div>
+                <svg class="w-4 h-4 text-gray-400 transition-transform shrink-0 group-hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                  :class="schedule.expanded ? 'rotate-180' : ''">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+              </button>
 
-              <div x-show="schedule.expanded" x-collapse style="display:none;" class="mt-4">
+              <div x-show="schedule.expanded" x-collapse style="display:none;" class="mt-3">
               <div class="flex justify-end mb-3">
                 <button @click.prevent="removeSchedule(index)" class="text-sm text-red-600 hover:text-red-700">Remove</button>
               </div>
@@ -578,40 +574,36 @@
           </template>
 
           <template x-for="(scene, index) in scenes" :key="index">
-            <div class="p-3 mb-4 transition-shadow bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md">
-              <div class="flex items-center justify-between gap-3">
-                <button type="button" @click="toggleSceneExpanded(scene)"
-                  class="flex items-start justify-between flex-1 w-full min-w-0 gap-3 text-left group">
-                  <div class="flex-1 min-w-0 pr-2">
-                    <div class="font-medium text-gray-900 truncate" x-text="scene.name || ('Scene ' + (index + 1))"></div>
-                    <div class="text-sm text-gray-500 truncate" x-text="sceneOverviewSubtitle(scene)"></div>
-                    <div class="flex flex-wrap gap-2 mt-2">
-                      <template x-for="chip in sceneOverviewChips(scene)" :key="chip.label">
-                        <span
-                          class="inline-flex items-center px-3 py-1 text-[11px] font-medium leading-none rounded-md ring-1 ring-inset"
-                          :class="chip.tone === 'mode'
-                            ? 'bg-cyan-50 text-cyan-700 ring-cyan-600/20'
-                            : chip.tone === 'brightness'
-                              ? 'bg-amber-50 text-amber-700 ring-amber-600/20'
-                              : 'bg-gray-50 text-gray-600 ring-gray-300/70'"
-                          x-text="chip.label"></span>
-                      </template>
-                    </div>
+            <div class="px-3 py-2 mb-2 bg-white rounded-lg ring-1 ring-gray-200">
+              <button type="button" @click="toggleSceneExpanded(scene)"
+                class="flex items-center w-full gap-3 text-left group">
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2">
+                    <span class="text-sm font-medium text-gray-900 truncate" x-text="scene.name || ('Scene ' + (index + 1))"></span>
+                    <span class="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium rounded ring-1 ring-inset shrink-0"
+                      :class="scene.display_enabled ? 'bg-green-50 text-green-700 ring-green-600/20' : 'bg-gray-100 text-gray-500 ring-gray-300/50'"
+                      x-text="scene.display_enabled ? 'On' : 'Off'"></span>
                   </div>
-                  <div class="flex items-center gap-2 ml-auto shrink-0">
-                    <div class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-md ring-1 ring-inset"
-                      :class="scene.display_enabled ? 'bg-green-50 text-green-700 ring-green-600/20' : 'bg-gray-100 text-gray-600 ring-gray-400/20'">
-                      <span x-text="scene.display_enabled ? 'On' : 'Off'"></span>
-                    </div>
-                    <svg class="w-5 h-5 text-gray-400 transition-transform shrink-0 group-hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                      :class="scene.expanded ? 'rotate-180' : ''">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                    </svg>
+                  <div class="flex flex-wrap gap-1.5 mt-1">
+                    <template x-for="chip in sceneOverviewChips(scene)" :key="chip.label">
+                      <span
+                        class="inline-flex items-center px-2 py-0.5 text-[11px] font-medium leading-none rounded ring-1 ring-inset"
+                        :class="chip.tone === 'mode'
+                          ? 'bg-cyan-50 text-cyan-700 ring-cyan-600/20'
+                          : chip.tone === 'brightness'
+                            ? 'bg-amber-50 text-amber-700 ring-amber-600/20'
+                            : 'bg-gray-50 text-gray-600 ring-gray-300/70'"
+                        x-text="chip.label"></span>
+                    </template>
                   </div>
-                </button>
-              </div>
+                </div>
+                <svg class="w-4 h-4 text-gray-400 transition-transform shrink-0 group-hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                  :class="scene.expanded ? 'rotate-180' : ''">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+              </button>
 
-              <div x-show="scene.expanded" x-collapse style="display:none;" class="mt-4">
+              <div x-show="scene.expanded" x-collapse style="display:none;" class="mt-3">
               <div class="flex justify-end gap-3 mb-3">
                 <button @click.prevent="testScene(scene)" class="text-sm text-blue-600 hover:text-blue-700">Test Scene</button>
                 <button @click.prevent="removeScene(index)" class="text-sm text-red-600 hover:text-red-700">Remove</button>

@@ -448,22 +448,36 @@
           </template>
 
           <template x-for="(schedule, index) in settings.schedules" :key="index">
-            <div class="p-3 mb-4 border border-gray-200 rounded-lg bg-gray-50">
+            <div class="p-3 mb-4 transition-shadow bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md">
               <div class="flex items-center justify-between gap-3">
                 <button type="button" @click="toggleScheduleExpanded(schedule)"
-                  class="flex items-center flex-1 min-w-0 gap-3 text-left">
-                  <div class="min-w-0">
+                  class="flex items-start justify-between flex-1 w-full min-w-0 gap-3 text-left group">
+                  <div class="flex-1 min-w-0 pr-2">
                     <div class="font-medium text-gray-900 truncate" x-text="schedule.name || ('Schedule ' + (index + 1))"></div>
-                    <div class="text-sm text-gray-500" x-text="scheduleSummary(schedule)"></div>
+                    <div class="text-sm text-gray-500 truncate" x-text="scheduleOverviewSubtitle(schedule)"></div>
+                    <div class="flex flex-wrap gap-2 mt-2">
+                      <template x-for="chip in scheduleOverviewChips(schedule)" :key="chip.label">
+                        <span
+                          class="inline-flex items-center px-3 py-1 text-[11px] font-medium leading-none rounded-md ring-1 ring-inset"
+                          :class="chip.tone === 'action'
+                            ? 'bg-blue-50 text-blue-700 ring-blue-600/20'
+                            : chip.tone === 'time'
+                              ? 'bg-indigo-50 text-indigo-700 ring-indigo-600/20'
+                              : 'bg-gray-50 text-gray-600 ring-gray-300/70'"
+                          x-text="chip.label"></span>
+                      </template>
+                    </div>
                   </div>
-                  <div class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-md ring-1 ring-inset"
-                    :class="schedule.enabled ? 'bg-green-50 text-green-700 ring-green-600/20' : 'bg-gray-100 text-gray-600 ring-gray-400/20'">
-                    <span x-text="schedule.enabled ? 'On' : 'Off'"></span>
+                  <div class="flex items-center gap-2 ml-auto shrink-0">
+                    <div class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-md ring-1 ring-inset"
+                      :class="schedule.enabled ? 'bg-green-50 text-green-700 ring-green-600/20' : 'bg-gray-100 text-gray-600 ring-gray-400/20'">
+                      <span x-text="schedule.enabled ? 'On' : 'Off'"></span>
+                    </div>
+                    <svg class="w-5 h-5 text-gray-400 transition-transform shrink-0 group-hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                      :class="schedule.expanded ? 'rotate-180' : ''">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
                   </div>
-                  <svg class="w-5 h-5 text-gray-500 transition-transform shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                    :class="schedule.expanded ? 'rotate-180' : ''">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                  </svg>
                 </button>
               </div>
 
@@ -564,22 +578,36 @@
           </template>
 
           <template x-for="(scene, index) in scenes" :key="index">
-            <div class="p-3 mb-4 border border-gray-200 rounded-lg bg-gray-50">
+            <div class="p-3 mb-4 transition-shadow bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md">
               <div class="flex items-center justify-between gap-3">
                 <button type="button" @click="toggleSceneExpanded(scene)"
-                  class="flex items-center flex-1 min-w-0 gap-3 text-left">
-                  <div class="min-w-0">
+                  class="flex items-start justify-between flex-1 w-full min-w-0 gap-3 text-left group">
+                  <div class="flex-1 min-w-0 pr-2">
                     <div class="font-medium text-gray-900 truncate" x-text="scene.name || ('Scene ' + (index + 1))"></div>
-                    <div class="text-sm text-gray-500" x-text="sceneSummary(scene)"></div>
+                    <div class="text-sm text-gray-500 truncate" x-text="sceneOverviewSubtitle(scene)"></div>
+                    <div class="flex flex-wrap gap-2 mt-2">
+                      <template x-for="chip in sceneOverviewChips(scene)" :key="chip.label">
+                        <span
+                          class="inline-flex items-center px-3 py-1 text-[11px] font-medium leading-none rounded-md ring-1 ring-inset"
+                          :class="chip.tone === 'mode'
+                            ? 'bg-cyan-50 text-cyan-700 ring-cyan-600/20'
+                            : chip.tone === 'brightness'
+                              ? 'bg-amber-50 text-amber-700 ring-amber-600/20'
+                              : 'bg-gray-50 text-gray-600 ring-gray-300/70'"
+                          x-text="chip.label"></span>
+                      </template>
+                    </div>
                   </div>
-                  <div class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-md ring-1 ring-inset"
-                    :class="scene.display_enabled ? 'bg-green-50 text-green-700 ring-green-600/20' : 'bg-gray-100 text-gray-600 ring-gray-400/20'">
-                    <span x-text="scene.display_enabled ? 'On' : 'Off'"></span>
+                  <div class="flex items-center gap-2 ml-auto shrink-0">
+                    <div class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-md ring-1 ring-inset"
+                      :class="scene.display_enabled ? 'bg-green-50 text-green-700 ring-green-600/20' : 'bg-gray-100 text-gray-600 ring-gray-400/20'">
+                      <span x-text="scene.display_enabled ? 'On' : 'Off'"></span>
+                    </div>
+                    <svg class="w-5 h-5 text-gray-400 transition-transform shrink-0 group-hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                      :class="scene.expanded ? 'rotate-180' : ''">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
                   </div>
-                  <svg class="w-5 h-5 text-gray-500 transition-transform shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                    :class="scene.expanded ? 'rotate-180' : ''">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                  </svg>
                 </button>
               </div>
 
@@ -1496,6 +1524,39 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
             this.saveNoticeText = ''
           }, 2500)
         },
+        sceneBrightnessLabel(scene) {
+          return 'Brightness ' + scene.brightness
+        },
+        sceneOverviewSubtitle(scene) {
+          if (scene.display_mode === 'matrix_rain') {
+            return 'Animated word clock'
+          }
+          if (scene.display_mode === 'color_per_word') {
+            return 'Multi-colour word clock'
+          }
+          if (scene.display_mode === 'single_color') {
+            return 'Single-colour clock'
+          }
+          if (scene.display_mode === 'rainbow') {
+            return 'Rainbow clock'
+          }
+          if (scene.display_mode === 'random') {
+            return 'Random colours'
+          }
+          return 'Clock scene'
+        },
+        sceneOverviewChips(scene) {
+          const chips = [
+            { label: this.modeLabel(scene.display_mode), tone: 'mode' },
+            { label: this.sceneBrightnessLabel(scene), tone: 'brightness' }
+          ]
+          if (scene.display_mode === 'matrix_rain') {
+            chips.push({ label: scene.matrix_rain_speed_ms + ' ms', tone: 'detail' })
+            chips.push({ label: scene.matrix_rain_spawn_rate + '% spawn', tone: 'detail' })
+            chips.push({ label: 'Trail ' + scene.matrix_rain_trail_length, tone: 'detail' })
+          }
+          return chips
+        },
         sceneSummary(scene) {
           const state = scene.display_enabled ? 'On' : 'Off'
           if (scene.display_mode === 'matrix_rain') {
@@ -1653,9 +1714,42 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
         toggleScheduleExpanded(schedule) {
           schedule.expanded = !schedule.expanded
         },
-        scheduleSummary(schedule) {
+        scheduleDaySummary(schedule) {
           const days = Array.isArray(schedule.days) ? schedule.days : []
-          const daySummary = days.length === this.weekdays.length ? 'Every day' : days.map(day => day.charAt(0).toUpperCase() + day.slice(1, 3)).join(', ')
+          if (days.length === this.weekdays.length) {
+            return 'Every day'
+          }
+          if (days.length === 5 && ['mon', 'tue', 'wed', 'thu', 'fri'].every(day => days.includes(day))) {
+            return 'Weekdays'
+          }
+          if (days.length === 2 && days.includes('sat') && days.includes('sun')) {
+            return 'Weekends'
+          }
+          return days.map(day => day.charAt(0).toUpperCase() + day.slice(1, 3)).join(', ')
+        },
+        scheduleActionLabel(schedule) {
+          if (schedule.action.type === 'set_brightness') {
+            return 'Set brightness to ' + schedule.action.value
+          }
+          if (schedule.action.type === 'apply_scene') {
+            return 'Apply scene: ' + (schedule.action.scene || 'Unknown')
+          }
+          if (schedule.action.type === 'display_on') {
+            return 'Turn display on'
+          }
+          return 'Turn display off'
+        },
+        scheduleOverviewSubtitle(schedule) {
+          return this.scheduleActionLabel(schedule)
+        },
+        scheduleOverviewChips(schedule) {
+          return [
+            { label: schedule.time, tone: 'time' },
+            { label: this.scheduleDaySummary(schedule), tone: 'detail' }
+          ]
+        },
+        scheduleSummary(schedule) {
+          const daySummary = this.scheduleDaySummary(schedule)
           if (schedule.action.type === 'set_brightness') {
             return daySummary + ' · ' + schedule.time + ' · Brightness ' + schedule.action.value
           }

@@ -10,6 +10,7 @@
     "WS2812B_PIN": 27,
     "ENABLE_MAX7219": false,
     "ENABLE_HT16K33": false,
-    "ENABLE_WS2812B": true
+    "ENABLE_WS2812B": true,
+    "HOSTNAME": "wordclock"
   }
   

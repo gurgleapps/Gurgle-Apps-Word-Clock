@@ -65,7 +65,7 @@ class GurgleAppsWebserver:
         }
         return status_names.get(status, str(status))
 
-    async def connect_wifi(self, ssid, password):
+    async def connect_wifi(self, ssid, password, hostname=None):
         if self.wifi_connecting:
             return False
 
@@ -85,6 +85,8 @@ class GurgleAppsWebserver:
                 print("Not connected to Wi-Fi.")
 
             # Activate Wi-Fi mode and connect
+            if hostname:
+                network.hostname(hostname)
             self.wlan_sta.active(True)
             await asyncio.sleep(1)
             self.wlan_sta.connect(ssid, password)

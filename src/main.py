@@ -1387,8 +1387,9 @@ async def connect_to_wifi():
     if wifi_ssid:
         # Password could be blank for open networks
         wifi_password = config.get('WIFI_PASSWORD', None)
+        hostname = config.get('HOSTNAME', 'wordclock')
         print("Connecting to Wi-Fi")
-        await server.connect_wifi(wifi_ssid, wifi_password)
+        await server.connect_wifi(wifi_ssid, wifi_password, hostname)
         if server.is_wifi_connected():
             print(f"Connected to Wi-Fi ip: {server.get_wifi_ip_address()}")
             await show_string(server.get_wifi_ip_address())

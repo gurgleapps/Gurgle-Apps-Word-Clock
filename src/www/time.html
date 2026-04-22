@@ -362,6 +362,20 @@
             <option>#ff00ff</option>
             <option>#ff6600</option>
           </datalist>
+          <div class="pt-4 mt-4 mb-4 border-t border-gray-200">
+            <div class="mb-3">
+              <label for="seasonalTimeRegion" class="block text-sm font-medium leading-6 text-gray-900">Regional Clock Changes</label>
+              <select x-model="settings.seasonal_time_region" id="seasonalTimeRegion"
+                class="mt-2 block w-full bg-gray-50 rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 sm:text-sm sm:leading-6">
+                <template x-for="option in seasonalTimeRegionOptions" :key="option.value">
+                  <option :value="option.value" x-text="option.label"></option>
+                </template>
+              </select>
+            </div>
+            <div class="text-sm leading-5 text-gray-500">
+              Uses the proper clock-change dates for the selected region. Canada varies by province, and Australia Eastern here means NSW, VIC, ACT, and Tasmania only. Need another region? Contact us or open a PR.
+            </div>
+          </div>
           <div class="flex justify-center mt-1 mb-2">
             <button @click.prevent="update()"
               class="px-4 py-2 font-semibold text-white bg-green-600 rounded focus:outline-none hover:bg-green-700">Update
@@ -390,6 +404,26 @@
               </div>
             </div>
           </div>
+          <div class="pt-4 mt-4 border-t border-gray-200">
+            <div class="p-3 rounded-lg bg-gray-50 ring-1 ring-gray-200">
+              <div class="inline-flex items-center w-full pb-2 mb-3 border-b border-gray-200 gap-x-3">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
+                  <path fill-rule="evenodd" d="M12 2.25a9.75 9.75 0 1 0 0 19.5 9.75 9.75 0 0 0 0-19.5ZM8.47 8.47a.75.75 0 0 1 1.06 0L12 10.94l2.47-2.47a.75.75 0 1 1 1.06 1.06L13.06 12l2.47 2.47a.75.75 0 0 1-1.06 1.06L12 13.06l-2.47 2.47a.75.75 0 0 1-1.06-1.06L10.94 12 8.47 9.53a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" />
+                </svg>
+                <span class="text-sm font-medium text-gray-900">Recovery</span>
+              </div>
+              <div class="flex items-center justify-between gap-3">
+                <span class="flex flex-col flex-grow">
+                  <span class="text-sm font-medium leading-6 text-gray-900">Reset Clock Settings</span>
+                  <span class="text-sm text-gray-500">Restore clock defaults without changing Wi-Fi, scenes, or schedules.</span>
+                </span>
+                <button @click.prevent="resetClockSettings()"
+                  class="px-3 py-2 text-sm font-semibold text-red-700 bg-white border border-red-200 rounded focus:outline-none hover:bg-red-50">
+                  Reset
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
         <div x-show="selectedOption=='Schedule'" x-collapse class="p-3 my-4 rounded-lg ring-1 ring-gray-100">
           <div class="flex flex-wrap items-start justify-between gap-3 mb-4">
@@ -399,12 +433,14 @@
             </div>
             <div class="flex w-full gap-2">
               <button @click.prevent="addSchedule()"
-                class="flex-1 px-4 py-2 font-semibold text-white bg-blue-600 rounded focus:outline-none hover:bg-blue-700">
-                Add Schedule
+                class="inline-flex items-center justify-center flex-1 gap-2 px-4 py-2 text-sm font-semibold text-blue-700 bg-white rounded-lg ring-1 ring-inset ring-blue-200 hover:bg-blue-50 focus:outline-none">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                Add
               </button>
               <button @click.prevent="updateSchedules()"
-                class="flex-1 px-4 py-2 font-semibold text-white bg-green-600 rounded focus:outline-none hover:bg-green-700">
-                Save Schedules
+                class="inline-flex items-center justify-center flex-1 gap-2 px-4 py-2 text-sm font-semibold text-white bg-green-600 rounded-lg hover:bg-green-700 focus:outline-none">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                Save
               </button>
             </div>
           </div>
@@ -414,28 +450,39 @@
           </template>
 
           <template x-for="(schedule, index) in settings.schedules" :key="index">
-            <div class="p-3 mb-4 border border-gray-200 rounded-lg bg-gray-50">
-              <div class="flex items-center justify-between gap-3">
-                <button type="button" @click="toggleScheduleExpanded(schedule)"
-                  class="flex items-center flex-1 min-w-0 gap-3 text-left">
-                  <div class="min-w-0">
-                    <div class="font-medium text-gray-900 truncate" x-text="schedule.name || ('Schedule ' + (index + 1))"></div>
-                    <div class="text-sm text-gray-500" x-text="scheduleSummary(schedule)"></div>
+            <div class="px-3 py-2 mb-2 rounded-lg bg-gray-50 ring-1 ring-gray-200">
+              <button type="button" @click="toggleScheduleExpanded(schedule)"
+                class="flex items-center w-full gap-3 text-left group">
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm font-medium text-gray-900 truncate" x-text="schedule.name || ('Schedule ' + (index + 1))"></div>
+                  <div class="flex flex-wrap gap-1.5 mt-1">
+                    <template x-for="chip in scheduleOverviewChips(schedule)" :key="chip.label">
+                      <span
+                        class="inline-flex items-center px-2 py-1 text-[10px] font-medium leading-none rounded ring-1 ring-inset"
+                        :class="chip.tone === 'action'
+                          ? 'bg-blue-50 text-blue-700 ring-blue-600/20'
+                          : chip.tone === 'time'
+                            ? 'bg-indigo-50 text-indigo-700 ring-indigo-600/20'
+                            : 'bg-gray-50 text-gray-600 ring-gray-300/70'"
+                        x-text="chip.label"></span>
+                    </template>
                   </div>
-                  <div class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-md ring-1 ring-inset"
-                    :class="schedule.enabled ? 'bg-green-50 text-green-700 ring-green-600/20' : 'bg-gray-100 text-gray-600 ring-gray-400/20'">
-                    <span x-text="schedule.enabled ? 'On' : 'Off'"></span>
-                  </div>
-                  <svg class="w-5 h-5 text-gray-500 transition-transform shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                    :class="schedule.expanded ? 'rotate-180' : ''">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                  </svg>
-                </button>
-              </div>
+                </div>
+                <span class="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium rounded ring-1 ring-inset shrink-0"
+                  :class="schedule.enabled ? 'bg-green-50 text-green-700 ring-green-600/20' : 'bg-gray-100 text-gray-500 ring-gray-300/50'"
+                  x-text="schedule.enabled ? 'On' : 'Off'"></span>
+                <svg class="w-4 h-4 text-gray-400 transition-transform shrink-0 group-hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                  :class="schedule.expanded ? 'rotate-180' : ''">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+              </button>
 
-              <div x-show="schedule.expanded" x-collapse style="display:none;" class="mt-4">
+              <div x-show="schedule.expanded" x-collapse style="display:none;" class="mt-3">
               <div class="flex justify-end mb-3">
-                <button @click.prevent="removeSchedule(index)" class="text-sm text-red-600 hover:text-red-700">Remove</button>
+                <button @click.prevent="removeSchedule(index)" class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-red-700 rounded-md ring-1 ring-inset ring-red-200 hover:bg-red-50">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                  Remove
+                </button>
               </div>
 
               <div class="mb-3">
@@ -515,12 +562,14 @@
             </div>
             <div class="flex w-full gap-2">
               <button @click.prevent="addScene()"
-                class="flex-1 px-4 py-2 font-semibold text-white bg-blue-600 rounded focus:outline-none hover:bg-blue-700">
-                Add Scene
+                class="inline-flex items-center justify-center flex-1 gap-2 px-4 py-2 text-sm font-semibold text-blue-700 bg-white rounded-lg ring-1 ring-inset ring-blue-200 hover:bg-blue-50 focus:outline-none">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                Add
               </button>
               <button @click.prevent="updateScenes()"
-                class="flex-1 px-4 py-2 font-semibold text-white bg-green-600 rounded focus:outline-none hover:bg-green-700">
-                Save Scenes
+                class="inline-flex items-center justify-center flex-1 gap-2 px-4 py-2 text-sm font-semibold text-white bg-green-600 rounded-lg hover:bg-green-700 focus:outline-none">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                Save
               </button>
             </div>
           </div>
@@ -530,29 +579,43 @@
           </template>
 
           <template x-for="(scene, index) in scenes" :key="index">
-            <div class="p-3 mb-4 border border-gray-200 rounded-lg bg-gray-50">
-              <div class="flex items-center justify-between gap-3">
-                <button type="button" @click="toggleSceneExpanded(scene)"
-                  class="flex items-center flex-1 min-w-0 gap-3 text-left">
-                  <div class="min-w-0">
-                    <div class="font-medium text-gray-900 truncate" x-text="scene.name || ('Scene ' + (index + 1))"></div>
-                    <div class="text-sm text-gray-500" x-text="sceneSummary(scene)"></div>
+            <div class="px-3 py-2 mb-2 rounded-lg bg-gray-50 ring-1 ring-gray-200">
+              <button type="button" @click="toggleSceneExpanded(scene)"
+                class="flex items-center w-full gap-3 text-left group">
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm font-medium text-gray-900 truncate" x-text="scene.name || ('Scene ' + (index + 1))"></div>
+                  <div class="flex flex-wrap gap-1.5 mt-1">
+                    <template x-for="chip in sceneOverviewChips(scene)" :key="chip.label">
+                      <span
+                        class="inline-flex items-center px-2 py-1 text-[10px] font-medium leading-none rounded ring-1 ring-inset"
+                        :class="chip.tone === 'mode'
+                          ? 'bg-cyan-50 text-cyan-700 ring-cyan-600/20'
+                          : chip.tone === 'brightness'
+                            ? 'bg-amber-50 text-amber-700 ring-amber-600/20'
+                            : 'bg-gray-50 text-gray-600 ring-gray-300/70'"
+                        x-text="chip.label"></span>
+                    </template>
                   </div>
-                  <div class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-md ring-1 ring-inset"
-                    :class="scene.display_enabled ? 'bg-green-50 text-green-700 ring-green-600/20' : 'bg-gray-100 text-gray-600 ring-gray-400/20'">
-                    <span x-text="scene.display_enabled ? 'On' : 'Off'"></span>
-                  </div>
-                  <svg class="w-5 h-5 text-gray-500 transition-transform shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                    :class="scene.expanded ? 'rotate-180' : ''">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                  </svg>
-                </button>
-              </div>
+                </div>
+                <span class="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium rounded ring-1 ring-inset shrink-0"
+                  :class="scene.display_enabled ? 'bg-green-50 text-green-700 ring-green-600/20' : 'bg-gray-100 text-gray-500 ring-gray-300/50'"
+                  x-text="scene.display_enabled ? 'On' : 'Off'"></span>
+                <svg class="w-4 h-4 text-gray-400 transition-transform shrink-0 group-hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                  :class="scene.expanded ? 'rotate-180' : ''">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+              </button>
 
-              <div x-show="scene.expanded" x-collapse style="display:none;" class="mt-4">
-              <div class="flex justify-end gap-3 mb-3">
-                <button @click.prevent="testScene(scene)" class="text-sm text-blue-600 hover:text-blue-700">Test Scene</button>
-                <button @click.prevent="removeScene(index)" class="text-sm text-red-600 hover:text-red-700">Remove</button>
+              <div x-show="scene.expanded" x-collapse style="display:none;" class="mt-3">
+              <div class="flex justify-end gap-2 mb-3">
+                <button @click.prevent="testScene(scene)" class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-blue-700 rounded-md ring-1 ring-inset ring-blue-200 hover:bg-blue-50">
+                  <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.84A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.27l9.344-5.891a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>
+                  Test
+                </button>
+                <button @click.prevent="removeScene(index)" class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-red-700 rounded-md ring-1 ring-inset ring-red-200 hover:bg-red-50">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                  Remove
+                </button>
               </div>
 
               <div class="mb-3">
@@ -711,6 +774,17 @@
             </div>
           </template>
 
+          <div class="pt-4 mt-2 border-t border-gray-200">
+            <div class="mb-3">
+              <div class="text-sm font-medium leading-6 text-gray-900">Recovery</div>
+              <div class="text-sm text-gray-500">Restore the shipped scene set if you want to undo scene changes.</div>
+            </div>
+            <button @click.prevent="resetDefaultScenes()"
+              class="w-full px-4 py-2 text-sm font-medium text-red-700 bg-white border border-red-200 rounded focus:outline-none hover:bg-red-50">
+              Reset Default Scenes
+            </button>
+          </div>
+
         </div>
       </div>
 
@@ -730,6 +804,14 @@
         <div class="flex items-center justify-between mt-2 space-x-4">
           <div>CPU Temp:</div>
           <div x-text="settings.cpu_temp==0 ? 'n/a' : settings.cpu_temp.toFixed(2)+'°C'">n/a</div>
+        </div>
+        <div class="flex items-center justify-between mt-1 space-x-4">
+          <div>Free Memory:</div>
+          <div x-text="formatBytes(settings.mem_free)">n/a</div>
+        </div>
+        <div class="flex items-center justify-between mt-1 space-x-4">
+          <div>Allocated Memory:</div>
+          <div x-text="formatBytes(settings.mem_alloc)">n/a</div>
         </div>
         <div class="flex items-center justify-between mt-1 space-x-4">
           <div>Current Scene:</div>
@@ -938,6 +1020,9 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
           'rainbow': [255, 0, 0],
           'wifi_connected': false,
           'cpu_temp': 0,
+          'mem_free': null,
+          'mem_alloc': null,
+          'seasonal_time_region': 'off',
           'disable_access_point': false,
           'scenes': {},
           'schedules': [],
@@ -1020,6 +1105,16 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
           { value: 'sat', label: 'Sat' },
           { value: 'sun', label: 'Sun' }
         ],
+        seasonalTimeRegionOptions: [
+          { value: 'off', label: 'Off' },
+          { value: 'uk', label: 'UK' },
+          { value: 'central_europe', label: 'Central Europe (CET/CEST)' },
+          { value: 'us_eastern', label: 'US / Canada Eastern' },
+          { value: 'us_central', label: 'US / Canada Central' },
+          { value: 'us_mountain', label: 'US / Canada Mountain' },
+          { value: 'us_pacific', label: 'US / Canada Pacific' },
+          { value: 'australia_eastern', label: 'Australia Eastern (NSW / VIC / ACT / TAS)' }
+        ],
         //selectedOption: 'Wi-Fi',
         showWarningModal: false,
         init() {
@@ -1066,6 +1161,18 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
           this.$nextTick(() => {
             setTimeout(() => this.checkTabOverflow(), 0)
           })
+        },
+        formatBytes(value) {
+          if (value === null || value === undefined || value < 0) {
+            return 'n/a'
+          }
+          if (value < 1024) {
+            return value + ' B'
+          }
+          if (value < 1024 * 1024) {
+            return (value / 1024).toFixed(1) + ' KB'
+          }
+          return (value / (1024 * 1024)).toFixed(2) + ' MB'
         },
         measureTabs() {
           const wrapper = this.$refs.tabNav
@@ -1303,6 +1410,25 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
           }
           this.showNotice('Failed to update settings', 'error')
         },
+        async resetClockSettings() {
+          if (!confirm('Reset clock settings to defaults? This will not change Wi-Fi, scenes, or schedules.')) {
+            return
+          }
+          const response = await fetch(this.path + '/reset-clock-settings', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          })
+          if (response.ok) {
+            const json = await response.json()
+            this.applySettings(json.settings)
+            this.timeChanged = false
+            this.showNotice('Clock settings reset')
+            return
+          }
+          this.showNotice('Failed to reset clock settings', 'error')
+        },
         normaliseScene(name, scene = {}, expanded = false) {
           const nextScene = {
             name: typeof name === 'string' ? name : 'scene',
@@ -1398,6 +1524,39 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
           this.saveNoticeTimeout = setTimeout(() => {
             this.saveNoticeText = ''
           }, 2500)
+        },
+        sceneBrightnessLabel(scene) {
+          return 'Brightness ' + scene.brightness
+        },
+        sceneOverviewSubtitle(scene) {
+          if (scene.display_mode === 'matrix_rain') {
+            return 'Animated word clock'
+          }
+          if (scene.display_mode === 'color_per_word') {
+            return 'Multi-colour word clock'
+          }
+          if (scene.display_mode === 'single_color') {
+            return 'Single-colour clock'
+          }
+          if (scene.display_mode === 'rainbow') {
+            return 'Rainbow clock'
+          }
+          if (scene.display_mode === 'random') {
+            return 'Random colours'
+          }
+          return 'Clock scene'
+        },
+        sceneOverviewChips(scene) {
+          const chips = [
+            { label: this.modeLabel(scene.display_mode), tone: 'mode' },
+            { label: this.sceneBrightnessLabel(scene), tone: 'brightness' }
+          ]
+          if (scene.display_mode === 'matrix_rain') {
+            chips.push({ label: scene.matrix_rain_speed_ms + ' ms', tone: 'detail' })
+            chips.push({ label: scene.matrix_rain_spawn_rate + '% spawn', tone: 'detail' })
+            chips.push({ label: 'Trail ' + scene.matrix_rain_trail_length, tone: 'detail' })
+          }
+          return chips
         },
         sceneSummary(scene) {
           const state = scene.display_enabled ? 'On' : 'Off'
@@ -1504,6 +1663,24 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
           }
           this.showNotice('Failed to save scenes', 'error')
         },
+        async resetDefaultScenes() {
+          if (!confirm('Reset scenes to the shipped defaults? This will replace your current scenes.')) {
+            return
+          }
+          const response = await fetch(this.path + '/reset-default-scenes', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          })
+          if (response.ok) {
+            const json = await response.json()
+            this.applySettings(json.settings)
+            this.showNotice('Scenes reset to defaults')
+            return
+          }
+          this.showNotice('Failed to reset scenes', 'error')
+        },
         normaliseSchedule(schedule = {}) {
           const nextSchedule = {
             expanded: !!schedule.expanded,
@@ -1538,9 +1715,42 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
         toggleScheduleExpanded(schedule) {
           schedule.expanded = !schedule.expanded
         },
-        scheduleSummary(schedule) {
+        scheduleDaySummary(schedule) {
           const days = Array.isArray(schedule.days) ? schedule.days : []
-          const daySummary = days.length === this.weekdays.length ? 'Every day' : days.map(day => day.charAt(0).toUpperCase() + day.slice(1, 3)).join(', ')
+          if (days.length === this.weekdays.length) {
+            return 'Every day'
+          }
+          if (days.length === 5 && ['mon', 'tue', 'wed', 'thu', 'fri'].every(day => days.includes(day))) {
+            return 'Weekdays'
+          }
+          if (days.length === 2 && days.includes('sat') && days.includes('sun')) {
+            return 'Weekends'
+          }
+          return days.map(day => day.charAt(0).toUpperCase() + day.slice(1, 3)).join(', ')
+        },
+        scheduleActionLabel(schedule) {
+          if (schedule.action.type === 'set_brightness') {
+            return 'Set brightness to ' + schedule.action.value
+          }
+          if (schedule.action.type === 'apply_scene') {
+            return 'Apply scene: ' + (schedule.action.scene || 'Unknown')
+          }
+          if (schedule.action.type === 'display_on') {
+            return 'Turn display on'
+          }
+          return 'Turn display off'
+        },
+        scheduleOverviewSubtitle(schedule) {
+          return this.scheduleActionLabel(schedule)
+        },
+        scheduleOverviewChips(schedule) {
+          return [
+            { label: schedule.time, tone: 'time' },
+            { label: this.scheduleDaySummary(schedule), tone: 'detail' }
+          ]
+        },
+        scheduleSummary(schedule) {
+          const daySummary = this.scheduleDaySummary(schedule)
           if (schedule.action.type === 'set_brightness') {
             return daySummary + ' · ' + schedule.time + ' · Brightness ' + schedule.action.value
           }

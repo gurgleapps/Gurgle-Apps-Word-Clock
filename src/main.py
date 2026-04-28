@@ -1429,6 +1429,7 @@ async def connect_to_wifi():
 async def animation_loop():
     while True:
         if app_state.display_enabled and is_animated_display_mode(app_state.current_display_mode):
+            gc.collect()
             run_animation_frame(app_state.current_display_mode)
             await asyncio.sleep_ms(get_animation_frame_delay_ms(app_state.current_display_mode))
             continue

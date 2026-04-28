@@ -57,4 +57,6 @@ class PioNeoMatrix:
             self.buf[i] = v
 
     def write(self):
+        irq_state = machine.disable_irq()
         self.sm.put(self.buf, 8)
+        machine.enable_irq(irq_state)

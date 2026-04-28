@@ -124,6 +124,15 @@
         "display_enabled": true,
         "display_mode": "rainbow"
     },
+    "rainbow_cycle": {
+        "brightness": 3,
+        "display_enabled": true,
+        "display_mode": "rainbow_cycle",
+        "rainbow_cycle_style": "pixel",
+        "rainbow_cycle_speed_ms": 120,
+        "rainbow_cycle_spread": 4,
+        "rainbow_cycle_step": 1
+    },
     "romance": {
         "brightness": 1,
         "display_enabled": true,

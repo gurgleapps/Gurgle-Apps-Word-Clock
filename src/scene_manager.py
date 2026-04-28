@@ -45,6 +45,11 @@ def apply_scene(
     log_scene,
     max_brightness,
     reset_matrix_rain_state,
+    rainbow_cycle_styles,
+    rainbow_cycle_speed_limits,
+    rainbow_cycle_spread_limits,
+    rainbow_cycle_step_limits,
+    reset_rainbow_cycle_state,
     is_display_enabled,
     time_to_matrix,
     clear_matrix,
@@ -118,6 +123,44 @@ def apply_scene(
             else:
                 log_scene("Invalid matrix_rain_time_brightness_cap in scene")
         reset_matrix_rain_state()
+
+    if next_mode == 'rainbow_cycle':
+        if 'rainbow_cycle_style' in scene:
+            if scene['rainbow_cycle_style'] in rainbow_cycle_styles:
+                app_state.rainbow_cycle_style = scene['rainbow_cycle_style']
+            else:
+                log_scene("Invalid rainbow_cycle_style in scene")
+        if 'rainbow_cycle_speed_ms' in scene:
+            min_speed, max_speed = rainbow_cycle_speed_limits
+            if (
+                isinstance(scene['rainbow_cycle_speed_ms'], int) and
+                not isinstance(scene['rainbow_cycle_speed_ms'], bool) and
+                min_speed <= scene['rainbow_cycle_speed_ms'] <= max_speed
+            ):
+                app_state.rainbow_cycle_speed_ms = scene['rainbow_cycle_speed_ms']
+            else:
+                log_scene("Invalid rainbow_cycle_speed_ms in scene")
+        if 'rainbow_cycle_spread' in scene:
+            min_spread, max_spread = rainbow_cycle_spread_limits
+            if (
+                isinstance(scene['rainbow_cycle_spread'], int) and
+                not isinstance(scene['rainbow_cycle_spread'], bool) and
+                min_spread <= scene['rainbow_cycle_spread'] <= max_spread
+            ):
+                app_state.rainbow_cycle_spread = scene['rainbow_cycle_spread']
+            else:
+                log_scene("Invalid rainbow_cycle_spread in scene")
+        if 'rainbow_cycle_step' in scene:
+            min_step, max_step = rainbow_cycle_step_limits
+            if (
+                isinstance(scene['rainbow_cycle_step'], int) and
+                not isinstance(scene['rainbow_cycle_step'], bool) and
+                min_step <= scene['rainbow_cycle_step'] <= max_step
+            ):
+                app_state.rainbow_cycle_step = scene['rainbow_cycle_step']
+            else:
+                log_scene("Invalid rainbow_cycle_step in scene")
+        reset_rainbow_cycle_state()
 
     current_scene_name = scene_name if scene_name is not None else fallback_name
 

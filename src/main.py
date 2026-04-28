@@ -17,6 +17,7 @@ import socket
 import scene_manager
 import schedule_manager
 import time_sync
+import rainbow_cycle
 from matrix_rain import (
     MATRIX_RAIN_DEFAULT_AFFECT_TIME,
     MATRIX_RAIN_DEFAULT_BACKGROUND_COLOR,
@@ -31,6 +32,20 @@ from matrix_rain import (
     MatrixRainState,
     render as render_matrix_rain_frame,
 )
+from rainbow_cycle import (
+    RAINBOW_CYCLE_DEFAULT_SPEED_MS,
+    RAINBOW_CYCLE_DEFAULT_SPREAD,
+    RAINBOW_CYCLE_DEFAULT_STEP,
+    RAINBOW_CYCLE_DEFAULT_STYLE,
+    RAINBOW_CYCLE_MAX_SPEED_MS,
+    RAINBOW_CYCLE_MAX_SPREAD,
+    RAINBOW_CYCLE_MAX_STEP,
+    RAINBOW_CYCLE_MIN_SPEED_MS,
+    RAINBOW_CYCLE_MIN_SPREAD,
+    RAINBOW_CYCLE_MIN_STEP,
+    RainbowCycleState,
+    render as render_rainbow_cycle_frame,
+)
 
 config_file = 'config.json'
 scenes_file = 'scenes.json'
@@ -39,6 +54,7 @@ schedules_file = 'schedules.json'
 
 # Display modes
 DISPLAY_MODE_RAINBOW = 'rainbow'
+DISPLAY_MODE_RAINBOW_CYCLE = 'rainbow_cycle'
 DISPLAY_MODE_SINGLE_COLOR = 'single_color'
 DISPLAY_MODE_COLOR_PER_WORD = 'color_per_word'
 DISPLAY_MODE_RANDOM = 'random'
@@ -59,6 +75,7 @@ DISPLAY_MODE_REFRESH_MS = {
 
 SCENE_MODE_FIELDS = {
     DISPLAY_MODE_RAINBOW: (),
+    DISPLAY_MODE_RAINBOW_CYCLE: (),
     DISPLAY_MODE_SINGLE_COLOR: ('single_color',),
     DISPLAY_MODE_COLOR_PER_WORD: ('minute_color', 'hour_color', 'past_to_color'),
     DISPLAY_MODE_RANDOM: (),
@@ -78,6 +95,11 @@ class AppState:
         self.current_scene_name = None
         self.last_display_minute_key = None
         self.last_dynamic_display_update_ms = None
+        self.rainbow_cycle_style = RAINBOW_CYCLE_DEFAULT_STYLE
+        self.rainbow_cycle_speed_ms = RAINBOW_CYCLE_DEFAULT_SPEED_MS
+        self.rainbow_cycle_spread = RAINBOW_CYCLE_DEFAULT_SPREAD
+        self.rainbow_cycle_step = RAINBOW_CYCLE_DEFAULT_STEP
+        self.rainbow_cycle_state = RainbowCycleState()
         self.matrix_rain_minute_color = MATRIX_RAIN_DEFAULT_MINUTE_COLOR
         self.matrix_rain_hour_color = MATRIX_RAIN_DEFAULT_HOUR_COLOR
         self.matrix_rain_past_to_color = MATRIX_RAIN_DEFAULT_PAST_TO_COLOR
@@ -239,10 +261,167 @@ def normalise_color(value):
         return None
     colour = []
     for channel in value:
-        if not isinstance(channel, int) or channel < 0 or channel > 255:
+        if isinstance(channel, bool) or not isinstance(channel, int) or channel < 0 or channel > 255:
             return None
         colour.append(channel)
     return tuple(colour)
+
+def parse_bool_field(data, field_name, default_value=None):
+    if field_name not in data:
+        return default_value, None
+    value = data[field_name]
+    if isinstance(value, bool):
+        return value, None
+    return None, field_name + " must be a boolean"
+
+def parse_int_field(data, field_name, min_value, max_value, default_value=None):
+    if field_name not in data:
+        return default_value, None
+    try:
+        if isinstance(data[field_name], bool):
+            return None, field_name + " must be an integer"
+        value = int(data[field_name])
+    except (TypeError, ValueError):
+        return None, field_name + " must be an integer"
+    if value < min_value or value > max_value:
+        return None, field_name + " must be between " + str(min_value) + " and " + str(max_value)
+    return value, None
+
+def parse_color_field(data, field_name, default_value=None):
+    if field_name not in data:
+        return default_value, None
+    color = normalise_color(data[field_name])
+    if color is None:
+        return None, field_name + " must be an RGB array with values from 0 to 255"
+    return color, None
+
+def parse_time_array_field(data, field_name):
+    value = data.get(field_name)
+    if not isinstance(value, (list, tuple)) or len(value) < 5:
+        return None, field_name + " must be a time array"
+    try:
+        parsed_time = (
+            int(value[0]),
+            int(value[1]),
+            int(value[2]),
+            int(value[3]),
+            int(value[4])
+        )
+    except (TypeError, ValueError):
+        return None, field_name + " must contain integer time values"
+    year, month, day, hour, minute = parsed_time
+    if year < 2020 or year > 2099:
+        return None, field_name + " year must be between 2020 and 2099"
+    if month < 1 or month > 12:
+        return None, field_name + " month must be between 1 and 12"
+    if day < 1 or day > 31:
+        return None, field_name + " day must be between 1 and 31"
+    if hour < 0 or hour > 23:
+        return None, field_name + " hour must be between 0 and 23"
+    if minute < 0 or minute > 59:
+        return None, field_name + " minute must be between 0 and 59"
+    return parsed_time, None
+
+def parse_clock_settings_payload(data):
+    if not isinstance(data, dict):
+        return None, "Settings payload must be an object"
+
+    brightness, error = parse_int_field(data, 'brightness', 0, MAX_BRIGHTNESS)
+    if error:
+        return None, error
+    if brightness is None:
+        return None, "brightness is required"
+
+    display_mode = data.get('display_mode')
+    if display_mode is None:
+        return None, "display_mode is required"
+    if display_mode not in display_modes:
+        return None, "display_mode is not supported"
+
+    schedules_enabled_value, error = parse_bool_field(data, 'schedules_enabled', False)
+    if error:
+        return None, error
+
+    seasonal_region = time_sync.normalise_seasonal_time_region(
+        data.get('seasonal_time_region', time_sync.SEASONAL_TIME_REGION_OFF)
+    )
+
+    parsed = {
+        'brightness': brightness,
+        'display_mode': display_mode,
+        'schedules_enabled': schedules_enabled_value,
+        'seasonal_time_region': seasonal_region
+    }
+
+    color_fields = (
+        ('single_color', single_color),
+        ('minute_color', minute_color),
+        ('hour_color', hour_color),
+        ('past_to_color', past_to_color),
+        ('matrix_rain_minute_color', app_state.matrix_rain_minute_color),
+        ('matrix_rain_hour_color', app_state.matrix_rain_hour_color),
+        ('matrix_rain_past_to_color', app_state.matrix_rain_past_to_color),
+        ('matrix_rain_background_color', app_state.matrix_rain_background_color)
+    )
+    for field_name, default_value in color_fields:
+        value, error = parse_color_field(data, field_name, default_value)
+        if error:
+            return None, error
+        parsed[field_name] = value
+
+    bool_fields = (
+        ('matrix_rain_white_head', MATRIX_RAIN_DEFAULT_WHITE_HEAD),
+        ('matrix_rain_affect_time', MATRIX_RAIN_DEFAULT_AFFECT_TIME),
+        ('timeChanged', False)
+    )
+    for field_name, default_value in bool_fields:
+        value, error = parse_bool_field(data, field_name, default_value)
+        if error:
+            return None, error
+        parsed[field_name] = value
+
+    ranged_int_fields = (
+        ('matrix_rain_speed_ms', 40, 400, MATRIX_RAIN_DEFAULT_SPEED_MS),
+        ('matrix_rain_spawn_rate', 0, 100, MATRIX_RAIN_DEFAULT_SPAWN_RATE),
+        ('matrix_rain_trail_length', 1, 8, MATRIX_RAIN_DEFAULT_TRAIL_LENGTH),
+        ('matrix_rain_time_brightness_cap', 0, MAX_BRIGHTNESS, MATRIX_RAIN_DEFAULT_TIME_BRIGHTNESS_CAP),
+        (
+            'rainbow_cycle_speed_ms',
+            RAINBOW_CYCLE_MIN_SPEED_MS,
+            RAINBOW_CYCLE_MAX_SPEED_MS,
+            RAINBOW_CYCLE_DEFAULT_SPEED_MS
+        ),
+        (
+            'rainbow_cycle_spread',
+            RAINBOW_CYCLE_MIN_SPREAD,
+            RAINBOW_CYCLE_MAX_SPREAD,
+            RAINBOW_CYCLE_DEFAULT_SPREAD
+        ),
+        (
+            'rainbow_cycle_step',
+            RAINBOW_CYCLE_MIN_STEP,
+            RAINBOW_CYCLE_MAX_STEP,
+            RAINBOW_CYCLE_DEFAULT_STEP
+        )
+    )
+    for field_name, min_value, max_value, default_value in ranged_int_fields:
+        value, error = parse_int_field(data, field_name, min_value, max_value, default_value)
+        if error:
+            return None, error
+        parsed[field_name] = value
+
+    rainbow_cycle_style = data.get('rainbow_cycle_style', RAINBOW_CYCLE_DEFAULT_STYLE)
+    if rainbow_cycle_style not in rainbow_cycle.RAINBOW_CYCLE_STYLES:
+        return None, "rainbow_cycle_style is not supported"
+    parsed['rainbow_cycle_style'] = rainbow_cycle_style
+
+    if parsed['timeChanged']:
+        new_time, error = parse_time_array_field(data, 'newTime')
+        if error:
+            return None, error
+        parsed['newTime'] = new_time
+
+    return parsed, None
 
 def clear_matrix():
     blank = [0] * 8
@@ -254,7 +433,7 @@ def clear_matrix():
         ws2812b_matrix.clear()
 
 def is_animated_display_mode(mode):
-    return mode == DISPLAY_MODE_MATRIX_RAIN
+    return mode == DISPLAY_MODE_MATRIX_RAIN or mode == DISPLAY_MODE_RAINBOW_CYCLE
 
 def reset_matrix_rain_state():
     app_state.matrix_rain_state.reset(app_state.matrix_rain_trail_length)
@@ -262,9 +441,13 @@ def reset_matrix_rain_state():
 def reset_matrix_rain_time_overlay():
     app_state.matrix_rain_state.reset_time_overlay()
 
+def reset_rainbow_cycle_state():
+    app_state.rainbow_cycle_state.reset()
+
 def reset_display_refresh_state():
     app_state.last_display_minute_key = None
     app_state.last_dynamic_display_update_ms = None
+    reset_rainbow_cycle_state()
     reset_matrix_rain_state()
     reset_matrix_rain_time_overlay()
 
@@ -293,14 +476,40 @@ def render_matrix_rain():
         matrix_mode=DISPLAY_MODE_MATRIX_RAIN
     )
 
+def advance_rainbow_cycle_state():
+    app_state.rainbow_cycle_state.advance(app_state.rainbow_cycle_step)
+
+def render_rainbow_cycle(word=None):
+    global colour_per_word_array
+    if word is None:
+        word, colour_per_word_array, _ = build_time_word_data()
+    render_rainbow_cycle_frame(
+        app_state.rainbow_cycle_state,
+        char=word,
+        time_color_array=colour_per_word_array,
+        style=app_state.rainbow_cycle_style,
+        spread=app_state.rainbow_cycle_spread,
+        brightness=app_state.brightness,
+        config=config,
+        ws2812b_matrix=ws2812b_matrix,
+        minute_color=minute_color,
+        hour_color=hour_color,
+        past_to_color=past_to_color
+    )
+
 def run_animation_frame(mode):
     if mode == DISPLAY_MODE_MATRIX_RAIN:
         advance_matrix_rain_state()
         render_matrix_rain()
+    elif mode == DISPLAY_MODE_RAINBOW_CYCLE:
+        advance_rainbow_cycle_state()
+        time_to_matrix(force=True)
 
 def get_animation_frame_delay_ms(mode):
     if mode == DISPLAY_MODE_MATRIX_RAIN:
         return app_state.matrix_rain_speed_ms
+    if mode == DISPLAY_MODE_RAINBOW_CYCLE:
+        return app_state.rainbow_cycle_speed_ms
     return ANIMATION_IDLE_SLEEP_MS
 
 def build_time_word_data(mode=None):
@@ -405,6 +614,10 @@ def reset_clock_settings_to_defaults():
     app_state.matrix_rain_spawn_rate = MATRIX_RAIN_DEFAULT_SPAWN_RATE
     app_state.matrix_rain_trail_length = MATRIX_RAIN_DEFAULT_TRAIL_LENGTH
     app_state.matrix_rain_time_brightness_cap = MATRIX_RAIN_DEFAULT_TIME_BRIGHTNESS_CAP
+    app_state.rainbow_cycle_style = RAINBOW_CYCLE_DEFAULT_STYLE
+    app_state.rainbow_cycle_speed_ms = RAINBOW_CYCLE_DEFAULT_SPEED_MS
+    app_state.rainbow_cycle_spread = RAINBOW_CYCLE_DEFAULT_SPREAD
+    app_state.rainbow_cycle_step = RAINBOW_CYCLE_DEFAULT_STEP
     manual_time_offset = 0
     seasonal_time_region = time_sync.SEASONAL_TIME_REGION_OFF
     reset_display_refresh_state()
@@ -426,6 +639,10 @@ def reset_clock_settings_to_defaults():
     config['MATRIX_RAIN_SPAWN_RATE'] = app_state.matrix_rain_spawn_rate
     config['MATRIX_RAIN_TRAIL_LENGTH'] = app_state.matrix_rain_trail_length
     config['MATRIX_RAIN_TIME_BRIGHTNESS_CAP'] = app_state.matrix_rain_time_brightness_cap
+    config['RAINBOW_CYCLE_STYLE'] = app_state.rainbow_cycle_style
+    config['RAINBOW_CYCLE_SPEED_MS'] = app_state.rainbow_cycle_speed_ms
+    config['RAINBOW_CYCLE_SPREAD'] = app_state.rainbow_cycle_spread
+    config['RAINBOW_CYCLE_STEP'] = app_state.rainbow_cycle_step
     persist_time_settings(save=False)
     save_config(config)
 
@@ -443,6 +660,11 @@ def apply_scene(scene_name_or_object, fallback_name=None):
         log_scene=log_scene,
         max_brightness=MAX_BRIGHTNESS,
         reset_matrix_rain_state=reset_matrix_rain_state,
+        rainbow_cycle_styles=rainbow_cycle.RAINBOW_CYCLE_STYLES,
+        rainbow_cycle_speed_limits=(RAINBOW_CYCLE_MIN_SPEED_MS, RAINBOW_CYCLE_MAX_SPEED_MS),
+        rainbow_cycle_spread_limits=(RAINBOW_CYCLE_MIN_SPREAD, RAINBOW_CYCLE_MAX_SPREAD),
+        rainbow_cycle_step_limits=(RAINBOW_CYCLE_MIN_STEP, RAINBOW_CYCLE_MAX_STEP),
+        reset_rainbow_cycle_state=reset_rainbow_cycle_state,
         is_display_enabled=lambda: app_state.display_enabled,
         time_to_matrix=time_to_matrix,
         clear_matrix=clear_matrix,
@@ -650,9 +872,9 @@ def time_to_matrix(force=False):
             print("Error writing to matrix")
     if config['ENABLE_WS2812B']:
         ws2812b_matrix.set_brightness(app_state.brightness)
-        display_fuction = display_modes.get(app_state.current_display_mode)
-        if display_fuction:
-            display_fuction(word)
+        display_function = display_modes.get(app_state.current_display_mode)
+        if display_function:
+            display_function(word)
     app_state.last_display_minute_key = (now[0], now[1], now[2], now[3], now[4])
     app_state.last_dynamic_display_update_ms = time.ticks_ms()
 
@@ -758,6 +980,9 @@ def set_brightness(new_brightness, persist=True):
 
 def display_rainbow_mode(word):
     ws2812b_matrix.show_char_with_color_array(word, ws2812b_matrix.get_rainbow_array())
+
+def display_rainbow_cycle_mode(word):
+    render_rainbow_cycle(word)
 
 def display_random_mode(word):
     random_array = ws2812b_matrix.get_rainbow_array()
@@ -1016,62 +1241,43 @@ async def set_clock_settings_request(request, response):
     global schedules_enabled
     global seasonal_time_region
     print(request.post_data)
-    set_brightness(int(request.post_data['brightness']))
-    app_state.current_display_mode = request.post_data['display_mode']
+
+    parsed_settings, error = parse_clock_settings_payload(request.post_data)
+    if error:
+        response_data = {
+            'status': 'ERROR',
+            'success': False,
+            'message': error,
+            'settings': settings_object()
+        }
+        await response.send_json(json.dumps(response_data), 400)
+        return
+
+    set_brightness(parsed_settings['brightness'], persist=False)
+    set_display_mode(parsed_settings['display_mode'], persist=False)
     app_state.current_scene_name = None
-    schedules_enabled = bool(request.post_data.get('schedules_enabled', False))
-    seasonal_time_region = time_sync.normalise_seasonal_time_region(request.post_data.get('seasonal_time_region', time_sync.SEASONAL_TIME_REGION_OFF))
-    single_color = (int(request.post_data['single_color'][0]), int(request.post_data['single_color'][1]), int(request.post_data['single_color'][2]))
-    minute_color = (int(request.post_data['minute_color'][0]), int(request.post_data['minute_color'][1]), int(request.post_data['minute_color'][2]))
-    hour_color = (int(request.post_data['hour_color'][0]), int(request.post_data['hour_color'][1]), int(request.post_data['hour_color'][2]))
-    past_to_color = (int(request.post_data['past_to_color'][0]), int(request.post_data['past_to_color'][1]), int(request.post_data['past_to_color'][2]))
-    app_state.matrix_rain_minute_color = (
-        int(request.post_data['matrix_rain_minute_color'][0]),
-        int(request.post_data['matrix_rain_minute_color'][1]),
-        int(request.post_data['matrix_rain_minute_color'][2])
-    )
-    app_state.matrix_rain_hour_color = (
-        int(request.post_data['matrix_rain_hour_color'][0]),
-        int(request.post_data['matrix_rain_hour_color'][1]),
-        int(request.post_data['matrix_rain_hour_color'][2])
-    )
-    app_state.matrix_rain_past_to_color = (
-        int(request.post_data['matrix_rain_past_to_color'][0]),
-        int(request.post_data['matrix_rain_past_to_color'][1]),
-        int(request.post_data['matrix_rain_past_to_color'][2])
-    )
-    app_state.matrix_rain_background_color = (
-        int(request.post_data['matrix_rain_background_color'][0]),
-        int(request.post_data['matrix_rain_background_color'][1]),
-        int(request.post_data['matrix_rain_background_color'][2])
-    )
-    app_state.matrix_rain_white_head = bool(request.post_data.get('matrix_rain_white_head', MATRIX_RAIN_DEFAULT_WHITE_HEAD))
-    app_state.matrix_rain_affect_time = bool(request.post_data.get('matrix_rain_affect_time', MATRIX_RAIN_DEFAULT_AFFECT_TIME))
-    requested_speed = int(request.post_data.get('matrix_rain_speed_ms', MATRIX_RAIN_DEFAULT_SPEED_MS))
-    if requested_speed < 40:
-        requested_speed = 40
-    if requested_speed > 400:
-        requested_speed = 400
-    app_state.matrix_rain_speed_ms = requested_speed
-    requested_spawn_rate = int(request.post_data.get('matrix_rain_spawn_rate', MATRIX_RAIN_DEFAULT_SPAWN_RATE))
-    if requested_spawn_rate < 0:
-        requested_spawn_rate = 0
-    if requested_spawn_rate > 100:
-        requested_spawn_rate = 100
-    app_state.matrix_rain_spawn_rate = requested_spawn_rate
-    requested_trail_length = int(request.post_data.get('matrix_rain_trail_length', MATRIX_RAIN_DEFAULT_TRAIL_LENGTH))
-    if requested_trail_length < 1:
-        requested_trail_length = 1
-    if requested_trail_length > 8:
-        requested_trail_length = 8
-    app_state.matrix_rain_trail_length = requested_trail_length
-    requested_time_brightness_cap = int(request.post_data.get('matrix_rain_time_brightness_cap', MATRIX_RAIN_DEFAULT_TIME_BRIGHTNESS_CAP))
-    if requested_time_brightness_cap < 0:
-        requested_time_brightness_cap = 0
-    if requested_time_brightness_cap > MAX_BRIGHTNESS:
-        requested_time_brightness_cap = MAX_BRIGHTNESS
-    app_state.matrix_rain_time_brightness_cap = requested_time_brightness_cap
+    schedules_enabled = parsed_settings['schedules_enabled']
+    seasonal_time_region = parsed_settings['seasonal_time_region']
+    single_color = parsed_settings['single_color']
+    minute_color = parsed_settings['minute_color']
+    hour_color = parsed_settings['hour_color']
+    past_to_color = parsed_settings['past_to_color']
+    app_state.matrix_rain_minute_color = parsed_settings['matrix_rain_minute_color']
+    app_state.matrix_rain_hour_color = parsed_settings['matrix_rain_hour_color']
+    app_state.matrix_rain_past_to_color = parsed_settings['matrix_rain_past_to_color']
+    app_state.matrix_rain_background_color = parsed_settings['matrix_rain_background_color']
+    app_state.matrix_rain_white_head = parsed_settings['matrix_rain_white_head']
+    app_state.matrix_rain_affect_time = parsed_settings['matrix_rain_affect_time']
+    app_state.matrix_rain_speed_ms = parsed_settings['matrix_rain_speed_ms']
+    app_state.matrix_rain_spawn_rate = parsed_settings['matrix_rain_spawn_rate']
+    app_state.matrix_rain_trail_length = parsed_settings['matrix_rain_trail_length']
+    app_state.matrix_rain_time_brightness_cap = parsed_settings['matrix_rain_time_brightness_cap']
+    app_state.rainbow_cycle_style = parsed_settings['rainbow_cycle_style']
+    app_state.rainbow_cycle_speed_ms = parsed_settings['rainbow_cycle_speed_ms']
+    app_state.rainbow_cycle_spread = parsed_settings['rainbow_cycle_spread']
+    app_state.rainbow_cycle_step = parsed_settings['rainbow_cycle_step']
     reset_matrix_rain_state()
+    reset_rainbow_cycle_state()
     config['BRIGHTNESS'] = app_state.brightness
     config['DISPLAY_MODE'] = app_state.current_display_mode
     config['SCHEDULES_ENABLED'] = schedules_enabled
@@ -1089,11 +1295,15 @@ async def set_clock_settings_request(request, response):
     config['MATRIX_RAIN_SPAWN_RATE'] = app_state.matrix_rain_spawn_rate
     config['MATRIX_RAIN_TRAIL_LENGTH'] = app_state.matrix_rain_trail_length
     config['MATRIX_RAIN_TIME_BRIGHTNESS_CAP'] = app_state.matrix_rain_time_brightness_cap
+    config['RAINBOW_CYCLE_STYLE'] = app_state.rainbow_cycle_style
+    config['RAINBOW_CYCLE_SPEED_MS'] = app_state.rainbow_cycle_speed_ms
+    config['RAINBOW_CYCLE_SPREAD'] = app_state.rainbow_cycle_spread
+    config['RAINBOW_CYCLE_STEP'] = app_state.rainbow_cycle_step
     persist_time_settings(save=False)
     save_config(config)
-    if request.post_data['timeChanged']:
-        time_data = request.post_data['newTime']
-        set_manual_time(int(time_data[0]), int(time_data[1]), int(time_data[2]), int(time_data[3]), int(time_data[4]), 0)
+    if parsed_settings['timeChanged']:
+        year, month, day, hour, minute = parsed_settings['newTime']
+        set_manual_time(year, month, day, hour, minute, 0)
     reset_matrix_rain_time_overlay()
     time_to_matrix()
     response_data = {
@@ -1145,6 +1355,10 @@ def settings_object():
         'matrix_rain_spawn_rate': app_state.matrix_rain_spawn_rate,
         'matrix_rain_trail_length': app_state.matrix_rain_trail_length,
         'matrix_rain_time_brightness_cap': app_state.matrix_rain_time_brightness_cap,
+        'rainbow_cycle_style': app_state.rainbow_cycle_style,
+        'rainbow_cycle_speed_ms': app_state.rainbow_cycle_speed_ms,
+        'rainbow_cycle_spread': app_state.rainbow_cycle_spread,
+        'rainbow_cycle_step': app_state.rainbow_cycle_step,
         'time': get_corrected_time(),
         'local_time': time.localtime(),
         'unix_time': time.time(),
@@ -1253,6 +1467,7 @@ async def main():
 
 display_modes = {
     DISPLAY_MODE_RAINBOW: display_rainbow_mode,
+    DISPLAY_MODE_RAINBOW_CYCLE: display_rainbow_cycle_mode,
     DISPLAY_MODE_SINGLE_COLOR: display_single_color_mode,
     DISPLAY_MODE_COLOR_PER_WORD: display_color_per_word_mode,
     DISPLAY_MODE_RANDOM: display_random_mode,
@@ -1280,6 +1495,10 @@ app_state.matrix_rain_speed_ms = config.get('MATRIX_RAIN_SPEED_MS', MATRIX_RAIN_
 app_state.matrix_rain_spawn_rate = config.get('MATRIX_RAIN_SPAWN_RATE', MATRIX_RAIN_DEFAULT_SPAWN_RATE)
 app_state.matrix_rain_trail_length = config.get('MATRIX_RAIN_TRAIL_LENGTH', MATRIX_RAIN_DEFAULT_TRAIL_LENGTH)
 app_state.matrix_rain_time_brightness_cap = config.get('MATRIX_RAIN_TIME_BRIGHTNESS_CAP', MATRIX_RAIN_DEFAULT_TIME_BRIGHTNESS_CAP)
+app_state.rainbow_cycle_style = rainbow_cycle.normalise_style(config.get('RAINBOW_CYCLE_STYLE', RAINBOW_CYCLE_DEFAULT_STYLE))
+app_state.rainbow_cycle_speed_ms = rainbow_cycle.clamp_speed_ms(config.get('RAINBOW_CYCLE_SPEED_MS', RAINBOW_CYCLE_DEFAULT_SPEED_MS))
+app_state.rainbow_cycle_spread = rainbow_cycle.clamp_spread(config.get('RAINBOW_CYCLE_SPREAD', RAINBOW_CYCLE_DEFAULT_SPREAD))
+app_state.rainbow_cycle_step = rainbow_cycle.clamp_step(config.get('RAINBOW_CYCLE_STEP', RAINBOW_CYCLE_DEFAULT_STEP))
 app_state.current_display_mode = config.get('DISPLAY_MODE', DISPLAY_MODE_RAINBOW)
 manual_time_offset = config.get('MANUAL_TIME_OFFSET', config.get('TIME_OFFSET', 0))
 seasonal_time_region = config.get('SEASONAL_TIME_REGION', time_sync.SEASONAL_TIME_REGION_OFF)

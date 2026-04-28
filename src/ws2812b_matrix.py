@@ -78,10 +78,10 @@ class ws2812b_matrix:
     def get_char(self):
         return self.char
     
-    def get_rainbow_array(self):
+    def get_rainbow_array(self, offset=0):
         rainbow = []
         for i in range(self.width * self.height):
-            color_position = int(i * 256 / (self.width * self.height))
+            color_position = (int(i * 256 / (self.width * self.height)) + offset) % 256
             rainbow.append(self.wheel(color_position))
         return rainbow
 

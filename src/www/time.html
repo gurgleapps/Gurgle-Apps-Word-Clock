@@ -229,6 +229,7 @@
               class="mt-2 block w-full bg-gray-50 rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 sm:text-sm sm:leading-6">
               <option value="single_color">Single Colour</option>
               <option value="rainbow">Rainbow</option>
+              <option value="rainbow_cycle">Rainbow Cycle</option>
               <option value="color_per_word">Word Colours</option>
               <option value="random">Random</option>
               <option value="matrix_rain">Matrix Rain</option>
@@ -292,6 +293,34 @@
                 <span aria-hidden="true" :class="settings.matrix_rain_affect_time ? 'translate-x-5' : 'translate-x-0'"
                   class="inline-block w-5 h-5 transition duration-200 ease-in-out transform bg-white rounded-full shadow pointer-events-none ring-0"></span>
               </button>
+            </div>
+          </div>
+          <div x-show="settings.display_mode=='rainbow_cycle'" x-transition style="display:none;" class="mb-4 space-y-3">
+            <div>
+              <label class="block text-sm font-medium leading-6 text-gray-900">Rainbow Cycle Style</label>
+              <select x-model="settings.rainbow_cycle_style"
+                class="mt-2 block w-full bg-gray-50 rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 sm:text-sm sm:leading-6">
+                <option value="pixel">Pixel Rainbow</option>
+                <option value="letter">Letter Rainbow</option>
+                <option value="word">Time Section Colours</option>
+                <option value="single">Single Colour Cycle</option>
+              </select>
+              <div class="mt-1 text-xs leading-4 text-gray-400" x-text="rainbowCycleStyleDescription(settings.rainbow_cycle_style)"></div>
+            </div>
+            <div>
+              <label class="block text-sm font-medium leading-6 text-gray-900">Cycle Speed: <span x-text="settings.rainbow_cycle_speed_ms + ' ms'"></span></label>
+              <input type="range" min="40" max="400" step="5" x-model.number="settings.rainbow_cycle_speed_ms" class="ga-slider">
+              <div class="mt-1 text-xs leading-4 text-gray-400">Lower is faster.</div>
+            </div>
+            <div>
+              <label class="block text-sm font-medium leading-6 text-gray-900">Motion Step: <span x-text="settings.rainbow_cycle_step"></span></label>
+              <input type="range" min="1" max="16" step="1" x-model.number="settings.rainbow_cycle_step" class="ga-slider">
+              <div class="mt-1 text-xs leading-4 text-gray-400">Lower is smoother; higher moves farther each frame.</div>
+            </div>
+            <div x-show="rainbowCycleUsesSpread(settings.rainbow_cycle_style)">
+              <label class="block text-sm font-medium leading-6 text-gray-900">Rainbow Spread: <span x-text="settings.rainbow_cycle_spread"></span></label>
+              <input type="range" min="1" max="16" step="1" x-model.number="settings.rainbow_cycle_spread" class="ga-slider">
+              <div class="mt-1 text-xs leading-4 text-gray-400">Lower is tighter; higher shows more colour variation at once.</div>
             </div>
           </div>
           <!-- single color -->
@@ -641,6 +670,7 @@
                   class="mt-2 block w-full bg-white rounded-md border border-gray-300 py-1.5 pl-3 pr-10 text-gray-900 sm:text-sm sm:leading-6">
                   <option value="single_color">Single Colour</option>
                   <option value="rainbow">Rainbow</option>
+                  <option value="rainbow_cycle">Rainbow Cycle</option>
                   <option value="color_per_word">Word Colours</option>
                   <option value="random">Random</option>
                   <option value="matrix_rain">Matrix Rain</option>
@@ -728,6 +758,35 @@
                     <span aria-hidden="true" :class="scene.matrix_rain_affect_time ? 'translate-x-5' : 'translate-x-0'"
                       class="inline-block w-5 h-5 transition duration-200 ease-in-out transform bg-white rounded-full shadow pointer-events-none ring-0"></span>
                   </button>
+                </div>
+              </div>
+
+              <div x-show="scene.display_mode=='rainbow_cycle'" class="mb-3 space-y-3">
+                <div>
+                  <label class="block mb-1 text-sm font-medium leading-6 text-gray-900">Rainbow Cycle Style</label>
+                  <select x-model="scene.rainbow_cycle_style"
+                    class="mt-2 block w-full bg-white rounded-md border border-gray-300 py-1.5 pl-3 pr-10 text-gray-900 sm:text-sm sm:leading-6">
+                    <option value="pixel">Pixel Rainbow</option>
+                    <option value="letter">Letter Rainbow</option>
+                    <option value="word">Time Section Colours</option>
+                    <option value="single">Single Colour Cycle</option>
+                  </select>
+                  <div class="mt-1 text-xs leading-4 text-gray-400" x-text="rainbowCycleStyleDescription(scene.rainbow_cycle_style)"></div>
+                </div>
+                <div>
+                  <label class="block mb-1 text-sm font-medium leading-6 text-gray-900">Cycle Speed</label>
+                  <input type="range" min="40" max="400" step="5" x-model.number="scene.rainbow_cycle_speed_ms" class="ga-slider">
+                  <div class="text-sm text-gray-500" x-text="scene.rainbow_cycle_speed_ms + ' ms'"></div>
+                </div>
+                <div>
+                  <label class="block mb-1 text-sm font-medium leading-6 text-gray-900">Motion Step</label>
+                  <input type="range" min="1" max="16" step="1" x-model.number="scene.rainbow_cycle_step" class="ga-slider">
+                  <div class="text-sm text-gray-500" x-text="scene.rainbow_cycle_step"></div>
+                </div>
+                <div x-show="rainbowCycleUsesSpread(scene.rainbow_cycle_style)">
+                  <label class="block mb-1 text-sm font-medium leading-6 text-gray-900">Rainbow Spread</label>
+                  <input type="range" min="1" max="16" step="1" x-model.number="scene.rainbow_cycle_spread" class="ga-slider">
+                  <div class="text-sm text-gray-500" x-text="scene.rainbow_cycle_spread"></div>
                 </div>
               </div>
 
@@ -1038,6 +1097,10 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
           'matrix_rain_spawn_rate': 18,
           'matrix_rain_trail_length': 4,
           'matrix_rain_time_brightness_cap': 3,
+          'rainbow_cycle_style': 'pixel',
+          'rainbow_cycle_speed_ms': 120,
+          'rainbow_cycle_spread': 4,
+          'rainbow_cycle_step': 1,
         },
         scenes: [],
         timeDisplay: [0, 0, 0, 0, 0, 0],
@@ -1059,6 +1122,7 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
         saveNoticeTimeout: null,
         sceneModeFields: {
           rainbow: [],
+          rainbow_cycle: [],
           single_color: ['single_color'],
           color_per_word: ['minute_color', 'hour_color', 'past_to_color'],
           random: [],
@@ -1298,6 +1362,7 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
           this.matrixRainMinuteColorHex = this.rgbArrayToHex(this.settings.matrix_rain_minute_color)
           this.matrixRainPastToColorHex = this.rgbArrayToHex(this.settings.matrix_rain_past_to_color)
           this.matrixRainHourColorHex = this.rgbArrayToHex(this.settings.matrix_rain_hour_color)
+          this.normaliseRainbowCycleSettings(this.settings)
           console.log(this.settings)
         },
         applySettingsPreservingSceneDrafts(nextSettings) {
@@ -1316,7 +1381,32 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
           this.matrixRainMinuteColorHex = this.rgbArrayToHex(this.settings.matrix_rain_minute_color)
           this.matrixRainPastToColorHex = this.rgbArrayToHex(this.settings.matrix_rain_past_to_color)
           this.matrixRainHourColorHex = this.rgbArrayToHex(this.settings.matrix_rain_hour_color)
+          this.normaliseRainbowCycleSettings(this.settings)
           console.log(this.settings)
+        },
+        normaliseRainbowCycleSettings(target) {
+          const validStyles = ['pixel', 'letter', 'word', 'single']
+          if (!validStyles.includes(target.rainbow_cycle_style)) {
+            target.rainbow_cycle_style = 'pixel'
+          }
+          if (typeof target.rainbow_cycle_speed_ms !== 'number' || target.rainbow_cycle_speed_ms < 40 || target.rainbow_cycle_speed_ms > 400) {
+            target.rainbow_cycle_speed_ms = 120
+          }
+          if (typeof target.rainbow_cycle_spread !== 'number' || target.rainbow_cycle_spread < 1 || target.rainbow_cycle_spread > 16) {
+            target.rainbow_cycle_spread = 4
+          }
+          if (typeof target.rainbow_cycle_step !== 'number' || target.rainbow_cycle_step < 1 || target.rainbow_cycle_step > 16) {
+            target.rainbow_cycle_step = 1
+          }
+        },
+        rainbowCycleUsesSpread(style) {
+          return style === 'pixel' || style === 'letter'
+        },
+        rainbowCycleStyleDescription(style) {
+          if (style === 'letter') return 'The lit words themselves are coloured across the rainbow.'
+          if (style === 'word') return 'Minutes, hours, and past/to each cycle as separate colours.'
+          if (style === 'single') return 'All active words share one colour that slowly changes.'
+          return 'A flowing rainbow passes behind the lit words.'
         },
         async brigtnessUpdated() {
           //this.updateSettings()
@@ -1449,11 +1539,16 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
             matrix_rain_speed_ms: typeof scene.matrix_rain_speed_ms === 'number' ? scene.matrix_rain_speed_ms : 120,
             matrix_rain_spawn_rate: typeof scene.matrix_rain_spawn_rate === 'number' ? scene.matrix_rain_spawn_rate : 18,
             matrix_rain_trail_length: typeof scene.matrix_rain_trail_length === 'number' ? scene.matrix_rain_trail_length : 4,
-            matrix_rain_time_brightness_cap: typeof scene.matrix_rain_time_brightness_cap === 'number' ? scene.matrix_rain_time_brightness_cap : 3
+            matrix_rain_time_brightness_cap: typeof scene.matrix_rain_time_brightness_cap === 'number' ? scene.matrix_rain_time_brightness_cap : 3,
+            rainbow_cycle_style: typeof scene.rainbow_cycle_style === 'string' ? scene.rainbow_cycle_style : 'pixel',
+            rainbow_cycle_speed_ms: typeof scene.rainbow_cycle_speed_ms === 'number' ? scene.rainbow_cycle_speed_ms : 120,
+            rainbow_cycle_spread: typeof scene.rainbow_cycle_spread === 'number' ? scene.rainbow_cycle_spread : 4,
+            rainbow_cycle_step: typeof scene.rainbow_cycle_step === 'number' ? scene.rainbow_cycle_step : 1
           }
           if (!this.sceneModeFields[nextScene.display_mode]) {
             nextScene.display_mode = 'single_color'
           }
+          this.normaliseRainbowCycleSettings(nextScene)
           if (nextScene.brightness < 0 || nextScene.brightness > 15) {
             nextScene.brightness = 2
           }
@@ -1489,7 +1584,11 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
             matrix_rain_speed_ms: 120,
             matrix_rain_spawn_rate: 18,
             matrix_rain_trail_length: 4,
-            matrix_rain_time_brightness_cap: 3
+            matrix_rain_time_brightness_cap: 3,
+            rainbow_cycle_style: 'pixel',
+            rainbow_cycle_speed_ms: 120,
+            rainbow_cycle_spread: 4,
+            rainbow_cycle_step: 1
           }, true)
         },
         addScene() {
@@ -1511,6 +1610,7 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
           if (mode === 'single_color') return 'Single colour'
           if (mode === 'color_per_word') return 'Word colours'
           if (mode === 'rainbow') return 'Rainbow'
+          if (mode === 'rainbow_cycle') return 'Rainbow Cycle'
           if (mode === 'random') return 'Random'
           if (mode === 'matrix_rain') return 'Matrix Rain'
           return mode || 'Unknown mode'
@@ -1541,6 +1641,9 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
           if (scene.display_mode === 'rainbow') {
             return 'Rainbow clock'
           }
+          if (scene.display_mode === 'rainbow_cycle') {
+            return 'Animated rainbow clock'
+          }
           if (scene.display_mode === 'random') {
             return 'Random colours'
           }
@@ -1556,12 +1659,20 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
             chips.push({ label: scene.matrix_rain_spawn_rate + '% spawn', tone: 'detail' })
             chips.push({ label: 'Trail ' + scene.matrix_rain_trail_length, tone: 'detail' })
           }
+          if (scene.display_mode === 'rainbow_cycle') {
+            chips.push({ label: this.modeLabel(scene.display_mode) + ' ' + scene.rainbow_cycle_style, tone: 'detail' })
+            chips.push({ label: scene.rainbow_cycle_speed_ms + ' ms', tone: 'detail' })
+            chips.push({ label: 'Step ' + scene.rainbow_cycle_step, tone: 'detail' })
+          }
           return chips
         },
         sceneSummary(scene) {
           const state = scene.display_enabled ? 'On' : 'Off'
           if (scene.display_mode === 'matrix_rain') {
             return state + ' · ' + this.modeLabel(scene.display_mode) + ' · ' + scene.matrix_rain_speed_ms + ' ms · ' + scene.matrix_rain_spawn_rate + '% · trail ' + scene.matrix_rain_trail_length + ' · text ' + scene.matrix_rain_time_brightness_cap
+          }
+          if (scene.display_mode === 'rainbow_cycle') {
+            return state + ' · ' + this.modeLabel(scene.display_mode) + ' · ' + scene.rainbow_cycle_style + ' · ' + scene.rainbow_cycle_speed_ms + ' ms · step ' + scene.rainbow_cycle_step + ' · spread ' + scene.rainbow_cycle_spread
           }
           return state + ' · ' + this.modeLabel(scene.display_mode) + ' · Brightness ' + scene.brightness
         },
@@ -1595,6 +1706,12 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
             scenePayload.matrix_rain_spawn_rate = Number(scene.matrix_rain_spawn_rate)
             scenePayload.matrix_rain_trail_length = Number(scene.matrix_rain_trail_length)
             scenePayload.matrix_rain_time_brightness_cap = Number(scene.matrix_rain_time_brightness_cap)
+          }
+          if (scene.display_mode === 'rainbow_cycle') {
+            scenePayload.rainbow_cycle_style = scene.rainbow_cycle_style
+            scenePayload.rainbow_cycle_speed_ms = Number(scene.rainbow_cycle_speed_ms)
+            scenePayload.rainbow_cycle_spread = Number(scene.rainbow_cycle_spread)
+            scenePayload.rainbow_cycle_step = Number(scene.rainbow_cycle_step)
           }
 
           return scenePayload

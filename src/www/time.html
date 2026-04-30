@@ -163,6 +163,12 @@
               class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-1.5">
             <div class="mt-1 text-sm text-gray-500">Leave blank to keep the saved password.</div>
           </div>
+          <div class="mb-4">
+            <label for="hostname" class="block text-sm font-medium leading-6 text-gray-900">Hostname:</label>
+            <input type="text" id="hostname" x-model="settings.hostname" autocapitalize="none" autocorrect="off" spellcheck="false"
+              class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-1.5">
+            <div class="mt-1 text-sm text-gray-500">Device will be reachable at <span class="font-mono" x-text="settings.hostname + '.local'">wordclock.local</span>. Use a unique name if you have multiple clocks.</div>
+          </div>
           <div class="flex justify-center mt-1 mb-2">
             <button @click.prevent="updateWifi()"
               class="px-4 py-2 font-semibold text-white bg-green-600 rounded focus:outline-none hover:bg-green-700">Update
@@ -1420,7 +1426,8 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
         async updateWifi() {
           const payload = {
             wifi_ssid: this.settings.wifi_ssid,
-            wifi_password: this.newWifiPassword
+            wifi_password: this.newWifiPassword,
+            hostname: this.settings.hostname
           }
           const response = await fetch(this.path + '/set-wifi-settings', {
             method: 'POST',

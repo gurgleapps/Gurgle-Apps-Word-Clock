@@ -1024,9 +1024,12 @@ async def set_wifi_settings_request(request, response):
     print(request.post_data)
     wifi_ssid = request.post_data['wifi_ssid']
     wifi_password = request.post_data.get('wifi_password', None)
+    hostname = request.post_data.get('hostname', '').strip()
     config['WIFI_SSID'] = wifi_ssid
     if wifi_password is not None and wifi_password != '':
         config['WIFI_PASSWORD'] = wifi_password
+    if hostname:
+        config['HOSTNAME'] = hostname
     save_config(config)
     last_wifi_disconnected_time = time.ticks_ms()
     response_data = {
@@ -1368,6 +1371,7 @@ def settings_object():
         'wifi_connected': server.is_wifi_connected(),
         'wifi_ip_address': server.get_wifi_ip_address(),
         'wifi_ssid': server.get_wifi_ssid(),
+        'hostname': config.get('HOSTNAME', 'wordclock'),
         'ap_address': server.get_ap_ip_address(),
         'ap_ssid': server.get_ap_ssid(),
         'ap_active': server.is_access_point_active(),

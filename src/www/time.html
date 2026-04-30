@@ -21,7 +21,14 @@
       <!-- update available banner -->
       <div x-show="updateAvailable" x-cloak class="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800 flex items-center justify-between gap-2">
         <span><span class="font-medium">Update available!</span> Version <span class="font-mono" x-text="latestVersion"></span> is ready to download.</span>
-        <a href="https://github.com/gurgleapps/Gurgle-Apps-Word-Clock" target="_blank" rel="noopener" class="shrink-0 underline font-medium">Get it on GitHub &rarr;</a>
+        <div class="flex items-center gap-3 shrink-0">
+          <a href="https://github.com/gurgleapps/Gurgle-Apps-Word-Clock" target="_blank" rel="noopener" class="underline font-medium">Get it on GitHub &rarr;</a>
+          <button @click="updateAvailable = false" class="text-amber-500 hover:text-amber-700" aria-label="Dismiss">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
       </div>
 
       <!-- flip clock -->
@@ -233,7 +240,7 @@
                 x-text="settings.brightness"></span></label>
             <input @change="brigtnessUpdated()" type="range" id="brightnessControl" min="0" max="15"
               x-model.number="settings.brightness" step="1" class="ga-slider">
-            <div class="mt-1 text-xs leading-4 text-gray-400">Lower brightness is usually best for everyday use. Higher brightness can wash out colours and may increase LED wear over time.</div>
+            <div class="mt-1 text-xs leading-4 text-gray-500">Lower brightness is usually best for everyday use. Higher brightness can wash out colours and may increase LED wear over time.</div>
           </div>
           <div class="mb-4">
             <label for="colorMode" class="block text-sm font-medium leading-6 text-gray-900">Color Display Mode:</label>
@@ -247,13 +254,36 @@
               <option value="matrix_rain">Matrix Rain</option>
             </select>
           </div>
-          <div x-show="settings.display_mode=='matrix_rain'" x-transition style="display:none;" class="mb-4 space-y-3">
+          <div x-show="settings.display_mode=='matrix_rain'" x-transition style="display:none;" class="p-3 mb-4 rounded-lg bg-gray-50 ring-1 ring-gray-200 space-y-3">
             <div>
               <label class="block text-sm font-medium leading-6 text-gray-900">Rain Colour</label>
               <label class="ga-color-control ga-color-wide">
                 <input type="color" x-model="matrixRainBackgroundHex" list="colorList" class="ga-color-input">
                 <span class="ga-color-swatch" :style="'--swatch-color: ' + matrixRainBackgroundHex"></span>
               </label>
+            </div>
+            <div class="flex justify-between">
+              <div>
+                <label class="block mb-1 text-sm font-medium leading-6 text-gray-900">Minute Word</label>
+                <label class="ga-color-control ga-color-compact">
+                  <input type="color" x-model="matrixRainMinuteColorHex" list="colorList" class="ga-color-input">
+                  <span class="ga-color-swatch" :style="'--swatch-color: ' + matrixRainMinuteColorHex"></span>
+                </label>
+              </div>
+              <div>
+                <label class="block mb-1 text-sm font-medium leading-6 text-gray-900">Past/To Word</label>
+                <label class="ga-color-control ga-color-compact">
+                  <input type="color" x-model="matrixRainPastToColorHex" list="colorList" class="ga-color-input">
+                  <span class="ga-color-swatch" :style="'--swatch-color: ' + matrixRainPastToColorHex"></span>
+                </label>
+              </div>
+              <div>
+                <label class="block mb-1 text-sm font-medium leading-6 text-gray-900">Hour Word</label>
+                <label class="ga-color-control ga-color-compact">
+                  <input type="color" x-model="matrixRainHourColorHex" list="colorList" class="ga-color-input">
+                  <span class="ga-color-swatch" :style="'--swatch-color: ' + matrixRainHourColorHex"></span>
+                </label>
+              </div>
             </div>
             <div>
               <label class="block text-sm font-medium leading-6 text-gray-900">Rain Speed: <span x-text="settings.matrix_rain_speed_ms + ' ms'"></span></label>
@@ -262,21 +292,21 @@
             <div>
               <label class="block text-sm font-medium leading-6 text-gray-900">
                 Spawn Rate: <span x-text="settings.matrix_rain_spawn_rate + '%'"></span>
-                <span class="block text-xs font-normal leading-4 text-gray-400">How often new rain drops appear.</span>
+                <span class="block text-xs font-normal leading-4 text-gray-500">How often new rain drops appear.</span>
               </label>
               <input type="range" min="0" max="100" step="1" x-model.number="settings.matrix_rain_spawn_rate" class="ga-slider">
             </div>
             <div>
               <label class="block text-sm font-medium leading-6 text-gray-900">
                 Trail Length: <span x-text="settings.matrix_rain_trail_length"></span>
-                <span class="block text-xs font-normal leading-4 text-gray-400">How many pixels each drop trails behind its head.</span>
+                <span class="block text-xs font-normal leading-4 text-gray-500">How many pixels each drop trails behind its head.</span>
               </label>
               <input type="range" min="1" max="8" step="1" x-model.number="settings.matrix_rain_trail_length" class="ga-slider">
             </div>
             <div>
               <label class="block text-sm font-medium leading-6 text-gray-900">
                 Time Text Brightness Cap: <span x-text="settings.matrix_rain_time_brightness_cap"></span>
-                <span class="block text-xs font-normal leading-4 text-gray-400">Limits the time words when overall brightness is higher.</span>
+                <span class="block text-xs font-normal leading-4 text-gray-500">Limits the time words when overall brightness is higher.</span>
               </label>
               <input type="range" min="0" max="15" step="1" x-model.number="settings.matrix_rain_time_brightness_cap" class="ga-slider">
             </div>
@@ -307,36 +337,36 @@
               </button>
             </div>
           </div>
-          <div x-show="settings.display_mode=='rainbow_cycle'" x-transition style="display:none;" class="mb-4 space-y-3">
+          <div x-show="settings.display_mode=='rainbow_cycle'" x-transition style="display:none;" class="p-3 mb-4 rounded-lg bg-gray-50 ring-1 ring-gray-200 space-y-3">
             <div>
               <label class="block text-sm font-medium leading-6 text-gray-900">Rainbow Cycle Style</label>
               <select x-model="settings.rainbow_cycle_style"
-                class="mt-2 block w-full bg-gray-50 rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 sm:text-sm sm:leading-6">
+                class="mt-2 block w-full bg-white rounded-md border border-gray-300 py-1.5 pl-3 pr-10 text-gray-900 sm:text-sm sm:leading-6">
                 <option value="pixel">Pixel Rainbow</option>
                 <option value="letter">Letter Rainbow</option>
                 <option value="word">Time Section Colours</option>
                 <option value="single">Single Colour Cycle</option>
               </select>
-              <div class="mt-1 text-xs leading-4 text-gray-400" x-text="rainbowCycleStyleDescription(settings.rainbow_cycle_style)"></div>
+              <div class="mt-1 text-xs leading-4 text-gray-500" x-text="rainbowCycleStyleDescription(settings.rainbow_cycle_style)"></div>
             </div>
             <div>
               <label class="block text-sm font-medium leading-6 text-gray-900">Cycle Speed: <span x-text="settings.rainbow_cycle_speed_ms + ' ms'"></span></label>
               <input type="range" min="40" max="400" step="5" x-model.number="settings.rainbow_cycle_speed_ms" class="ga-slider">
-              <div class="mt-1 text-xs leading-4 text-gray-400">Lower is faster.</div>
+              <div class="mt-1 text-xs leading-4 text-gray-500">Lower is faster.</div>
             </div>
             <div>
               <label class="block text-sm font-medium leading-6 text-gray-900">Motion Step: <span x-text="settings.rainbow_cycle_step"></span></label>
               <input type="range" min="1" max="16" step="1" x-model.number="settings.rainbow_cycle_step" class="ga-slider">
-              <div class="mt-1 text-xs leading-4 text-gray-400">Lower is smoother; higher moves farther each frame.</div>
+              <div class="mt-1 text-xs leading-4 text-gray-500">Lower is smoother; higher moves farther each frame.</div>
             </div>
             <div x-show="rainbowCycleUsesSpread(settings.rainbow_cycle_style)">
               <label class="block text-sm font-medium leading-6 text-gray-900">Rainbow Spread: <span x-text="settings.rainbow_cycle_spread"></span></label>
               <input type="range" min="1" max="16" step="1" x-model.number="settings.rainbow_cycle_spread" class="ga-slider">
-              <div class="mt-1 text-xs leading-4 text-gray-400">Lower is tighter; higher shows more colour variation at once.</div>
+              <div class="mt-1 text-xs leading-4 text-gray-500">Lower is tighter; higher shows more colour variation at once.</div>
             </div>
           </div>
           <!-- single color -->
-          <div x-show="settings.display_mode=='single_color'" x-transition style="display:none;" class="mb-4">
+          <div x-show="settings.display_mode=='single_color'" x-transition style="display:none;" class="p-3 mb-4 rounded-lg bg-gray-50 ring-1 ring-gray-200">
             <label for="" class="block text-sm font-medium leading-6 text-gray-900">Color:</label>
             <label class="ga-color-control ga-color-wide">
               <input type="color" x-model="singeColorHex" list="colorList" class="ga-color-input">
@@ -344,7 +374,7 @@
             </label>
           </div>
           <!-- color  per word -->
-          <div x-show="settings.display_mode=='color_per_word'" x-transition style="display:none;" class="mb-4">
+          <div x-show="settings.display_mode=='color_per_word'" x-transition style="display:none;" class="p-3 mb-4 rounded-lg bg-gray-50 ring-1 ring-gray-200">
             <div class="flex justify-between">
               <div>
                 <label for="" class="block mb-1 text-sm font-medium leading-6 text-gray-900">Minute Color:</label>
@@ -365,31 +395,6 @@
                 <label class="ga-color-control ga-color-compact">
                   <input type="color" x-model="hourColorHex" list="colorList" class="ga-color-input">
                   <span class="ga-color-swatch" :style="'--swatch-color: ' + hourColorHex"></span>
-                </label>
-              </div>
-            </div>
-          </div>
-          <div x-show="settings.display_mode=='matrix_rain'" x-transition style="display:none;" class="mb-4">
-            <div class="flex justify-between">
-              <div>
-                <label for="" class="block mb-1 text-sm font-medium leading-6 text-gray-900">Minute Word Color:</label>
-                <label class="ga-color-control ga-color-compact">
-                  <input type="color" x-model="matrixRainMinuteColorHex" list="colorList" class="ga-color-input">
-                  <span class="ga-color-swatch" :style="'--swatch-color: ' + matrixRainMinuteColorHex"></span>
-                </label>
-              </div>
-              <div>
-                <label for="" class="block mb-1 text-sm font-medium leading-6 text-gray-900">Past/To Word Color:</label>
-                <label class="ga-color-control ga-color-compact">
-                  <input type="color" x-model="matrixRainPastToColorHex" list="colorList" class="ga-color-input">
-                  <span class="ga-color-swatch" :style="'--swatch-color: ' + matrixRainPastToColorHex"></span>
-                </label>
-              </div>
-              <div>
-                <label for="" class="block mb-1 text-sm font-medium leading-6 text-gray-900">Hour Word Color:</label>
-                <label class="ga-color-control ga-color-compact">
-                  <input type="color" x-model="matrixRainHourColorHex" list="colorList" class="ga-color-input">
-                  <span class="ga-color-swatch" :style="'--swatch-color: ' + matrixRainHourColorHex"></span>
                 </label>
               </div>
             </div>
@@ -423,7 +428,7 @@
               Settings</button>
           </div>
           <div class="pt-4 mt-4 border-t border-gray-200">
-            <div class="p-3 rounded-lg bg-gray-50 ring-1 ring-gray-200">
+            <div class="p-3 rounded-lg bg-white ring-1 ring-gray-200">
               <div class="inline-flex items-center w-full pb-2 mb-3 border-b border-gray-200 gap-x-3">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
                   <path fill-rule="evenodd" d="M12 2.25a.75.75 0 0 1 .75.75v1.386a8.25 8.25 0 0 1 5.864 5.864H20a.75.75 0 0 1 0 1.5h-1.386a8.25 8.25 0 0 1-5.864 5.864V19a.75.75 0 0 1-1.5 0v-1.386a8.25 8.25 0 0 1-5.864-5.864H4a.75.75 0 0 1 0-1.5h1.386A8.25 8.25 0 0 1 11.25 4.386V3a.75.75 0 0 1 .75-.75Zm0 3.75a6.75 6.75 0 1 0 0 13.5A6.75 6.75 0 0 0 12 6Z" clip-rule="evenodd" />
@@ -446,7 +451,7 @@
             </div>
           </div>
           <div class="pt-4 mt-4 border-t border-gray-200">
-            <div class="p-3 rounded-lg bg-gray-50 ring-1 ring-gray-200">
+            <div class="p-3 rounded-lg bg-white ring-1 ring-gray-200">
               <div class="inline-flex items-center w-full pb-2 mb-3 border-b border-gray-200 gap-x-3">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
                   <path fill-rule="evenodd" d="M12 2.25a9.75 9.75 0 1 0 0 19.5 9.75 9.75 0 0 0 0-19.5ZM8.47 8.47a.75.75 0 0 1 1.06 0L12 10.94l2.47-2.47a.75.75 0 1 1 1.06 1.06L13.06 12l2.47 2.47a.75.75 0 0 1-1.06 1.06L12 13.06l-2.47 2.47a.75.75 0 0 1-1.06-1.06L10.94 12 8.47 9.53a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" />
@@ -491,7 +496,7 @@
           </template>
 
           <template x-for="(schedule, index) in settings.schedules" :key="index">
-            <div class="px-3 py-2 mb-2 rounded-lg bg-gray-50 ring-1 ring-gray-200">
+            <div class="px-3 py-2 mb-2 rounded-lg bg-white ring-1 ring-gray-200">
               <button type="button" @click="toggleScheduleExpanded(schedule)"
                 class="flex items-center w-full gap-3 text-left group">
                 <div class="flex-1 min-w-0">
@@ -620,7 +625,7 @@
           </template>
 
           <template x-for="(scene, index) in scenes" :key="index">
-            <div class="px-3 py-2 mb-2 rounded-lg bg-gray-50 ring-1 ring-gray-200">
+            <div class="px-3 py-2 mb-2 rounded-lg bg-white ring-1 ring-gray-200">
               <button type="button" @click="toggleSceneExpanded(scene)"
                 class="flex items-center w-full gap-3 text-left group">
                 <div class="flex-1 min-w-0">
@@ -689,7 +694,7 @@
                 </select>
               </div>
 
-              <div x-show="scene.display_mode=='matrix_rain'" class="mb-3 space-y-3">
+              <div x-show="scene.display_mode=='matrix_rain'" class="p-3 mb-3 rounded-lg bg-gray-50 ring-1 ring-gray-200 space-y-3">
                 <div>
                   <label class="block mb-1 text-sm font-medium leading-6 text-gray-900">Rain Colour</label>
                   <label class="ga-color-control ga-color-wide">
@@ -730,7 +735,7 @@
                 <div>
                   <label class="block mb-1 text-sm font-medium leading-6 text-gray-900">
                     Spawn Rate
-                    <span class="block text-xs font-normal leading-4 text-gray-400">How often new rain drops appear.</span>
+                    <span class="block text-xs font-normal leading-4 text-gray-500">How often new rain drops appear.</span>
                   </label>
                   <input type="range" min="0" max="100" step="1" x-model.number="scene.matrix_rain_spawn_rate" class="ga-slider">
                   <div class="text-sm text-gray-500" x-text="scene.matrix_rain_spawn_rate + '%'"></div>
@@ -738,7 +743,7 @@
                 <div>
                   <label class="block mb-1 text-sm font-medium leading-6 text-gray-900">
                     Trail Length
-                    <span class="block text-xs font-normal leading-4 text-gray-400">How many pixels each drop trails behind its head.</span>
+                    <span class="block text-xs font-normal leading-4 text-gray-500">How many pixels each drop trails behind its head.</span>
                   </label>
                   <input type="range" min="1" max="8" step="1" x-model.number="scene.matrix_rain_trail_length" class="ga-slider">
                   <div class="text-sm text-gray-500" x-text="scene.matrix_rain_trail_length"></div>
@@ -746,7 +751,7 @@
                 <div>
                   <label class="block mb-1 text-sm font-medium leading-6 text-gray-900">
                     Time Text Brightness Cap
-                    <span class="block text-xs font-normal leading-4 text-gray-400">Limits the time words when scene brightness is higher.</span>
+                    <span class="block text-xs font-normal leading-4 text-gray-500">Limits the time words when scene brightness is higher.</span>
                   </label>
                   <input type="range" min="0" max="15" step="1" x-model.number="scene.matrix_rain_time_brightness_cap" class="ga-slider">
                   <div class="text-sm text-gray-500" x-text="scene.matrix_rain_time_brightness_cap"></div>
@@ -773,7 +778,7 @@
                 </div>
               </div>
 
-              <div x-show="scene.display_mode=='rainbow_cycle'" class="mb-3 space-y-3">
+              <div x-show="scene.display_mode=='rainbow_cycle'" class="p-3 mb-3 rounded-lg bg-gray-50 ring-1 ring-gray-200 space-y-3">
                 <div>
                   <label class="block mb-1 text-sm font-medium leading-6 text-gray-900">Rainbow Cycle Style</label>
                   <select x-model="scene.rainbow_cycle_style"
@@ -783,7 +788,7 @@
                     <option value="word">Time Section Colours</option>
                     <option value="single">Single Colour Cycle</option>
                   </select>
-                  <div class="mt-1 text-xs leading-4 text-gray-400" x-text="rainbowCycleStyleDescription(scene.rainbow_cycle_style)"></div>
+                  <div class="mt-1 text-xs leading-4 text-gray-500" x-text="rainbowCycleStyleDescription(scene.rainbow_cycle_style)"></div>
                 </div>
                 <div>
                   <label class="block mb-1 text-sm font-medium leading-6 text-gray-900">Cycle Speed</label>
@@ -808,7 +813,7 @@
                 <div class="text-sm text-gray-500" x-text="scene.brightness"></div>
               </div>
 
-              <div x-show="sceneSupportsField(scene, 'single_color')" class="mb-3">
+              <div x-show="sceneSupportsField(scene, 'single_color')" class="p-3 mb-3 rounded-lg bg-gray-50 ring-1 ring-gray-200">
                 <label class="block mb-1 text-sm font-medium leading-6 text-gray-900">Color</label>
                 <label class="ga-color-control ga-color-wide">
                   <input type="color" x-model="scene.single_color_hex" list="colorList" class="ga-color-input">
@@ -816,7 +821,7 @@
                 </label>
               </div>
 
-              <div x-show="sceneSupportsField(scene, 'minute_color')" class="mb-3">
+              <div x-show="sceneSupportsField(scene, 'minute_color')" class="p-3 mb-3 rounded-lg bg-gray-50 ring-1 ring-gray-200">
                 <div class="flex justify-between">
                   <div>
                     <label class="block mb-1 text-sm font-medium leading-6 text-gray-900">Minute</label>
@@ -859,7 +864,7 @@
         </div>
       </div>
 
-      <div class="p-4 mb-2 text-gray-500 rounded-lg shadow-sm bg-gray-50 ring-1 ring-gray-200">
+      <div class="p-4 mb-2 text-gray-500 rounded-lg shadow-sm bg-white ring-1 ring-gray-200">
         <div class="flex items-center justify-between pb-2 space-x-4 border-b border-gray-200">
           <div class="flex items-center space-x-2">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-6 h-6">
@@ -885,6 +890,14 @@
           <div x-text="formatBytes(settings.mem_alloc)">n/a</div>
         </div>
         <div class="flex items-center justify-between mt-1 space-x-4">
+          <div>Firmware:</div>
+          <div x-text="currentVersion || 'n/a'">n/a</div>
+        </div>
+        <div class="flex items-center justify-between mt-1 space-x-4">
+          <div>Board:</div>
+          <div class="text-right" x-text="settings.board || 'n/a'">n/a</div>
+        </div>
+        <div class="flex items-center justify-between mt-1 space-x-4">
           <div>Current Scene:</div>
           <div x-text="settings.current_scene || 'manual'">manual</div>
         </div>
@@ -900,7 +913,7 @@
       </div>
 
       <!-- wifi details -->
-      <div class="p-4 text-gray-500 rounded-lg shadow-sm bg-gray-50 ring-1 ring-gray-200">
+      <div class="p-4 text-gray-500 rounded-lg shadow-sm bg-white ring-1 ring-gray-200">
         <div class="flex items-center justify-between pb-2 space-x-4 border-b border-gray-200">
           <div class="flex items-center space-x-2">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
@@ -927,7 +940,7 @@
         </div>
       </div>
 
-      <div class="p-4 mt-3 text-gray-500 rounded-lg shadow-sm bg-gray-50 ring-1 ring-gray-200">
+      <div class="p-4 mt-3 text-gray-500 rounded-lg shadow-sm bg-white ring-1 ring-gray-200">
         <div class="flex items-center justify-between pb-2 space-x-4 border-b border-gray-200">
           <div class="flex items-center space-x-2">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
@@ -1054,7 +1067,7 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
   .ga-slider::-webkit-slider-runnable-track {
     width: 100%;
     height: 0.5rem;
-    background: #f3f4f6;
+    background: #d1d5db;
     border-radius: 9999px;
   }
 
@@ -1071,7 +1084,7 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
   .ga-slider::-moz-range-track {
     width: 100%;
     height: 0.5rem;
-    background: #f3f4f6;
+    background: #d1d5db;
     border-radius: 9999px;
   }
 </style>
@@ -1131,6 +1144,7 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
         newWifiPassword: '',
         updateAvailable: false,
         latestVersion: null,
+        currentVersion: null,
         saveNoticeText: '',
         saveNoticeTone: 'success',
         saveNoticeTimeout: null,
@@ -1370,6 +1384,7 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
               const data = await r.json()
               this.updateAvailable = data.update_available
               this.latestVersion = data.latest_version
+              this.currentVersion = data.current_version
             }
           } catch (e) {
             // silently ignore — no internet or device not reachable

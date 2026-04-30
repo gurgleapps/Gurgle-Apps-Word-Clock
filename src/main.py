@@ -1394,6 +1394,7 @@ def settings_object():
         'last_ntp_sync_attempt': last_ntp_sync_attempt,
         'dns_check_status': last_dns_check_status,
         'disable_access_point': disable_access_point,
+        'board': os.uname().machine,
         'status': 'OK'
     }
 

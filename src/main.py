@@ -212,6 +212,18 @@ def log_boot_summary():
     log_boot("Valid schedules loaded: " + str(len(valid_schedules)))
     log_boot("Wi-Fi configured: " + ('yes' if wifi_ssid else 'no'))
     log_boot("Access point disabled: " + str(disable_access_point))
+    try:
+        fs = os.statvfs('/')
+        block_size = fs[0]
+        total_kb = block_size * fs[2] // 1024
+        free_kb = block_size * fs[3] // 1024
+        log_boot("Flash: " + str(free_kb) + " KB free / " + str(total_kb) + " KB total")
+    except Exception:
+        pass
+    gc.collect()
+    ram_free_kb = gc.mem_free() // 1024
+    ram_used_kb = gc.mem_alloc() // 1024
+    log_boot("RAM: " + str(ram_free_kb) + " KB free, " + str(ram_used_kb) + " KB used")
 
 def apply_scene_color_value(name, color):
     global single_color

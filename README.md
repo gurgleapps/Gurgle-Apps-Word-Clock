@@ -24,6 +24,7 @@ It runs on multiple boards including **Raspberry Pi Pico W**, **Pico 2 W**, and 
     - [ESP32‑C3 Super Mini — Pinout (Top View)](#esp32c3-super-mini--pinout-top-view)
   - [🖥 Development Environment](#-development-environment)
   - [🚀 Project Links](#-project-links)
+  - [🔄 Firmware Version \& Updates](#-firmware-version--updates)
 
 
 ---
@@ -167,6 +168,20 @@ Use `./flash.sh --with-config` only when you want to replace the device `config.
 By default, `./flash.sh` also preserves the device `scenes.json` and `schedules.json`. Use `./flash.sh --with-scenes --with-schedules` if you intentionally want to replace them from the repo.
 Use `./monitor.sh` when you just want to attach to the serial console without flashing.
 While the serial monitor is open, use `Ctrl-C` to interrupt, `Ctrl-D` to soft reboot, and `Ctrl-]` to exit.
+
+To test the Update available banner you can temporarily set `VERSION` on the device to an older version and refresh the web dashboard:
+
+```sh
+mpremote connect auto exec "open('VERSION','w').write('1.0.0')"
+```
+
+To build the CSS assets (uses Tailwind CSS), you need Node.js and npm installed. Run from the `build/` directory:
+
+```sh
+cd build
+npm install
+npm run build-css
+```
 
 ---
 

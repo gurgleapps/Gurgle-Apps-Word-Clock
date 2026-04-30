@@ -125,13 +125,13 @@
         "display_mode": "rainbow"
     },
     "rainbow_cycle": {
-        "brightness": 3,
+        "brightness": 2,
         "display_enabled": true,
         "display_mode": "rainbow_cycle",
-        "rainbow_cycle_style": "pixel",
-        "rainbow_cycle_speed_ms": 120,
-        "rainbow_cycle_spread": 4,
-        "rainbow_cycle_step": 1
+        "rainbow_cycle_style": "letter",
+        "rainbow_cycle_speed_ms": 125,
+        "rainbow_cycle_spread": 7,
+        "rainbow_cycle_step": 3
     },
     "romance": {
         "brightness": 1,

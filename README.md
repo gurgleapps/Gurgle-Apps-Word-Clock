@@ -69,7 +69,18 @@ It's also an ideal starter project for makers, students, and hobbyists who want 
    Install the latest MicroPython firmware on your Pico W, Pico 2 W, or ESP32.
 
 2. **Copy the Project Files**  
-   Upload all files from the `src` directory to your device using Thonny or `mpremote`.
+   Upload all files from the `src` directory to your device.
+
+   **Using Thonny** (recommended for beginners, shown in our YouTube videos):
+   - Open Thonny and connect to your board
+   - Select all files inside the `src` folder and upload them to the root of the device
+   - Make sure the `www` folder and its contents are also uploaded
+
+   **Using mpremote** (faster for developers):
+   ```sh
+   ./setup-flash.sh
+   ./flash.sh
+   ```
 
 3. **Edit `config.json`**  
    Set:
@@ -135,6 +146,8 @@ GPIO 21 [o]     [o] GPIO 00
 
 ## 🖥 Development Environment
 
+> **Note:** Our YouTube build guides use **Thonny** to copy files to the device, which works perfectly for first-time setup and updates alike. The tools below are for contributors and those who prefer the command line.
+
 For fast UI testing without copying files to the microcontroller repeatedly:
 
 ```
@@ -161,6 +174,23 @@ While the serial monitor is open, use `Ctrl-C` to interrupt, `Ctrl-D` to soft re
 
 - Word Clock Kit: https://gurgleapps.com/reviews/electronics/wifi-controlled-color-word-clock-kit-micropython  
 - MicroPython Web Server Framework: https://github.com/gurgleapps/pico-web-server-control
+
+---
+
+## 🔄 Firmware Version & Updates
+
+The current firmware version is recorded in [`src/VERSION`](src/VERSION). When you open the web dashboard, the clock will automatically check for a newer version (requires internet). If an update is available, a banner will appear.
+
+**To update using Thonny:**
+1. Download the latest source from the [releases page](https://github.com/gurgleapps/Gurgle-Apps-Word-Clock/releases)
+2. In Thonny, upload all files from the `src` folder to your device, overwriting existing files
+3. Your `config.json`, `scenes.json`, and `schedules.json` are safe to keep — only overwrite them if the release notes say otherwise
+
+**To update using mpremote:**
+```sh
+./flash.sh
+```
+`config.json`, `scenes.json`, and `schedules.json` are preserved by default.
 
 ---
 

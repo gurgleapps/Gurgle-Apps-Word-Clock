@@ -18,6 +18,12 @@
         <a href="https://gurgleapps.com"><img class="h-16 -w-auto" src="img/logo.svg"></a>
       </div>
 
+      <!-- update available banner -->
+      <div x-show="updateAvailable" x-cloak class="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800 flex items-center justify-between gap-2">
+        <span><span class="font-medium">Update available!</span> Version <span class="font-mono" x-text="latestVersion"></span> is ready to download.</span>
+        <a href="https://github.com/gurgleapps/Gurgle-Apps-Word-Clock/releases" target="_blank" rel="noopener" class="shrink-0 underline font-medium">Get it on GitHub &rarr;</a>
+      </div>
+
       <!-- flip clock -->
       <div class="flex justify-center">
         <div class="p-1 mx-auto font-mono text-4xl font-extrabold text-white bg-black rounded-2xl">
@@ -1123,6 +1129,8 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
         matrixRainHourColorHex: '#ffff00',
         timeChanged: false,
         newWifiPassword: '',
+        updateAvailable: false,
+        latestVersion: null,
         saveNoticeText: '',
         saveNoticeTone: 'success',
         saveNoticeTimeout: null,
@@ -1190,6 +1198,7 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
         init() {
           console.log('init')
           this.getClockSettings()
+          this.checkForUpdates()
           this.setupTabOverflow()
           //this.newTimeString = this.formatTime(this.dateToArray(new Date()), false)
           this.newTimeString = this.dateToString(new Date())
@@ -1352,6 +1361,18 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
           const response = await fetch(this.path + '/get-clock-settings')
           if (response.ok) {
             this.applySettings(await response.json())
+          }
+        },
+        async checkForUpdates() {
+          try {
+            const r = await fetch(this.path + '/check-version')
+            if (r.ok) {
+              const data = await r.json()
+              this.updateAvailable = data.update_available
+              this.latestVersion = data.latest_version
+            }
+          } catch (e) {
+            // silently ignore — no internet or device not reachable
           }
         },
         applySettings(nextSettings) {

@@ -1400,6 +1400,40 @@ def settings_object():
 def settings_to_json():
     return json.dumps(settings_object())
 
+async def check_version_request(request, response):
+    current_version = 'unknown'
+    try:
+        with open('VERSION', 'r') as f:
+            current_version = f.read().strip()
+    except Exception:
+        pass
+    latest_version = None
+    update_available = False
+    if server.is_wifi_connected():
+        resp = None
+        try:
+            import urequests
+            resp = urequests.get(
+                'https://raw.githubusercontent.com/gurgleapps/Gurgle-Apps-Word-Clock/main/manifest.json',
+                timeout=5
+            )
+            data = resp.json()
+            latest_version = data.get('version')
+            update_available = latest_version is not None and latest_version != current_version
+        except Exception:
+            pass
+        finally:
+            if resp is not None:
+                try:
+                    resp.close()
+                except Exception:
+                    pass
+    await response.send_json(json.dumps({
+        'current_version': current_version,
+        'latest_version': latest_version,
+        'update_available': update_available
+    }), 200)
+
 def setup_routes(server):
     server.add_function_route('/set-brightness', set_brightness_request)
     server.add_function_route('/get-clock-settings', get_clock_settings_request)
@@ -1415,6 +1449,7 @@ def setup_routes(server):
     server.add_function_route('/test-pattern', test_pattern_request)
     server.add_function_route('/disable-access-point', disable_access_point_request)
     server.add_function_route('/enable-access-point', enable_access_point_request)
+    server.add_function_route('/check-version', check_version_request)
 
 async def connect_to_wifi():
     await scroll_message(matrix_fonts.textFont1, "Wifi", 0.05)

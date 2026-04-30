@@ -105,6 +105,7 @@ CMD=(
     "$MPREMOTE"
     connect "$DEVICE"
     fs cp "$ROOT_DIR"/src/*.py : +
+    fs cp "$ROOT_DIR"/src/VERSION :VERSION +
     fs cp "$ROOT_DIR"/src/config_*.json : +
     fs cp "$ROOT_DIR"/src/default_scenes.json :default_scenes.json +
     fs cp -r "$ROOT_DIR"/src/www/* :www +

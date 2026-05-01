@@ -94,7 +94,7 @@
                   @click="selectTab(tab.label)"
                   class="flex shrink-0 items-center gap-2 px-3 py-3 text-sm font-medium transition-colors border-b-2 whitespace-nowrap"
                   :class="isTabActive(tab)
-                    ? 'border-indigo-500 text-indigo-600'
+                    ? 'border-sky-500 text-sky-700'
                     : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'">
                   <span x-html="tab.icon" class="shrink-0"></span>
                   <span x-text="tab.label"></span>
@@ -132,7 +132,7 @@
                     @click="selectTab(tab.label); overflowOpen = false"
                     class="flex items-center w-full gap-3 px-4 py-2 text-sm text-left"
                     :class="isTabActive(tab)
-                      ? 'bg-indigo-50 text-indigo-600 font-medium'
+                      ? 'bg-sky-50 text-sky-700 font-medium'
                       : 'text-gray-700 hover:bg-gray-50'">
                     <span x-html="tab.icon" class="shrink-0"></span>
                     <span x-text="tab.label"></span>
@@ -184,8 +184,10 @@
           </div>
           <div class="flex justify-center mt-1 mb-2">
             <button @click.prevent="updateWifi()"
-              class="px-4 py-2 font-semibold text-white bg-green-600 rounded focus:outline-none hover:bg-green-700">Update
-              Wifi</button>
+              class="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-sky-600 rounded-lg shadow-sm hover:bg-sky-500 active:scale-[0.98] transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-sky-600 focus:ring-offset-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.14 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"/></svg>
+              Update Wi-Fi
+            </button>
           </div>
 
 
@@ -196,17 +198,18 @@
                 d="M1.371 8.143c5.858-5.857 15.356-5.857 21.213 0a.75.75 0 0 1 0 1.061l-.53.53a.75.75 0 0 1-1.06 0c-4.98-4.979-13.053-4.979-18.032 0a.75.75 0 0 1-1.06 0l-.53-.53a.75.75 0 0 1 0-1.06Zm3.182 3.182c4.1-4.1 10.749-4.1 14.85 0a.75.75 0 0 1 0 1.061l-.53.53a.75.75 0 0 1-1.062 0 8.25 8.25 0 0 0-11.667 0 .75.75 0 0 1-1.06 0l-.53-.53a.75.75 0 0 1 0-1.06Zm3.204 3.182a6 6 0 0 1 8.486 0 .75.75 0 0 1 0 1.061l-.53.53a.75.75 0 0 1-1.061 0 3.75 3.75 0 0 0-5.304 0 .75.75 0 0 1-1.06 0l-.53-.53a.75.75 0 0 1 0-1.06Zm3.182 3.182a1.5 1.5 0 0 1 2.122 0 .75.75 0 0 1 0 1.061l-.53.53a.75.75 0 0 1-1.061 0l-.53-.53a.75.75 0 0 1 0-1.06Z"
                 clip-rule="evenodd" />
             </svg>
-            AP
+            Access Point
           </div>
 
 
           <!-- AP disable -->
-          <div class="flex items-center mb-4">
-            <span class="mr-3 text-sm" id="annual-billing-label">
-              <span class="font-medium text-gray-900">Access Point Disabled</span>
+          <div class="flex items-center justify-between gap-3 mb-4">
+            <span class="flex flex-col flex-grow">
+              <span class="text-sm font-medium leading-6 text-gray-900">Disable Access Point</span>
+              <span class="text-sm text-gray-500">When enabled, the Wi-Fi access point is turned off.</span>
             </span>
             <button @click="toggleAccessPointDisabled" type="button"
-              :class="settings.disable_access_point ? 'bg-blue-600' : 'bg-gray-200'"
+              :class="settings.disable_access_point ? 'bg-sky-600' : 'bg-gray-200'"
               class="relative inline-flex flex-shrink-0 h-6 transition-colors duration-200 ease-in-out border-2 border-transparent rounded-full cursor-pointer w-11 ">
               <span aria-hidden="true" :class="settings.disable_access_point ? 'translate-x-5' : 'translate-x-0'"
                 class="inline-block w-5 h-5 transition duration-200 ease-in-out transform bg-white rounded-full shadow pointer-events-none ring-0"></span>
@@ -226,13 +229,14 @@
           </div>
           <div class="flex justify-center mt-1 mb-2">
             <button @click.prevent="updateTime()"
-              class="inline-flex px-4 py-2 font-semibold text-white bg-green-600 rounded focus:outline-none hover:bg-green-700">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 mr-2">
+              class="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-sky-600 rounded-lg shadow-sm hover:bg-sky-500 active:scale-[0.98] transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-sky-600 focus:ring-offset-2">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
                 <path fill-rule="evenodd"
                   d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25ZM12.75 6a.75.75 0 0 0-1.5 0v6c0 .414.336.75.75.75h4.5a.75.75 0 0 0 0-1.5h-3.75V6Z"
                   clip-rule="evenodd" />
               </svg>
-              <span>Update Time</span></button>
+              Update Time
+            </button>
           </div>
           <!-- brightness -->
           <div class="mb-4">
@@ -243,9 +247,9 @@
             <div class="mt-1 text-xs leading-4 text-gray-500">Lower brightness is usually best for everyday use. Higher brightness can wash out colours and may increase LED wear over time.</div>
           </div>
           <div class="mb-4">
-            <label for="colorMode" class="block text-sm font-medium leading-6 text-gray-900">Color Display Mode:</label>
+            <label for="colorMode" class="block text-sm font-medium leading-6 text-gray-900">Colour Display Mode:</label>
             <select x-model="settings.display_mode" id="colorMode"
-              class="mt-2 block w-full bg-gray-50 rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 sm:text-sm sm:leading-6">
+              class="mt-2 block w-full bg-white rounded-md border border-gray-300 py-1.5 pl-3 pr-10 text-gray-900 sm:text-sm sm:leading-6">
               <option value="single_color">Single Colour</option>
               <option value="rainbow">Rainbow</option>
               <option value="rainbow_cycle">Rainbow Cycle</option>
@@ -317,7 +321,7 @@
               </span>
               <button type="button"
                 @click="settings.matrix_rain_white_head = !settings.matrix_rain_white_head"
-                :class="settings.matrix_rain_white_head ? 'bg-blue-600' : 'bg-gray-200'"
+                :class="settings.matrix_rain_white_head ? 'bg-sky-600' : 'bg-gray-200'"
                 class="relative inline-flex flex-shrink-0 h-6 transition-colors duration-200 ease-in-out border-2 border-transparent rounded-full cursor-pointer w-11 ">
                 <span aria-hidden="true" :class="settings.matrix_rain_white_head ? 'translate-x-5' : 'translate-x-0'"
                   class="inline-block w-5 h-5 transition duration-200 ease-in-out transform bg-white rounded-full shadow pointer-events-none ring-0"></span>
@@ -330,7 +334,7 @@
               </span>
               <button type="button"
                 @click="settings.matrix_rain_affect_time = !settings.matrix_rain_affect_time"
-                :class="settings.matrix_rain_affect_time ? 'bg-blue-600' : 'bg-gray-200'"
+                :class="settings.matrix_rain_affect_time ? 'bg-sky-600' : 'bg-gray-200'"
                 class="relative inline-flex flex-shrink-0 h-6 transition-colors duration-200 ease-in-out border-2 border-transparent rounded-full cursor-pointer w-11 ">
                 <span aria-hidden="true" :class="settings.matrix_rain_affect_time ? 'translate-x-5' : 'translate-x-0'"
                   class="inline-block w-5 h-5 transition duration-200 ease-in-out transform bg-white rounded-full shadow pointer-events-none ring-0"></span>
@@ -424,8 +428,10 @@
           </div>
           <div class="flex justify-center mt-1 mb-2">
             <button @click.prevent="update()"
-              class="px-4 py-2 font-semibold text-white bg-green-600 rounded focus:outline-none hover:bg-green-700">Update
-              Settings</button>
+              class="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-sky-600 rounded-lg shadow-sm hover:bg-sky-500 active:scale-[0.98] transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-sky-600 focus:ring-offset-2">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.36-1.814a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z" clip-rule="evenodd"/></svg>
+              Update Settings
+            </button>
           </div>
           <div class="pt-4 mt-4 border-t border-gray-200">
             <div class="p-3 rounded-lg bg-white ring-1 ring-gray-200">
@@ -442,7 +448,7 @@
                 </span>
                 <button type="button"
                   @click="toggleSchedulesEnabled"
-                  :class="settings.schedules_enabled ? 'bg-blue-600' : 'bg-gray-200'"
+                  :class="settings.schedules_enabled ? 'bg-sky-600' : 'bg-gray-200'"
                   class="relative inline-flex flex-shrink-0 h-6 transition-colors duration-200 ease-in-out border-2 border-transparent rounded-full cursor-pointer w-11 ">
                   <span aria-hidden="true" :class="settings.schedules_enabled ? 'translate-x-5' : 'translate-x-0'"
                     class="inline-block w-5 h-5 transition duration-200 ease-in-out transform bg-white rounded-full shadow pointer-events-none ring-0"></span>
@@ -464,7 +470,8 @@
                   <span class="text-sm text-gray-500">Restore clock defaults without changing Wi-Fi, scenes, or schedules.</span>
                 </span>
                 <button @click.prevent="resetClockSettings()"
-                  class="px-3 py-2 text-sm font-semibold text-red-700 bg-white border border-red-200 rounded focus:outline-none hover:bg-red-50">
+                  class="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-red-700 bg-white border border-red-300 rounded-lg shadow-sm hover:bg-red-50 active:scale-[0.98] transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"/></svg>
                   Reset
                 </button>
               </div>
@@ -477,15 +484,15 @@
               <div class="text-sm font-medium leading-6 text-gray-900">Schedules</div>
               <div class="text-sm text-gray-500">Edit the contents of <code>schedules.json</code>.</div>
             </div>
-            <div class="flex w-full gap-2">
+            <div class="flex justify-end gap-2">
               <button @click.prevent="addSchedule()"
-                class="inline-flex items-center justify-center flex-1 gap-2 px-4 py-2 text-sm font-semibold text-blue-700 bg-white rounded-lg ring-1 ring-inset ring-blue-200 hover:bg-blue-50 focus:outline-none">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-sky-600 rounded-lg shadow-sm hover:bg-sky-500 active:scale-[0.98] transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-sky-600 focus:ring-offset-2">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25ZM12.75 9a.75.75 0 0 0-1.5 0v2.25H9a.75.75 0 0 0 0 1.5h2.25V15a.75.75 0 0 0 1.5 0v-2.25H15a.75.75 0 0 0 0-1.5h-2.25V9Z" clip-rule="evenodd"/></svg>
                 Add
               </button>
               <button @click.prevent="updateSchedules()"
-                class="inline-flex items-center justify-center flex-1 gap-2 px-4 py-2 text-sm font-semibold text-white bg-green-600 rounded-lg hover:bg-green-700 focus:outline-none">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-sky-600 rounded-lg shadow-sm hover:bg-sky-500 active:scale-[0.98] transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-sky-600 focus:ring-offset-2">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.36-1.814a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z" clip-rule="evenodd"/></svg>
                 Save
               </button>
             </div>
@@ -506,9 +513,9 @@
                       <span
                         class="inline-flex items-center px-2 py-1 text-[10px] font-medium leading-none rounded ring-1 ring-inset"
                         :class="chip.tone === 'action'
-                          ? 'bg-blue-50 text-blue-700 ring-blue-600/20'
+                          ? 'bg-sky-50 text-sky-700 ring-sky-600/20'
                           : chip.tone === 'time'
-                            ? 'bg-indigo-50 text-indigo-700 ring-indigo-600/20'
+                            ? 'bg-sky-50 text-sky-700 ring-sky-600/20'
                             : 'bg-gray-50 text-gray-600 ring-gray-300/70'"
                         x-text="chip.label"></span>
                     </template>
@@ -541,7 +548,7 @@
                 <span class="text-sm font-medium leading-6 text-gray-900">Enabled</span>
                 <button type="button"
                   @click="schedule.enabled = !schedule.enabled"
-                  :class="schedule.enabled ? 'bg-blue-600' : 'bg-gray-200'"
+                  :class="schedule.enabled ? 'bg-sky-600' : 'bg-gray-200'"
                   class="relative inline-flex flex-shrink-0 h-6 transition-colors duration-200 ease-in-out border-2 border-transparent rounded-full cursor-pointer w-11 ">
                   <span aria-hidden="true" :class="schedule.enabled ? 'translate-x-5' : 'translate-x-0'"
                     class="inline-block w-5 h-5 transition duration-200 ease-in-out transform bg-white rounded-full shadow pointer-events-none ring-0"></span>
@@ -554,7 +561,7 @@
                   <template x-for="day in weekdays" :key="day.value">
                     <button type="button"
                       @click="toggleScheduleDay(schedule, day.value)"
-                      :class="schedule.days.includes(day.value) ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 border border-gray-300'"
+                      :class="schedule.days.includes(day.value) ? 'bg-sky-600 text-white' : 'bg-white text-gray-700 border border-gray-300'"
                       class="inline-flex items-center justify-center p-0 mx-auto text-sm font-medium rounded-full shadow-sm"
                       style="width: 2.5rem; height: 2.5rem; line-height: 1;">
                       <span x-text="day.label"></span>
@@ -606,15 +613,15 @@
               <div class="text-sm font-medium leading-6 text-gray-900">Scenes</div>
               <div class="text-sm text-gray-500">Edit the contents of <code>scenes.json</code>.</div>
             </div>
-            <div class="flex w-full gap-2">
+            <div class="flex justify-end gap-2">
               <button @click.prevent="addScene()"
-                class="inline-flex items-center justify-center flex-1 gap-2 px-4 py-2 text-sm font-semibold text-blue-700 bg-white rounded-lg ring-1 ring-inset ring-blue-200 hover:bg-blue-50 focus:outline-none">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-sky-600 rounded-lg shadow-sm hover:bg-sky-500 active:scale-[0.98] transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-sky-600 focus:ring-offset-2">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25ZM12.75 9a.75.75 0 0 0-1.5 0v2.25H9a.75.75 0 0 0 0 1.5h2.25V15a.75.75 0 0 0 1.5 0v-2.25H15a.75.75 0 0 0 0-1.5h-2.25V9Z" clip-rule="evenodd"/></svg>
                 Add
               </button>
               <button @click.prevent="updateScenes()"
-                class="inline-flex items-center justify-center flex-1 gap-2 px-4 py-2 text-sm font-semibold text-white bg-green-600 rounded-lg hover:bg-green-700 focus:outline-none">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-sky-600 rounded-lg shadow-sm hover:bg-sky-500 active:scale-[0.98] transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-sky-600 focus:ring-offset-2">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.36-1.814a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z" clip-rule="evenodd"/></svg>
                 Save
               </button>
             </div>
@@ -654,7 +661,7 @@
 
               <div x-show="scene.expanded" x-collapse style="display:none;" class="mt-3">
               <div class="flex justify-end gap-2 mb-3">
-                <button @click.prevent="testScene(scene)" class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-blue-700 rounded-md ring-1 ring-inset ring-blue-200 hover:bg-blue-50">
+                <button @click.prevent="testScene(scene)" class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-sky-700 rounded-md ring-1 ring-inset ring-sky-200 hover:bg-sky-50">
                   <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.84A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.27l9.344-5.891a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>
                   Test
                 </button>
@@ -674,7 +681,7 @@
                 <span class="text-sm font-medium leading-6 text-gray-900">Display Enabled</span>
                 <button type="button"
                   @click="scene.display_enabled = !scene.display_enabled"
-                  :class="scene.display_enabled ? 'bg-blue-600' : 'bg-gray-200'"
+                  :class="scene.display_enabled ? 'bg-sky-600' : 'bg-gray-200'"
                   class="relative inline-flex flex-shrink-0 h-6 transition-colors duration-200 ease-in-out border-2 border-transparent rounded-full cursor-pointer w-11 ">
                   <span aria-hidden="true" :class="scene.display_enabled ? 'translate-x-5' : 'translate-x-0'"
                     class="inline-block w-5 h-5 transition duration-200 ease-in-out transform bg-white rounded-full shadow pointer-events-none ring-0"></span>
@@ -760,7 +767,7 @@
                   <span class="text-sm font-medium leading-6 text-gray-900">White Leading Edge</span>
                   <button type="button"
                     @click="scene.matrix_rain_white_head = !scene.matrix_rain_white_head"
-                    :class="scene.matrix_rain_white_head ? 'bg-blue-600' : 'bg-gray-200'"
+                    :class="scene.matrix_rain_white_head ? 'bg-sky-600' : 'bg-gray-200'"
                     class="relative inline-flex flex-shrink-0 h-6 transition-colors duration-200 ease-in-out border-2 border-transparent rounded-full cursor-pointer w-11 ">
                     <span aria-hidden="true" :class="scene.matrix_rain_white_head ? 'translate-x-5' : 'translate-x-0'"
                       class="inline-block w-5 h-5 transition duration-200 ease-in-out transform bg-white rounded-full shadow pointer-events-none ring-0"></span>
@@ -770,7 +777,7 @@
                   <span class="text-sm font-medium leading-6 text-gray-900">Rain Affects Time</span>
                   <button type="button"
                     @click="scene.matrix_rain_affect_time = !scene.matrix_rain_affect_time"
-                    :class="scene.matrix_rain_affect_time ? 'bg-blue-600' : 'bg-gray-200'"
+                    :class="scene.matrix_rain_affect_time ? 'bg-sky-600' : 'bg-gray-200'"
                     class="relative inline-flex flex-shrink-0 h-6 transition-colors duration-200 ease-in-out border-2 border-transparent rounded-full cursor-pointer w-11 ">
                     <span aria-hidden="true" :class="scene.matrix_rain_affect_time ? 'translate-x-5' : 'translate-x-0'"
                       class="inline-block w-5 h-5 transition duration-200 ease-in-out transform bg-white rounded-full shadow pointer-events-none ring-0"></span>
@@ -856,8 +863,10 @@
               <div class="text-sm text-gray-500">Restore the shipped scene set if you want to undo scene changes.</div>
             </div>
             <button @click.prevent="resetDefaultScenes()"
-              class="w-full px-4 py-2 text-sm font-medium text-red-700 bg-white border border-red-200 rounded focus:outline-none hover:bg-red-50">
+              class="inline-flex items-center justify-center w-full gap-2 px-4 py-2.5 text-sm font-semibold text-red-700 bg-white border border-red-300 rounded-lg shadow-sm hover:bg-red-50 active:scale-[0.98] transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"/></svg>
               Reset Default Scenes
+            </button>
             </button>
           </div>
 
@@ -878,35 +887,35 @@
         </div>
 
         <div class="flex items-center justify-between mt-2 space-x-4">
-          <div>CPU Temp:</div>
+          <div class="text-gray-700 font-medium">CPU Temp:</div>
           <div x-text="settings.cpu_temp==0 ? 'n/a' : settings.cpu_temp.toFixed(2)+'°C'">n/a</div>
         </div>
         <div class="flex items-center justify-between mt-1 space-x-4">
-          <div>Free Memory:</div>
+          <div class="text-gray-700 font-medium">Free Memory:</div>
           <div x-text="formatBytes(settings.mem_free)">n/a</div>
         </div>
         <div class="flex items-center justify-between mt-1 space-x-4">
-          <div>Allocated Memory:</div>
+          <div class="text-gray-700 font-medium">Allocated Memory:</div>
           <div x-text="formatBytes(settings.mem_alloc)">n/a</div>
         </div>
         <div class="flex items-center justify-between mt-1 space-x-4">
-          <div>Firmware:</div>
+          <div class="text-gray-700 font-medium">Firmware:</div>
           <div x-text="currentVersion || 'n/a'">n/a</div>
         </div>
         <div class="flex items-center justify-between mt-1 space-x-4">
-          <div>Board:</div>
+          <div class="text-gray-700 font-medium">Board:</div>
           <div class="text-right" x-text="settings.board || 'n/a'">n/a</div>
         </div>
         <div class="flex items-center justify-between mt-1 space-x-4">
-          <div>Current Scene:</div>
+          <div class="text-gray-700 font-medium">Current Scene:</div>
           <div x-text="settings.current_scene || 'manual'">manual</div>
         </div>
         <div class="flex items-center justify-between mt-1 space-x-4">
-          <div>Schedules:</div>
+          <div class="text-gray-700 font-medium">Schedules:</div>
           <div x-text="settings.schedules_enabled ? 'Enabled' : 'Disabled'">Disabled</div>
         </div>
         <div class="flex items-center justify-between mt-1 space-x-4">
-          <div>Valid Schedules:</div>
+          <div class="text-gray-700 font-medium">Valid Schedules:</div>
           <div x-text="settings.schedule_count">0</div>
         </div>
 
@@ -930,12 +939,12 @@
         </div>
 
         <div class="flex items-center justify-between mt-2 space-x-4">
-          <div>IP:</div>
+          <div class="text-gray-700 font-medium">IP:</div>
           <div x-text="settings.wifi_connected ? settings.wifi_ip_address : 'n/a'">n/a</div>
         </div>
 
         <div class="flex items-center justify-between mt-1 space-x-4">
-          <div>SSID:</div>
+          <div class="text-gray-700 font-medium">SSID:</div>
           <div x-text="settings.wifi_connected ? settings.wifi_ssid : 'n/a'">n/a</div>
         </div>
       </div>
@@ -957,12 +966,12 @@
         </div>
 
         <div class="flex items-center justify-between mt-2 space-x-4">
-          <div>IP:</div>
+          <div class="text-gray-700 font-medium">IP:</div>
           <div x-text="settings.ap_active ? settings.ap_address : 'n/a'">n/a</div>
         </div>
 
         <div class="flex items-center justify-between mt-1 space-x-4">
-          <div>SSID:</div>
+          <div class="text-gray-700 font-medium">SSID:</div>
           <div x-text="settings.ap_active ? settings.ap_ssid : 'n/a'">n/a</div>
         </div>
       </div>
@@ -981,8 +990,14 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
     <h2 class="text-lg font-bold">Warning!</h2>
     <p class="my-4">Disabling the Access Point will prevent re-enabling it unless you are connected to Wi-Fi or you manually edit the config.json on your device.</p>
     <div class="flex justify-end space-x-4">
-      <button @click="showWarningModal=false" class="px-4 py-2 text-black bg-gray-300 rounded hover:bg-gray-400">Cancel</button>
-      <button @click="toggleAccessPointDisabled" class="px-4 py-2 text-white bg-red-600 rounded hover:bg-red-700">Disable AP</button>
+      <button @click="showWarningModal=false" class="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 active:scale-[0.98] transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        Cancel
+      </button>
+      <button @click="toggleAccessPointDisabled" class="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-red-600 rounded-lg shadow-sm hover:bg-red-500 active:scale-[0.98] transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"/></svg>
+        Disable Access Point
+      </button>
     </div>
   </div>
 </div>
@@ -1059,7 +1074,7 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
     margin-top: -0.125rem;
     appearance: none;
     background: #fff;
-    box-shadow: 0 0 0 4px rgba(37, 99, 235, 1);
+    box-shadow: 0 0 0 4px rgba(2, 132, 199, 1);
     border-radius: 9999px;
     transition: all 150ms ease-in-out;
   }
@@ -1076,7 +1091,7 @@ x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
     height: 0.875rem;
     appearance: none;
     background: #fff;
-    border: 4px solid #2563eb;
+    border: 4px solid #0284c7;
     border-radius: 9999px;
     transition: all 150ms ease-in-out;
   }
